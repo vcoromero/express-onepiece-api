@@ -51,7 +51,7 @@ Edit `configs/.env.development` with your database credentials.
 
 The project supports multiple environments:
 
-- `configs/.env.test` - Test environment
+- `configs/.env.development` - Development environment
 - `configs/.env.qa` - QA environment
 - `configs/.env.production` - Production environment
 
