@@ -3,6 +3,7 @@ const helmet = require('helmet');
 const cors = require('cors');
 const healthRoutes = require('./routes/health.routes');
 const authRoutes = require('./routes/auth.routes');
+const fruitTypesRoutes = require('./routes/fruit-types.routes');
 const { generalLimiter } = require('./middlewares/rate-limiter');
 const logger = require('./utils/logger');
 
@@ -34,6 +35,7 @@ if (process.env.LOG_HTTP_REQUESTS === 'true') {
 // Routes
 app.use('/api', healthRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api', fruitTypesRoutes);
 
 // 404 handler
 app.use((req, res) => {
