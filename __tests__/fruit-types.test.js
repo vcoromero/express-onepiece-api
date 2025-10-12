@@ -135,6 +135,41 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.body).toHaveProperty('success', false);
       expect(response.body.message).toContain('exists');
     });
+
+    it('should return 400 if name exceeds 50 characters', async () => {
+      const longNameFruitType = {
+        name: 'A'.repeat(51),
+        description: 'Name too long'
+      };
+
+      const response = await request(app)
+        .post('/api/fruit-types')
+        .send(longNameFruitType);
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.message).toContain('50 characters');
+    });
+
+    it('should create fruit type without description', async () => {
+      const fruitTypeNoDesc = {
+        name: 'Test Without Desc'
+      };
+
+      const response = await request(app)
+        .post('/api/fruit-types')
+        .send(fruitTypeNoDesc);
+
+      expect(response.status).toBe(201);
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body.data).toHaveProperty('id');
+      expect(response.body.data).toHaveProperty('name', fruitTypeNoDesc.name);
+      
+      // Clean up
+      if (response.body.data && response.body.data.id) {
+        await pool.query('DELETE FROM devil_fruit_types WHERE id = ?', [response.body.data.id]);
+      }
+    });
   });
 
   describe('PUT /api/fruit-types/:id', () => {
@@ -191,6 +226,90 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.body).toHaveProperty('success', false);
       expect(response.body.message).toContain('Invalid ID');
     });
+
+    it('should return 400 if name is empty string', async () => {
+      if (!createdFruitTypeId) {
+        const createResponse = await request(app)
+          .post('/api/fruit-types')
+          .send({ name: 'Empty Name Test', description: 'To be updated with empty' });
+        createdFruitTypeId = createResponse.body.data.id;
+      }
+
+      const response = await request(app)
+        .put(`/api/fruit-types/${createdFruitTypeId}`)
+        .send({ name: '   ' });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.message).toContain('empty');
+    });
+
+    it('should return 400 if name exceeds 50 characters', async () => {
+      if (!createdFruitTypeId) {
+        const createResponse = await request(app)
+          .post('/api/fruit-types')
+          .send({ name: 'Long Name Test', description: 'To be updated' });
+        createdFruitTypeId = createResponse.body.data.id;
+      }
+
+      const response = await request(app)
+        .put(`/api/fruit-types/${createdFruitTypeId}`)
+        .send({ name: 'B'.repeat(51) });
+
+      expect(response.status).toBe(400);
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.message).toContain('50 characters');
+    });
+
+    it('should return 409 if trying to update to an existing name', async () => {
+      if (!createdFruitTypeId) {
+        const createResponse = await request(app)
+          .post('/api/fruit-types')
+          .send({ name: 'Duplicate Update Test', description: 'To be updated' });
+        createdFruitTypeId = createResponse.body.data.id;
+      }
+
+      const response = await request(app)
+        .put(`/api/fruit-types/${createdFruitTypeId}`)
+        .send({ name: 'Paramecia' });
+
+      expect(response.status).toBe(409);
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.message).toContain('exists');
+    });
+
+    it('should update only description', async () => {
+      if (!createdFruitTypeId) {
+        const createResponse = await request(app)
+          .post('/api/fruit-types')
+          .send({ name: 'Desc Only Update', description: 'Original' });
+        createdFruitTypeId = createResponse.body.data.id;
+      }
+
+      const response = await request(app)
+        .put(`/api/fruit-types/${createdFruitTypeId}`)
+        .send({ description: 'Updated description only' });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('success', true);
+      expect(response.body.data).toHaveProperty('description', 'Updated description only');
+    });
+
+    it('should update description to null', async () => {
+      if (!createdFruitTypeId) {
+        const createResponse = await request(app)
+          .post('/api/fruit-types')
+          .send({ name: 'Null Desc Test', description: 'To be nulled' });
+        createdFruitTypeId = createResponse.body.data.id;
+      }
+
+      const response = await request(app)
+        .put(`/api/fruit-types/${createdFruitTypeId}`)
+        .send({ description: null });
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('success', true);
+    });
   });
 
   describe('DELETE /api/fruit-types/:id', () => {
@@ -231,6 +350,90 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.status).toBe(400);
       expect(response.body).toHaveProperty('success', false);
       expect(response.body.message).toContain('Invalid ID');
+    });
+  });
+
+  describe('Error Handling', () => {
+    it('should handle database errors on GET all', async () => {
+      // Mock the pool.query to throw an error
+      const originalQuery = pool.query.bind(pool);
+      pool.query = jest.fn().mockRejectedValueOnce(new Error('Database connection failed'));
+
+      const response = await request(app).get('/api/fruit-types');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.message).toContain('Error fetching fruit types');
+
+      // Restore original function
+      pool.query = originalQuery;
+    });
+
+    it('should handle database errors on GET by ID', async () => {
+      const originalQuery = pool.query.bind(pool);
+      pool.query = jest.fn().mockRejectedValueOnce(new Error('Database error'));
+
+      const response = await request(app).get('/api/fruit-types/1');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.message).toContain('Error fetching fruit type');
+
+      pool.query = originalQuery;
+    });
+
+    it('should handle database errors on POST', async () => {
+      const originalQuery = pool.query.bind(pool);
+      // Mock to fail on the INSERT query (after successful existence check)
+      pool.query = jest.fn()
+        .mockResolvedValueOnce([[]])  // First call: check if name exists (returns empty)
+        .mockRejectedValueOnce(new Error('Insert failed'));  // Second call: INSERT fails
+
+      const response = await request(app)
+        .post('/api/fruit-types')
+        .send({ name: 'Error Test', description: 'Test error handling' });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.message).toContain('Error creating fruit type');
+
+      pool.query = originalQuery;
+    });
+
+    it('should handle database errors on PUT', async () => {
+      const originalQuery = pool.query.bind(pool);
+      // Mock to fail on UPDATE
+      pool.query = jest.fn()
+        .mockResolvedValueOnce([[{ id: 1 }]])  // First call: check existence
+        .mockResolvedValueOnce([[]])  // Second call: check duplicate name
+        .mockRejectedValueOnce(new Error('Update failed'));  // Third call: UPDATE fails
+
+      const response = await request(app)
+        .put('/api/fruit-types/1')
+        .send({ name: 'Updated Name' });
+
+      expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.message).toContain('Error updating fruit type');
+
+      pool.query = originalQuery;
+    });
+
+    it('should handle database errors on DELETE', async () => {
+      const originalQuery = pool.query.bind(pool);
+      // Mock to fail on DELETE
+      pool.query = jest.fn()
+        .mockResolvedValueOnce([[{ id: 999, name: 'Test' }]])  // First call: check existence
+        .mockResolvedValueOnce([[{ count: 0 }]])  // Second call: check associations
+        .mockRejectedValueOnce(new Error('Delete failed'));  // Third call: DELETE fails
+
+      const response = await request(app).delete('/api/fruit-types/999');
+
+      expect(response.status).toBe(500);
+      expect(response.body).toHaveProperty('success', false);
+      expect(response.body.message).toContain('Error deleting fruit type');
+
+      pool.query = originalQuery;
     });
   });
 });
