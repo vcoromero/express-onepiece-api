@@ -106,6 +106,422 @@
           }
         }
       ]
+    },
+    {
+      "name": "Devil Fruit Types",
+      "item": [
+        {
+          "name": "Get All Fruit Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/fruit-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "fruit-types"]
+            },
+            "description": "Retrieve all devil fruit types"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/fruit-types",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "fruit-types"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"count\": 3,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"name\": \"Paramecia\",\n            \"description\": \"Grants superhuman abilities, most common type\",\n            \"created_at\": \"2024-01-01T00:00:00.000Z\",\n            \"updated_at\": \"2024-01-01T00:00:00.000Z\"\n        },\n        {\n            \"id\": 2,\n            \"name\": \"Zoan\",\n            \"description\": \"Allows transformation into animals or hybrid forms\",\n            \"created_at\": \"2024-01-01T00:00:00.000Z\",\n            \"updated_at\": \"2024-01-01T00:00:00.000Z\"\n        },\n        {\n            \"id\": 3,\n            \"name\": \"Logia\",\n            \"description\": \"Grants power to transform into natural elements\",\n            \"created_at\": \"2024-01-01T00:00:00.000Z\",\n            \"updated_at\": \"2024-01-01T00:00:00.000Z\"\n        }\n    ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Fruit Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/fruit-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "fruit-types", "1"]
+            },
+            "description": "Retrieve a specific fruit type by ID"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/fruit-types/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "fruit-types", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"Paramecia\",\n        \"description\": \"Grants superhuman abilities, most common type\",\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T00:00:00.000Z\"\n    }\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/fruit-types/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "fruit-types", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Fruit type with ID 99999 not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Fruit Type",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Mythical Zoan\",\n    \"description\": \"Rare Zoan type with mythical creature abilities\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/fruit-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "fruit-types"]
+            },
+            "description": "Create a new devil fruit type"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Mythical Zoan\",\n    \"description\": \"Rare Zoan type with mythical creature abilities\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/fruit-types",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "fruit-types"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"message\": \"Fruit type created successfully\",\n    \"data\": {\n        \"id\": 4,\n        \"name\": \"Mythical Zoan\",\n        \"description\": \"Rare Zoan type with mythical creature abilities\",\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T00:00:00.000Z\"\n    }\n}"
+            },
+            {
+              "name": "Validation Error - Missing Name",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"description\": \"Description without name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/fruit-types",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "fruit-types"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Name is required\"\n}"
+            },
+            {
+              "name": "Conflict - Duplicate Name",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Paramecia\",\n    \"description\": \"Duplicate name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/fruit-types",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "fruit-types"]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"A fruit type with this name already exists\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Fruit Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Paramecia Updated\",\n    \"description\": \"Updated description for Paramecia type\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/fruit-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "fruit-types", "1"]
+            },
+            "description": "Update an existing fruit type"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Paramecia Updated\",\n    \"description\": \"Updated description for Paramecia type\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/fruit-types/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "fruit-types", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"message\": \"Fruit type updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"Paramecia Updated\",\n        \"description\": \"Updated description for Paramecia type\",\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T01:00:00.000Z\"\n    }\n}"
+            },
+            {
+              "name": "Partial Update - Name Only",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"New Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/fruit-types/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "fruit-types", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"message\": \"Fruit type updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"New Name\",\n        \"description\": \"Original description\",\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T01:00:00.000Z\"\n    }\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/fruit-types/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "fruit-types", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Fruit type with ID 99999 not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Fruit Type",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/fruit-types/4",
+              "host": ["{{base_url}}"],
+              "path": ["api", "fruit-types", "4"]
+            },
+            "description": "Delete a fruit type (only if it has no associated devil fruits)"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/fruit-types/4",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "fruit-types", "4"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"message\": \"Fruit type \\\"Mythical Zoan\\\" deleted successfully\"\n}"
+            },
+            {
+              "name": "Conflict - Has Associated Fruits",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/fruit-types/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "fruit-types", "1"]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Cannot delete fruit type because it has associated devil fruits\",\n    \"associatedFruits\": 10\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/fruit-types/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "fruit-types", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Fruit type with ID 99999 not found\"\n}"
+            }
+          ]
+        }
+      ]
     }
   ],
   "variable": [
