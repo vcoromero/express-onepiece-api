@@ -10,6 +10,7 @@ yarn-error.log*
 .env
 .env.local
 configs/.env*
+!configs/.env.example
 *.pid
 *.seed
 *.pid.lock
