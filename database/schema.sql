@@ -524,7 +524,7 @@ INSERT INTO character_haki (character_id, haki_type_id, mastery_level, awakened)
 -- Whitebeard
 (20, 1, 'advanced', FALSE),
 (20, 2, 'advanced', FALSE),
-(20, 3, 'advanced', FALSE),
+(20, 3, 'advanced', FALSE)
 -- Buggy (doesn't have Haki in canon)
 -- No entries for Buggy
 ;
