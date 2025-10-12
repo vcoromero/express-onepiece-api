@@ -44,6 +44,21 @@ configs/.env.production   # Production environment template
 
 Edit `configs/.env` with your local values if needed. See `configs/README.md` for detailed configuration guide.
 
+Example database configuration:
+
+```env
+# Database Configuration
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_password
+DB_NAME=onepiece_db
+DB_PORT=3306
+
+# Server Configuration
+PORT=3000
+NODE_ENV=development
+```
+
 ## Available Scripts
 
 - `npm start` - Start the production server
@@ -233,6 +248,7 @@ aws logs tail /aws/elasticbeanstalk/one-piece-api/var/log/nodejs/nodejs.log --fo
 - **GET** `/api/health`
   - Returns API health status
   - Public access (no authentication required)
+  - Response: `{ status: 'OK', message: '...', timestamp: '...' }`
 
 ### Authentication
 
@@ -279,6 +295,30 @@ aws logs tail /aws/elasticbeanstalk/one-piece-api/var/log/nodejs/nodejs.log --fo
       "password": "your_secure_password"
     }
     ```
+
+### Devil Fruit Types
+
+- **GET** `/api/fruit-types`
+  - Get all devil fruit types
+  - Response: `{ success: true, count: number, data: [...] }`
+
+- **GET** `/api/fruit-types/:id`
+  - Get a specific fruit type by ID
+  - Response: `{ success: true, data: {...} }`
+
+- **POST** `/api/fruit-types`
+  - Create a new fruit type
+  - Body: `{ name: string (required), description: string (optional) }`
+  - Response: `{ success: true, message: '...', data: {...} }`
+
+- **PUT** `/api/fruit-types/:id`
+  - Update an existing fruit type
+  - Body: `{ name: string (optional), description: string (optional) }`
+  - Response: `{ success: true, message: '...', data: {...} }`
+
+- **DELETE** `/api/fruit-types/:id`
+  - Delete a fruit type (only if it has no associated fruits)
+  - Response: `{ success: true, message: '...' }`
 
 ## Authentication & Authorization
 
@@ -340,6 +380,15 @@ router.delete('/items/:id', authMiddleware, itemController.delete);
 - ✅ Remove `/api/auth/generate-hash` endpoint in production
 - ✅ Use HTTPS in production
 
+## Database Setup
+
+1. Create the database by running the SQL script:
+```bash
+mysql -u root -p < database/schema.sql
+```
+
+2. Verify that the `onepiece_db` database is created with all tables.
+
 ## Testing
 
 Run the test suite:
@@ -352,6 +401,17 @@ View coverage report:
 npm test -- --coverage
 ```
 
+Run tests in watch mode:
+```bash
+npm run test:watch
+```
+
+Tests include:
+- ✓ Health check endpoint
+- ✓ Authentication and JWT
+- ✓ Complete CRUD for devil fruit types
+- ✓ Validations and error handling
+- ✓ Rate limiting
 ## Postman Collection
 
 Import the `onepiece-api.postman_collection.json` file into Postman to test the API endpoints.
@@ -361,38 +421,45 @@ Import the `onepiece-api.postman_collection.json` file into Postman to test the 
 ```
 express-onepiece-api/
 ├── src/
-│   ├── controllers/      # API controllers
+│   ├── config/
+│   │   └── db.config.js          # Database configuration
+│   ├── controllers/              # API controllers
 │   │   ├── auth.controller.js
-│   │   └── health.controller.js
-│   ├── routes/          # Route definitions
+│   │   ├── health.controller.js
+│   │   └── fruit-types.controller.js
+│   ├── routes/                   # Route definitions
 │   │   ├── auth.routes.js
-│   │   └── health.routes.js
-│   ├── middlewares/     # Custom middlewares
+│   │   ├── health.routes.js
+│   │   └── fruit-types.routes.js
+│   ├── middlewares/              # Custom middlewares
 │   │   ├── auth.middleware.js
 │   │   └── rate-limiter.js
-│   ├── utils/           # Utilities and helpers
+│   ├── utils/                    # Utilities and helpers
 │   │   ├── jwt.util.js
 │   │   └── logger.js
-│   ├── app.js          # Express configuration
-│   └── index.js        # Entry point
-├── __tests__/          # Unit tests (22 tests)
+│   ├── app.js                    # Express configuration
+│   └── index.js                  # Entry point
+├── __tests__/                    # Unit tests
 │   ├── auth.test.js
 │   ├── health.test.js
+│   ├── fruit-types.test.js
 │   └── rate-limiter.test.js
-├── configs/            # Environment configuration
-│   ├── .env            # Local development (not committed)
-│   ├── .env.test       # Test environment (not committed)
-│   ├── .env.qa         # QA template
-│   ├── .env.production # Production template
-│   ├── .env.example    # Template reference
-│   └── README.md       # Configuration guide
-├── database/           # Database scripts
-│   └── schema.sql
-├── logs/               # Application logs (not committed)
+├── configs/                      # Environment configuration
+│   ├── .env                      # Local development (not committed)
+│   ├── .env.test                 # Test environment (not committed)
+│   ├── .env.qa                   # QA template
+│   ├── .env.production           # Production template
+│   ├── .env.example              # Template reference
+│   └── README.md                 # Configuration guide
+├── database/                     # Database scripts
+│   ├── schema.sql                # Database creation script
+│   └── README.md
+├── logs/                         # Application logs (not committed)
 │   ├── combined.log
 │   ├── error.log
 │   └── security.log
-├── jest.setup.js       # Jest test configuration
+├── coverage/                     # Coverage reports
+├── jest.setup.js                 # Jest test configuration
 ├── Dockerfile
 ├── package.json
 └── README.md
