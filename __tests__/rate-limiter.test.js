@@ -1,6 +1,9 @@
 const request = require('supertest');
 const app = require('../src/app');
 
+// Note: These are integration tests for the rate limiting middleware
+// We use supertest to make HTTP requests to verify the middleware behavior
+// in the context of the full Express application
 describe('Rate Limiting Tests', () => {
   beforeAll(() => {
     // Set environment variables for tests
