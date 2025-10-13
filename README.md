@@ -3,7 +3,7 @@
 A RESTful API inspired by One Piece, built with Express.js, MySQL, and Sequelize ORM.
 
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com)
-[![Coverage](https://img.shields.io/badge/coverage-66%25-yellow)](https://github.com)
+[![Coverage](https://img.shields.io/badge/coverage-89.87%25-brightgreen)](https://github.com)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -15,7 +15,7 @@ A RESTful API inspired by One Piece, built with Express.js, MySQL, and Sequelize
 - ✅ **JWT Authentication** - Secure token-based auth
 - ✅ **Rate Limiting** - Protection against abuse
 - ✅ **Winston Logger** - CloudWatch ready
-- ✅ **Jest Tests** - 51 tests, 66% coverage
+- ✅ **Jest Tests** - 167 tests, 89.87% coverage
 - ✅ **Docker Ready** - Containerization included
 - ✅ **AWS Optimized** - Deployment guides included
 
@@ -137,6 +137,7 @@ npm run audit          # Security audit
 GET  /api/health                # Health check (public)
 POST /api/auth/login            # Login (get JWT)
 GET  /api/auth/verify           # Verify token (requires auth)
+POST /api/auth/generate-hash    # Generate password hash (dev only)
 ```
 
 ### Devil Fruit Types
@@ -148,6 +149,34 @@ POST   /api/fruit-types         # Create (requires auth)
 PUT    /api/fruit-types/:id     # Update (requires auth)
 DELETE /api/fruit-types/:id     # Delete (requires auth)
 ```
+
+### Devil Fruits
+
+```bash
+GET    /api/devil-fruits                    # Get all with pagination & filters (public)
+GET    /api/devil-fruits/:id                # Get one by ID (public)
+GET    /api/devil-fruits/type/:typeId       # Get by type with pagination (public)
+POST   /api/devil-fruits                    # Create (requires auth)
+PUT    /api/devil-fruits/:id                # Update (requires auth)
+DELETE /api/devil-fruits/:id                # Delete (requires auth)
+```
+
+#### Devil Fruits Query Parameters
+
+**GET /api/devil-fruits** supports:
+- `page` - Page number (default: 1)
+- `limit` - Items per page (default: 10, max: 100)
+- `search` - Search term for name
+- `type_id` - Filter by type ID
+- `rarity` - Filter by rarity (common, rare, legendary, mythical)
+- `sortBy` - Sort field (id, name, rarity, power_level, created_at)
+- `sortOrder` - Sort order (ASC, DESC)
+
+**GET /api/devil-fruits/type/:typeId** supports:
+- `page` - Page number (default: 1)
+- `limit` - Items per page (default: 10, max: 100)
+- `sortBy` - Sort field (id, name, created_at)
+- `sortOrder` - Sort order (ASC, DESC)
 
 > 💡 **Postman Collection:** Import `onepiece-api.postman_collection.json`
 
@@ -203,7 +232,7 @@ npm test -- --coverage
 npm run test:watch
 ```
 
-**Current coverage:** 66% (51/51 tests passing ✅)
+**Current coverage:** 89.87% (167/167 tests passing ✅)
 
 ---
 
