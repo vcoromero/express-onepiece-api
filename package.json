@@ -31,6 +31,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.6.5",
+    "sequelize": "^6.37.7",
     "winston": "^3.18.3"
   },
   "devDependencies": {
