@@ -1,6 +1,8 @@
 const request = require('supertest');
 const app = require('../src/app');
 
+// Note: These are integration tests for the health endpoint
+// The health endpoint is simple with no external dependencies, so integration tests are appropriate
 describe('Health Endpoint', () => {
   it('should return 200 and health status', async () => {
     const response = await request(app).get('/api/health');
