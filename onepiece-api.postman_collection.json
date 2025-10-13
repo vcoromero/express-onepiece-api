@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "One Piece API",
-    "description": "Collection for testing One Piece API endpoints",
+    "description": "Collection for testing One Piece API endpoints with JWT Authentication",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "_exporter_id": "onepiece-api"
   },
@@ -17,29 +17,93 @@
           "path": ["api", "health"]
         },
         "description": "Check if the API is running and healthy"
-      },
-      "response": [
+      }
+    },
+    {
+      "name": "Authentication",
+      "item": [
         {
-          "name": "Successful Response",
-          "originalRequest": {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Automatically save token after successful login",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('jwt_token', jsonData.data.token);",
+                  "    console.log('Token saved successfully');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{admin_username}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login endpoint - Returns JWT token for authentication"
+          }
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{base_url}}/api/health",
+              "raw": "{{base_url}}/api/auth/verify",
               "host": ["{{base_url}}"],
-              "path": ["api", "health"]
-            }
-          },
-          "status": "OK",
-          "code": 200,
-          "_postman_previewlanguage": "json",
-          "header": [
-            {
-              "key": "Content-Type",
-              "value": "application/json"
-            }
-          ],
-          "body": "{\n    \"status\": \"OK\",\n    \"message\": \"One Piece API is running\",\n    \"timestamp\": \"2024-01-01T00:00:00.000Z\",\n    \"environment\": \"development\"\n}"
+              "path": ["api", "auth", "verify"]
+            },
+            "description": "Verify if a JWT token is valid"
+          }
+        },
+        {
+          "name": "Generate Password Hash (Dev Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"your_new_password_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/generate-hash",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "generate-hash"]
+            },
+            "description": "Generate a bcrypt hash for a password - ONLY available in development mode"
+          }
         }
       ]
     }
@@ -49,7 +113,21 @@
       "key": "base_url",
       "value": "http://localhost:3000",
       "type": "string"
+    },
+    {
+      "key": "admin_username",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "admin_password",
+      "value": "your_password_here",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
     }
   ]
 }
-

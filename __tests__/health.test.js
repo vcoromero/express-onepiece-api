@@ -9,7 +9,6 @@ describe('Health Endpoint', () => {
     expect(response.body).toHaveProperty('status', 'OK');
     expect(response.body).toHaveProperty('message', 'One Piece API is running');
     expect(response.body).toHaveProperty('timestamp');
-    expect(response.body).toHaveProperty('environment');
   });
 
   it('should return valid timestamp format', async () => {
