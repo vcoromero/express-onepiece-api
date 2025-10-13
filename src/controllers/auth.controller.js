@@ -1,5 +1,6 @@
 const bcrypt = require('bcryptjs');
 const JWTUtil = require('../utils/jwt.util');
+const logger = require('../utils/logger');
 
 /**
  * Authentication Controller
@@ -12,11 +13,15 @@ class AuthController {
    * Body: { username: string, password: string }
    */
   static async login(req, res) {
+    const ip = req.ip || req.connection.remoteAddress;
+    
     try {
       const { username, password } = req.body;
 
       // Validate that username and password are provided
       if (!username || !password) {
+        logger.security.loginFailed(username || 'unknown', ip, 'Missing credentials');
+        
         return res.status(400).json({
           success: false,
           message: 'Incomplete credentials',
@@ -29,6 +34,13 @@ class AuthController {
       const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
 
       if (!adminUsername || !adminPasswordHash) {
+        logger.error('Authentication configuration error', {
+          missingVars: {
+            username: !adminUsername,
+            passwordHash: !adminPasswordHash
+          }
+        });
+        
         return res.status(500).json({
           success: false,
           message: 'Authentication configuration error',
@@ -38,6 +50,8 @@ class AuthController {
 
       // Verify username
       if (username !== adminUsername) {
+        logger.security.loginFailed(username, ip, 'Invalid username');
+        
         return res.status(401).json({
           success: false,
           message: 'Invalid credentials',
@@ -49,6 +63,8 @@ class AuthController {
       const isPasswordValid = await bcrypt.compare(password, adminPasswordHash);
 
       if (!isPasswordValid) {
+        logger.security.loginFailed(username, ip, 'Invalid password');
+        
         return res.status(401).json({
           success: false,
           message: 'Invalid credentials',
@@ -61,6 +77,11 @@ class AuthController {
         username: adminUsername,
         role: 'admin',
         timestamp: Date.now()
+      });
+
+      // Log successful login
+      logger.security.loginSuccess(adminUsername, ip, {
+        userAgent: req.get('user-agent')
       });
 
       // Respond with the token
@@ -77,6 +98,12 @@ class AuthController {
         }
       });
     } catch (error) {
+      logger.error('Error processing login', {
+        error: error.message,
+        stack: error.stack,
+        ip
+      });
+      
       return res.status(500).json({
         success: false,
         message: 'Error processing login',

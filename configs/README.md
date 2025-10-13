@@ -4,18 +4,22 @@ This directory contains environment configuration templates for different deploy
 
 ## Quick Setup
 
-1. **Copy the appropriate template to your project root:**
+1. **All environment files are in the `configs/` directory:**
    ```bash
-   # For development
-   cp configs/.env.development .env
-   
-   # Or create from scratch
-   touch .env
+   configs/.env              # Local development (DO NOT COMMIT)
+   configs/.env.test         # Test environment
+   configs/.env.qa           # QA environment
+   configs/.env.production   # Production environment
+   configs/.env.example      # Template/reference
    ```
 
-2. **Edit the `.env` file** with your actual values
+2. **For local development:**
+   ```bash
+   # The configs/.env file is already created with defaults
+   # Edit it with your local values if needed
+   ```
 
-3. **Never commit** `.env` files (already in `.gitignore`)
+3. **Never commit** environment files (already in `.gitignore`)
 
 ---
 
@@ -74,27 +78,37 @@ curl -X POST http://localhost:3000/api/auth/generate-hash \
 # Copy the hash to ADMIN_PASSWORD_HASH
 ```
 
-### Security (Optional)
+### Security (Recommended for Production/AWS)
 
 ```env
-# Rate limiting configuration
+# Rate limiting configuration - CRITICAL for AWS cost control
 RATE_LIMIT_WINDOW_MS=900000      # 15 minutes in milliseconds
-RATE_LIMIT_MAX_REQUESTS=100      # Max requests per window
+RATE_LIMIT_MAX_REQUESTS=100      # Max requests per window (general API)
 RATE_LIMIT_LOGIN_MAX=5           # Max login attempts per window
+
+# Why this is important for AWS:
+# - Prevents DDoS attacks that could increase costs
+# - Protects against brute force attacks
+# - Controls compute/bandwidth usage
 ```
 
-### Logging (Optional)
+### Logging (Highly Recommended for AWS)
 
 ```env
-LOG_LEVEL=info        # debug, info, warn, error
-LOG_FILE=logs/app.log # Log file path
+LOG_LEVEL=info              # debug, info, warn, error
+LOG_FILE=logs/app.log       # Log file path
+LOG_HTTP_REQUESTS=false     # Set to true to log all HTTP requests
+
+# AWS CloudWatch Integration:
+# Winston logger is configured to work with CloudWatch Logs
+# Set LOG_LEVEL=info in production to balance detail with cost
 ```
 
 ---
 
 ## Environment Templates
 
-### Development (.env.development)
+### Local Development (configs/.env)
 
 ```env
 # Server
@@ -109,7 +123,7 @@ DB_NAME=onepiece_db
 DB_PORT=3306
 
 # JWT
-JWT_SECRET=dev-secret-key-do-not-use-in-production-12345
+JWT_SECRET=dev-secret-key-for-local-development-only
 JWT_EXPIRES_IN=24h
 
 # Admin
@@ -125,9 +139,41 @@ RATE_LIMIT_LOGIN_MAX=10
 # Logging
 LOG_LEVEL=debug
 LOG_FILE=logs/development.log
+LOG_HTTP_REQUESTS=true  # Log all requests in development
 ```
 
-### QA (.env.qa)
+```env
+# Server
+PORT=3000
+NODE_ENV=test
+
+# Database (use test database)
+DB_HOST=localhost
+DB_USER=test_user
+DB_PASSWORD=test_password
+DB_NAME=onepiece_db_test
+DB_PORT=3306
+
+# JWT
+JWT_SECRET=test-secret-key-for-testing-only
+JWT_EXPIRES_IN=1h
+
+# Admin
+ADMIN_USERNAME=testadmin
+ADMIN_PASSWORD_HASH=$2a$10$8vQ9ZxGPQ5KHYpQKmEWZDuYjLZGJ5wZH5gH5.mQxJQF9nQxJQF9nO
+
+# Security
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_MAX_REQUESTS=100
+RATE_LIMIT_LOGIN_MAX=10
+
+# Logging (minimal in tests)
+LOG_LEVEL=error
+LOG_FILE=logs/test.log
+LOG_HTTP_REQUESTS=false
+```
+
+### QA Environment (configs/.env.qa)
 
 ```env
 # Server
@@ -159,7 +205,7 @@ LOG_LEVEL=debug
 LOG_FILE=logs/qa.log
 ```
 
-### Production (.env.production)
+### Production Environment (configs/.env.production)
 
 ```env
 # Server
@@ -183,12 +229,13 @@ ADMIN_PASSWORD_HASH=$2a$10$your_production_password_hash_here
 
 # Security (stricter in production)
 RATE_LIMIT_WINDOW_MS=900000
-RATE_LIMIT_MAX_REQUESTS=50
-RATE_LIMIT_LOGIN_MAX=3
+RATE_LIMIT_MAX_REQUESTS=50       # Stricter for production
+RATE_LIMIT_LOGIN_MAX=3           # Only 3 login attempts per 15 min
 
-# Logging
+# Logging (AWS CloudWatch ready)
 LOG_LEVEL=info
 LOG_FILE=logs/production.log
+LOG_HTTP_REQUESTS=false          # Disable to reduce log volume/costs
 ```
 
 ---

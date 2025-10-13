@@ -4,10 +4,10 @@
   "description": "One Piece themed RESTful API built with Express.js",
   "main": "src/index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "NODE_ENV=development jest --coverage",
-    "test:watch": "jest --watch",
+    "start": "node -r dotenv/config src/index.js dotenv_config_path=configs/.env",
+    "dev": "nodemon -r dotenv/config src/index.js dotenv_config_path=configs/.env",
+    "test": "NODE_ENV=test jest --coverage",
+    "test:watch": "NODE_ENV=test jest --watch",
     "audit": "npm audit",
     "audit:fix": "npm audit fix",
     "lint": "eslint src/**/*.js",
@@ -27,9 +27,11 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "express-rate-limit": "^8.1.0",
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
-    "mysql2": "^3.6.5"
+    "mysql2": "^3.6.5",
+    "winston": "^3.18.3"
   },
   "devDependencies": {
     "@babel/preset-env": "^7.23.6",
@@ -48,6 +50,9 @@
     ],
     "testMatch": [
       "**/__tests__/**/*.test.js"
+    ],
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
     ]
   }
 }
