@@ -1,16 +1,4 @@
-# AWS Deployment Guide - One Piece API
-
-## 📋 Table of Contents
-
-1. [Why AWS](#why-aws)
-2. [Deployment Options](#deployment-options)
-3. [Recommended Configuration](#recommended-configuration)
-4. [CloudWatch Integration](#cloudwatch-integration)
-5. [Estimated Costs](#estimated-costs)
-6. [Security](#security)
-7. [Troubleshooting](#troubleshooting)
-
----
+# AWS Deployment - One Piece API
 
 ## 🚀 Why AWS
 
@@ -24,15 +12,11 @@ This API is optimized for AWS with built-in features for:
 
 ## 🎯 Deployment Options
 
-### Option 1: AWS Elastic Beanstalk (⭐ Recommended for beginners)
+### Option 1: Elastic Beanstalk ⭐ (Easiest)
 
-**Pros:**
-- Easiest setup
-- Automatic auto-scaling
-- Load balancing included
-- Managed updates
+**Pros:** Easiest setup, automatic auto-scaling, load balancing included
 
-**Steps:**
+**Estimated cost:** ~$25-50/month (t3.micro)
 
 ```bash
 # 1. Install EB CLI
@@ -46,9 +30,9 @@ eb create one-piece-api-env
 
 # 4. Configure environment variables
 eb setenv \
-  JWT_SECRET=your_secure_secret_here \
+  JWT_SECRET=your_secure_secret \
   ADMIN_USERNAME=admin \
-  ADMIN_PASSWORD_HASH=your_hash_here \
+  ADMIN_PASSWORD_HASH=your_hash \
   DB_HOST=your_rds_endpoint \
   DB_USER=admin \
   DB_PASSWORD=your_db_password \
@@ -62,19 +46,13 @@ eb deploy
 eb open
 ```
 
-**Estimated cost:** ~$25-50/month (t3.micro)
-
 ---
 
-### Option 2: AWS Lambda + API Gateway (⭐ Cheapest for low traffic)
+### Option 2: Lambda + API Gateway ⭐ (Cheapest)
 
-**Pros:**
-- Pay per use (only pay for requests)
-- Infinite auto-scaling
-- No server management
-- Generous free tier
+**Pros:** Pay per use, infinite auto-scaling, no server management, generous free tier
 
-**Steps:**
+**Estimated cost:** ~$0-5/month (1M requests = $3.50)
 
 ```bash
 # 1. Install Serverless Framework
@@ -116,30 +94,23 @@ EOF
 cat > lambda.js << 'EOF'
 const serverless = require('serverless-http');
 const app = require('./src/app');
-
 module.exports.handler = serverless(app);
 EOF
 
-# 4. Install serverless-http
+# 4. Install dependency
 npm install serverless-http
 
 # 5. Deploy
 serverless deploy --stage production
 ```
 
-**Estimated cost:** ~$0-5/month (1M requests = $3.50)
-
 ---
 
-### Option 3: AWS ECS + Fargate (⭐ Best for containers)
+### Option 3: ECS + Fargate (Containers)
 
-**Pros:**
-- Uses Docker (portability)
-- Full control
-- Easy auto-scaling
-- No server management
+**Pros:** Uses Docker (portability), full control, easy auto-scaling
 
-**Steps:**
+**Estimated cost:** ~$15-30/month
 
 ```bash
 # 1. Build Docker image
@@ -157,21 +128,15 @@ docker tag onepiece-api:latest YOUR_ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/onep
 docker push YOUR_ACCOUNT.dkr.ecr.us-east-1.amazonaws.com/onepiece-api:latest
 
 # 5. Create task definition and service in ECS Console
-# (Or use AWS CLI/Terraform)
 ```
-
-**Estimated cost:** ~$15-30/month (Fargate minimal)
 
 ---
 
-### Option 4: AWS EC2 (Traditional)
+### Option 4: EC2 (Traditional)
 
-**Pros:**
-- Full control
-- Familiar approach
-- Free tier available
+**Pros:** Full control, familiar approach, free tier available
 
-**Steps:**
+**Estimated cost:** ~$0-10/month (t2.micro free tier)
 
 ```bash
 # 1. Launch EC2 instance (t2.micro for free tier)
@@ -195,13 +160,7 @@ sudo npm install -g pm2
 pm2 start src/index.js --name onepiece-api
 pm2 startup
 pm2 save
-
-# 7. Configure Nginx (optional)
-sudo yum install -y nginx
-# Configure reverse proxy
 ```
-
-**Estimated cost:** ~$0-10/month (t2.micro free tier)
 
 ---
 
@@ -251,32 +210,6 @@ node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
 
 Winston logger works automatically with CloudWatch when deployed on AWS.
 
-### Setup CloudWatch Logs
-
-**For EC2/Elastic Beanstalk:**
-
-```bash
-# 1. Install CloudWatch agent
-wget https://s3.amazonaws.com/amazoncloudwatch-agent/amazon_linux/amd64/latest/amazon-cloudwatch-agent.rpm
-sudo rpm -U ./amazon-cloudwatch-agent.rpm
-
-# 2. Configure agent
-sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-config-wizard
-
-# 3. Start agent
-sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-  -a fetch-config \
-  -m ec2 \
-  -s -c file:/opt/aws/amazon-cloudwatch-agent/bin/config.json
-```
-
-**For ECS/Fargate:**
-- Logs are automatically sent to CloudWatch
-- Configure log retention in AWS console
-
-**For Lambda:**
-- Automatic logs in `/aws/lambda/function-name`
-
 ### View Logs
 
 ```bash
@@ -288,8 +221,6 @@ aws logs tail /aws/elasticbeanstalk/one-piece-api --follow
 ```
 
 ### Create Alarms
-
-Configure alerts for:
 
 ```bash
 # High error rate
@@ -303,12 +234,6 @@ aws cloudwatch put-metric-alarm \
   --evaluation-periods 1 \
   --threshold 10 \
   --comparison-operator GreaterThanThreshold
-
-# Login failures
-# (Custom metric from app)
-
-# Rate limit triggers
-# (Custom metric from app)
 ```
 
 ---
@@ -323,7 +248,6 @@ aws cloudwatch put-metric-alarm \
 | **EC2 t2.micro** | Free tier or paid | $0-8 |
 | **RDS t3.micro** | MySQL 20GB | $15-20 |
 | **CloudWatch Logs** | 5GB/month | Free |
-| **Data Transfer** | <15GB/month | Free |
 
 **Total for small project:** $10-50/month
 
@@ -338,9 +262,7 @@ aws cloudwatch put-metric-alarm \
 
 ---
 
-## 🔒 Security
-
-### Security Checklist
+## 🔒 Security Checklist
 
 - ✅ **Rate limiting enabled** - Protects costs and prevents abuse
 - ✅ **HTTPS enabled** - Use ALB, CloudFront, or API Gateway
@@ -356,7 +278,6 @@ aws cloudwatch put-metric-alarm \
 ### Use AWS Secrets Manager
 
 ```javascript
-// Instead of .env, load secrets from AWS
 const AWS = require('aws-sdk');
 const secretsManager = new AWS.SecretsManager({ region: 'us-east-1' });
 
@@ -395,7 +316,6 @@ const jwtSecret = secrets.JWT_SECRET;
 
 **Solution:**
 ```javascript
-// Make sure your app uses process.env.PORT
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0'); // ← Important: '0.0.0.0' not 'localhost'
 ```
@@ -421,56 +341,21 @@ Add this policy to IAM role:
 }
 ```
 
-### Very high costs
-
-**Cause:** Possible attack or rate limiting not configured
-
-**Solution:**
-1. Check CloudWatch metrics for unusual traffic
-2. Review logs for suspicious IPs
-3. Configure WAF to block IPs
-4. Enable stricter rate limiting
-
 ---
 
 ## 🎯 Next Steps
 
-After deploying to AWS:
-
-1. **Deploy frontend** (Nuxt.js)
-   - Option A: S3 + CloudFront (cheapest)
-   - Option B: AWS Amplify (easiest)
-
+1. **Deploy frontend** (Nuxt.js) - S3 + CloudFront or AWS Amplify
 2. **Configure CORS** for your domain
-   ```javascript
-   app.use(cors({
-     origin: 'https://your-frontend-domain.com',
-     credentials: true
-   }));
-   ```
-
-3. **Setup CI/CD**
-   - GitHub Actions → AWS
-   - Automatic deploy on push to main
-
-4. **Add custom domain**
-   - Route 53 for DNS
-   - Certificate Manager for SSL
-
-5. **Monitoring & Alerts**
-   - Configure CloudWatch dashboards
-   - Setup SNS for notifications
+3. **Setup CI/CD** - GitHub Actions → AWS
+4. **Add custom domain** - Route 53 + Certificate Manager
+5. **Monitoring & Alerts** - CloudWatch dashboards + SNS
 
 ---
 
 ## 📚 Resources
 
-- [AWS Elastic Beanstalk Docs](https://docs.aws.amazon.com/elasticbeanstalk/)
-- [AWS Lambda Docs](https://docs.aws.amazon.com/lambda/)
+- [AWS Elastic Beanstalk](https://docs.aws.amazon.com/elasticbeanstalk/)
+- [AWS Lambda](https://docs.aws.amazon.com/lambda/)
 - [Serverless Framework](https://www.serverless.com/framework/docs/)
 - [AWS Free Tier](https://aws.amazon.com/free/)
-- [CloudWatch Logs](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/)
-
----
-
-**Questions?** Open an issue in the repo or check AWS documentation.
