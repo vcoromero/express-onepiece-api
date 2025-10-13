@@ -92,17 +92,26 @@ curl -X POST http://localhost:3000/api/auth/login \
 
 ---
 
-## 📚 Documentation
+## 📚 Complete Documentation
 
+### Architecture Guides
 | Document | Description |
 |----------|-------------|
-| **[📖 Sequelize Guide](docs/SEQUELIZE_GUIDE.md)** | How to use ORM, models, relations |
-| **[🏢 Service Layer Pattern](docs/SERVICE_LAYER_PATTERN.md)** | Architecture, separation of concerns |
-| **[🔐 Authentication](docs/AUTHENTICATION.md)** | JWT, login, route protection |
-| **[☁️ AWS Deployment](docs/AWS_DEPLOYMENT.md)** | Deploy on Lambda, Beanstalk, ECS, EC2 |
-| **[📁 Project Structure](docs/PROJECT_STRUCTURE.md)** | Folder organization and architecture |
-| **[🗄️ Database](database/README.md)** | Schema, tables, seed data |
-| **[⚙️ Environment Config](configs/README.md)** | Environment variables and secrets |
+| **[📁 Project Structure](docs/PROJECT_STRUCTURE.md)** | Folder organization and complete architecture |
+| **[🏢 Service Layer Pattern](docs/SERVICE_LAYER_PATTERN.md)** | Layer architecture and separation of concerns |
+| **[📖 Sequelize ORM Guide](docs/SEQUELIZE_GUIDE.md)** | ORM usage, models and relationships |
+
+### Configuration and Deployment
+| Document | Description |
+|----------|-------------|
+| **[⚙️ Environment Variables](configs/README.md)** | Environment-specific configuration and secrets |
+| **[🗄️ Database](database/README.md)** | MySQL schema, tables and initial data |
+| **[☁️ AWS Deployment](docs/AWS_DEPLOYMENT.md)** | Guides for Lambda, Beanstalk, ECS, EC2 |
+
+### Security
+| Document | Description |
+|----------|-------------|
+| **[🔐 JWT Authentication](docs/AUTHENTICATION.md)** | Login system, tokens and route protection |
 
 ---
 
@@ -335,14 +344,17 @@ curl -X POST http://localhost:3000/api/auth/generate-hash \
 
 ---
 
-## 💬 Support
+## 💬 Contact and Support
 
-- 📧 Email: your-email@example.com
-- 🐛 Issues: [GitHub Issues](https://github.com/your-repo/issues)
-- 📖 Docs: [docs/](docs/)
+**Developer:** Victor Jesus Romero Perez  
+📧 **Email:** vcoromero@gmail.com  
+📱 **Phone:** +529931348794  
+🐛 **Issues:** [GitHub Issues](https://github.com/your-repo/issues)  
+📖 **Documentation:** [docs/](docs/)
 
 ---
 
 <p align="center">
-  Made with ❤️ and ☕
+  🏴‍☠️ <em>"A man's dreams never die"</em> 🏴‍☠️<br>
+  <strong>— Marshall D. Teach (Blackbeard)</strong>
 </p>
