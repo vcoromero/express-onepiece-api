@@ -1,10 +1,10 @@
 const request = require('supertest');
 const app = require('../src/app');
-const { pool } = require('../src/config/db.config');
+const fruitTypeService = require('../src/services/fruit-type.service');
 
 // Note: These are unit tests with mocked dependencies
-// We mock both JWTUtil and the database pool to test controller logic in isolation
-// This ensures tests are fast, reliable, and don't depend on external services
+// We mock the Service Layer to test controller logic in isolation
+// This ensures tests are fast, reliable, and don't depend on database
 
 // Mock JWTUtil since it has its own unit tests
 jest.mock('../src/utils/jwt.util', () => ({
@@ -18,12 +18,15 @@ jest.mock('../src/utils/jwt.util', () => ({
   decodeToken: jest.fn()
 }));
 
-// Mock database pool to avoid real database connections
-jest.mock('../src/config/db.config', () => ({
-  pool: {
-    query: jest.fn(),
-    end: jest.fn()
-  }
+// Mock FruitTypeService - This is the Service Layer
+jest.mock('../src/services/fruit-type.service', () => ({
+  getAllTypes: jest.fn(),
+  getTypeById: jest.fn(),
+  createType: jest.fn(),
+  updateType: jest.fn(),
+  deleteType: jest.fn(),
+  nameExists: jest.fn(),
+  hasAssociatedFruits: jest.fn()
 }));
 
 describe('Fruit Types API Endpoints', () => {
@@ -47,12 +50,12 @@ describe('Fruit Types API Endpoints', () => {
 
   describe('GET /api/fruit-types', () => {
     it('should return 200 and a list of fruit types', async () => {
-      // Mock database response
+      // Mock service response
       const mockFruitTypes = [
         { id: 1, name: 'Paramecia', description: 'Test description', created_at: new Date(), updated_at: new Date() },
         { id: 2, name: 'Zoan', description: 'Test description 2', created_at: new Date(), updated_at: new Date() }
       ];
-      pool.query.mockResolvedValueOnce([mockFruitTypes]);
+      fruitTypeService.getAllTypes.mockResolvedValueOnce(mockFruitTypes);
 
       const response = await request(app).get('/api/fruit-types');
 
@@ -61,15 +64,15 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.body).toHaveProperty('count', 2);
       expect(response.body).toHaveProperty('data');
       expect(Array.isArray(response.body.data)).toBe(true);
-      expect(pool.query).toHaveBeenCalledTimes(1);
+      expect(fruitTypeService.getAllTypes).toHaveBeenCalledTimes(1);
     });
 
     it('should return fruit types with correct structure', async () => {
-      // Mock database response
+      // Mock service response
       const mockFruitTypes = [
         { id: 1, name: 'Paramecia', description: 'Test description', created_at: new Date(), updated_at: new Date() }
       ];
-      pool.query.mockResolvedValueOnce([mockFruitTypes]);
+      fruitTypeService.getAllTypes.mockResolvedValueOnce(mockFruitTypes);
 
       const response = await request(app).get('/api/fruit-types');
 
@@ -86,9 +89,9 @@ describe('Fruit Types API Endpoints', () => {
 
   describe('GET /api/fruit-types/:id', () => {
     it('should return 200 and an existing fruit type', async () => {
-      // Mock database response for existing fruit type
+      // Mock service response for existing fruit type
       const mockFruitType = { id: 1, name: 'Paramecia', description: 'Test', created_at: new Date(), updated_at: new Date() };
-      pool.query.mockResolvedValueOnce([[mockFruitType]]);
+      fruitTypeService.getTypeById.mockResolvedValueOnce(mockFruitType);
 
       const response = await request(app).get('/api/fruit-types/1');
 
@@ -99,8 +102,8 @@ describe('Fruit Types API Endpoints', () => {
     });
 
     it('should return 404 for a non-existent ID', async () => {
-      // Mock database response for non-existent fruit type
-      pool.query.mockResolvedValueOnce([[]]);
+      // Mock service response for non-existent fruit type
+      fruitTypeService.getTypeById.mockResolvedValueOnce(null);
 
       const response = await request(app).get('/api/fruit-types/99999');
 
@@ -140,12 +143,9 @@ describe('Fruit Types API Endpoints', () => {
         description: 'This is a test type'
       };
 
-      // Mock database responses
+      // Mock service response
       const mockCreatedRecord = { id: 123, name: 'Test Type', description: 'This is a test type', created_at: new Date(), updated_at: new Date() };
-      pool.query
-        .mockResolvedValueOnce([[]]) // Check if name exists (empty result)
-        .mockResolvedValueOnce([{ insertId: 123 }]) // INSERT query
-        .mockResolvedValueOnce([[mockCreatedRecord]]); // SELECT created record
+      fruitTypeService.createType.mockResolvedValueOnce(mockCreatedRecord);
 
       const response = await request(app)
         .post('/api/fruit-types')
@@ -158,6 +158,7 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.body.data).toHaveProperty('id', 123);
       expect(response.body.data).toHaveProperty('name', newFruitType.name);
       expect(response.body.data).toHaveProperty('description', newFruitType.description);
+      expect(fruitTypeService.createType).toHaveBeenCalledWith(newFruitType);
     });
 
     it('should return 400 if name is missing', async () => {
@@ -196,8 +197,10 @@ describe('Fruit Types API Endpoints', () => {
         description: 'Duplicate attempt'
       };
 
-      // Mock database response showing name already exists
-      pool.query.mockResolvedValueOnce([[{ id: 1, name: 'Paramecia' }]]);
+      // Mock service throwing duplicate error
+      const error = new Error('A fruit type with this name already exists');
+      error.code = 'DUPLICATE_NAME';
+      fruitTypeService.createType.mockRejectedValueOnce(error);
 
       const response = await request(app)
         .post('/api/fruit-types')
@@ -230,12 +233,9 @@ describe('Fruit Types API Endpoints', () => {
         name: 'Test Without Desc'
       };
 
-      // Mock database responses
+      // Mock service response
       const mockCreatedRecord = { id: 456, name: 'Test Without Desc', description: null, created_at: new Date(), updated_at: new Date() };
-      pool.query
-        .mockResolvedValueOnce([[]]) // Check if name exists
-        .mockResolvedValueOnce([{ insertId: 456 }]) // INSERT query
-        .mockResolvedValueOnce([[mockCreatedRecord]]); // SELECT created record
+      fruitTypeService.createType.mockResolvedValueOnce(mockCreatedRecord);
 
       const response = await request(app)
         .post('/api/fruit-types')
@@ -266,13 +266,9 @@ describe('Fruit Types API Endpoints', () => {
         description: 'Updated description'
       };
 
-      // Mock database responses
+      // Mock service response
       const mockUpdatedRecord = { id: 1, name: 'Test Type Updated', description: 'Updated description', created_at: new Date(), updated_at: new Date() };
-      pool.query
-        .mockResolvedValueOnce([[{ id: 1, name: 'Old Name' }]]) // Check if ID exists
-        .mockResolvedValueOnce([[]]) // Check if new name exists
-        .mockResolvedValueOnce([{ affectedRows: 1 }]) // UPDATE query
-        .mockResolvedValueOnce([[mockUpdatedRecord]]); // SELECT updated record
+      fruitTypeService.updateType.mockResolvedValueOnce(mockUpdatedRecord);
 
       const response = await request(app)
         .put('/api/fruit-types/1')
@@ -283,11 +279,14 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.body).toHaveProperty('success', true);
       expect(response.body.data).toHaveProperty('name', updatedData.name);
       expect(response.body.data).toHaveProperty('description', updatedData.description);
+      expect(fruitTypeService.updateType).toHaveBeenCalledWith('1', updatedData);
     });
 
     it('should return 404 for a non-existent ID', async () => {
-      // Mock database response showing ID doesn't exist
-      pool.query.mockResolvedValueOnce([[]]);
+      // Mock service throwing not found error
+      const error = new Error('Fruit type with ID 99999 not found');
+      error.code = 'NOT_FOUND';
+      fruitTypeService.updateType.mockRejectedValueOnce(error);
 
       const response = await request(app)
         .put('/api/fruit-types/99999')
@@ -299,9 +298,6 @@ describe('Fruit Types API Endpoints', () => {
     });
 
     it('should return 400 if no fields are provided', async () => {
-      // Mock database response showing ID exists
-      pool.query.mockResolvedValueOnce([[{ id: 1, name: 'Existing' }]]);
-
       const response = await request(app)
         .put('/api/fruit-types/1')
         .set('Authorization', `Bearer ${authToken}`)
@@ -324,9 +320,6 @@ describe('Fruit Types API Endpoints', () => {
     });
 
     it('should return 400 if name is empty string', async () => {
-      // Mock database response showing ID exists
-      pool.query.mockResolvedValueOnce([[{ id: 1, name: 'Existing' }]]);
-
       const response = await request(app)
         .put('/api/fruit-types/1')
         .set('Authorization', `Bearer ${authToken}`)
@@ -338,9 +331,6 @@ describe('Fruit Types API Endpoints', () => {
     });
 
     it('should return 400 if name exceeds 50 characters', async () => {
-      // Mock database response showing ID exists
-      pool.query.mockResolvedValueOnce([[{ id: 1, name: 'Existing' }]]);
-
       const response = await request(app)
         .put('/api/fruit-types/1')
         .set('Authorization', `Bearer ${authToken}`)
@@ -352,10 +342,10 @@ describe('Fruit Types API Endpoints', () => {
     });
 
     it('should return 409 if trying to update to an existing name', async () => {
-      // Mock database responses
-      pool.query
-        .mockResolvedValueOnce([[{ id: 2, name: 'Current Name' }]]) // Check if ID exists
-        .mockResolvedValueOnce([[{ id: 1, name: 'Paramecia' }]]); // Check if new name exists
+      // Mock service throwing duplicate error
+      const error = new Error('Another fruit type with this name already exists');
+      error.code = 'DUPLICATE_NAME';
+      fruitTypeService.updateType.mockRejectedValueOnce(error);
 
       const response = await request(app)
         .put('/api/fruit-types/2')
@@ -368,12 +358,9 @@ describe('Fruit Types API Endpoints', () => {
     });
 
     it('should update only description', async () => {
-      // Mock database responses
+      // Mock service response
       const mockUpdatedRecord = { id: 1, name: 'Existing Name', description: 'Updated description only', created_at: new Date(), updated_at: new Date() };
-      pool.query
-        .mockResolvedValueOnce([[{ id: 1, name: 'Existing Name' }]]) // Check if ID exists
-        .mockResolvedValueOnce([{ affectedRows: 1 }]) // UPDATE query
-        .mockResolvedValueOnce([[mockUpdatedRecord]]); // SELECT updated record
+      fruitTypeService.updateType.mockResolvedValueOnce(mockUpdatedRecord);
 
       const response = await request(app)
         .put('/api/fruit-types/1')
@@ -386,12 +373,9 @@ describe('Fruit Types API Endpoints', () => {
     });
 
     it('should update description to null', async () => {
-      // Mock database responses
+      // Mock service response
       const mockUpdatedRecord = { id: 1, name: 'Existing Name', description: null, created_at: new Date(), updated_at: new Date() };
-      pool.query
-        .mockResolvedValueOnce([[{ id: 1, name: 'Existing Name' }]]) // Check if ID exists
-        .mockResolvedValueOnce([{ affectedRows: 1 }]) // UPDATE query
-        .mockResolvedValueOnce([[mockUpdatedRecord]]); // SELECT updated record
+      fruitTypeService.updateType.mockResolvedValueOnce(mockUpdatedRecord);
 
       const response = await request(app)
         .put('/api/fruit-types/1')
@@ -413,10 +397,11 @@ describe('Fruit Types API Endpoints', () => {
     });
 
     it('should return 409 when trying to delete a type with associated fruits', async () => {
-      // Mock database responses
-      pool.query
-        .mockResolvedValueOnce([[{ id: 1, name: 'Paramecia' }]]) // Check if ID exists
-        .mockResolvedValueOnce([[{ count: 5 }]]); // Check associations (has 5 fruits)
+      // Mock service throwing has associations error
+      const error = new Error('Cannot delete fruit type because it has associated devil fruits');
+      error.code = 'HAS_ASSOCIATIONS';
+      error.associatedCount = 5;
+      fruitTypeService.deleteType.mockRejectedValueOnce(error);
 
       const response = await request(app)
         .delete('/api/fruit-types/1')
@@ -425,14 +410,13 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.status).toBe(409);
       expect(response.body).toHaveProperty('success', false);
       expect(response.body.message).toContain('associated');
+      expect(response.body).toHaveProperty('associatedFruits', 5);
     });
 
     it('should successfully delete a fruit type without associations', async () => {
-      // Mock database responses
-      pool.query
-        .mockResolvedValueOnce([[{ id: 10, name: 'Delete Test' }]]) // Check if ID exists
-        .mockResolvedValueOnce([[{ count: 0 }]]) // Check associations (no fruits)
-        .mockResolvedValueOnce([{ affectedRows: 1 }]); // DELETE query
+      // Mock service response
+      const mockDeleted = { id: 10, name: 'Delete Test' };
+      fruitTypeService.deleteType.mockResolvedValueOnce(mockDeleted);
 
       const response = await request(app)
         .delete('/api/fruit-types/10')
@@ -441,11 +425,14 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.status).toBe(200);
       expect(response.body).toHaveProperty('success', true);
       expect(response.body.message).toContain('deleted');
+      expect(fruitTypeService.deleteType).toHaveBeenCalledWith('10');
     });
 
     it('should return 404 for a non-existent ID', async () => {
-      // Mock database response showing ID doesn't exist
-      pool.query.mockResolvedValueOnce([[]]);
+      // Mock service throwing not found error
+      const error = new Error('Fruit type with ID 99999 not found');
+      error.code = 'NOT_FOUND';
+      fruitTypeService.deleteType.mockRejectedValueOnce(error);
 
       const response = await request(app)
         .delete('/api/fruit-types/99999')
@@ -467,9 +454,9 @@ describe('Fruit Types API Endpoints', () => {
   });
 
   describe('Error Handling', () => {
-    it('should handle database errors on GET all', async () => {
-      // Mock database error
-      pool.query.mockRejectedValueOnce(new Error('Database connection failed'));
+    it('should handle service errors on GET all', async () => {
+      // Mock service error
+      fruitTypeService.getAllTypes.mockRejectedValueOnce(new Error('Service error'));
 
       const response = await request(app).get('/api/fruit-types');
 
@@ -478,9 +465,9 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.body.message).toContain('Error fetching fruit types');
     });
 
-    it('should handle database errors on GET by ID', async () => {
-      // Mock database error
-      pool.query.mockRejectedValueOnce(new Error('Database error'));
+    it('should handle service errors on GET by ID', async () => {
+      // Mock service error
+      fruitTypeService.getTypeById.mockRejectedValueOnce(new Error('Service error'));
 
       const response = await request(app).get('/api/fruit-types/1');
 
@@ -489,11 +476,9 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.body.message).toContain('Error fetching fruit type');
     });
 
-    it('should handle database errors on POST', async () => {
-      // Mock to fail on the INSERT query (after successful existence check)
-      pool.query
-        .mockResolvedValueOnce([[]])  // First call: check if name exists (returns empty)
-        .mockRejectedValueOnce(new Error('Insert failed'));  // Second call: INSERT fails
+    it('should handle service errors on POST', async () => {
+      // Mock service error (generic error, not duplicate)
+      fruitTypeService.createType.mockRejectedValueOnce(new Error('Service error'));
 
       const response = await request(app)
         .post('/api/fruit-types')
@@ -505,12 +490,9 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.body.message).toContain('Error creating fruit type');
     });
 
-    it('should handle database errors on PUT', async () => {
-      // Mock to fail on UPDATE
-      pool.query
-        .mockResolvedValueOnce([[{ id: 1 }]])  // First call: check existence
-        .mockResolvedValueOnce([[]])  // Second call: check duplicate name
-        .mockRejectedValueOnce(new Error('Update failed'));  // Third call: UPDATE fails
+    it('should handle service errors on PUT', async () => {
+      // Mock service error (generic error, not not_found or duplicate)
+      fruitTypeService.updateType.mockRejectedValueOnce(new Error('Service error'));
 
       const response = await request(app)
         .put('/api/fruit-types/1')
@@ -522,12 +504,9 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.body.message).toContain('Error updating fruit type');
     });
 
-    it('should handle database errors on DELETE', async () => {
-      // Mock to fail on DELETE
-      pool.query
-        .mockResolvedValueOnce([[{ id: 999, name: 'Test' }]])  // First call: check existence
-        .mockResolvedValueOnce([[{ count: 0 }]])  // Second call: check associations
-        .mockRejectedValueOnce(new Error('Delete failed'));  // Third call: DELETE fails
+    it('should handle service errors on DELETE', async () => {
+      // Mock service error (generic error, not not_found or has_associations)
+      fruitTypeService.deleteType.mockRejectedValueOnce(new Error('Service error'));
 
       const response = await request(app)
         .delete('/api/fruit-types/999')
