@@ -1,470 +1,348 @@
-# One Piece API
+# One Piece API 🏴‍☠️
 
-A RESTful API inspired by One Piece, built with Express.js and MySQL.
+A RESTful API inspired by One Piece, built with Express.js, MySQL, and Sequelize ORM.
 
-## Technologies
+[![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com)
+[![Coverage](https://img.shields.io/badge/coverage-66%25-yellow)](https://github.com)
+[![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-- **Express.js** - Web framework
-- **MySQL** - Database
-- **JWT** - JSON Web Token authentication
-- **bcryptjs** - Password hashing
-- **Jest** - Unit testing
-- **ESLint** - Code quality
-- **Docker** - Containerization
+---
 
-## Prerequisites
+## ✨ Features
 
-- Node.js (v18 or higher)
-- MySQL (v8 or higher)
-- Docker (optional, for containerized deployment)
+- ✅ **Sequelize ORM** - Clean, type-safe queries
+- ✅ **JWT Authentication** - Secure token-based auth
+- ✅ **Rate Limiting** - Protection against abuse
+- ✅ **Winston Logger** - CloudWatch ready
+- ✅ **Jest Tests** - 51 tests, 66% coverage
+- ✅ **Docker Ready** - Containerization included
+- ✅ **AWS Optimized** - Deployment guides included
 
-## Installation
+---
 
-1. Clone the repository:
+## 🚀 Quick Start
+
+### 1. Installation
+
 ```bash
+# Clone repository
 git clone <repository-url>
 cd express-onepiece-api
-```
 
-2. Install dependencies:
-```bash
+# Install dependencies
 npm install
-```
 
-3. Configure environment variables:
-
-All environment files are located in `configs/` directory:
-
-```bash
-configs/.env              # Your local development (already created with defaults)
-configs/.env.test         # Test environment (already created)
-configs/.env.qa           # QA environment template
-configs/.env.production   # Production environment template
-```
-
-Edit `configs/.env` with your local values if needed. See `configs/README.md` for detailed configuration guide.
-
-Example database configuration:
-
-```env
-# Database Configuration
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=onepiece_db
-DB_PORT=3306
-
-# Server Configuration
-PORT=3000
-NODE_ENV=development
-```
-
-## Available Scripts
-
-- `npm start` - Start the production server
-- `npm run dev` - Start the development server with nodemon
-- `npm test` - Run unit tests with coverage
-- `npm run test:watch` - Run tests in watch mode
-- `npm run audit` - Run security audit
-- `npm run audit:fix` - Fix security vulnerabilities
-- `npm run lint` - Check code quality
-- `npm run lint:fix` - Fix linting issues
-
-## Docker
-
-Build and run with Docker:
-```bash
-docker build -t onepiece-api .
-docker run -p 3000:3000 --env-file .env onepiece-api
-```
-
-## AWS Deployment
-
-This API is optimized for AWS cloud deployment with built-in features for cost control and monitoring.
-
-### Why Rate Limiting & Logging are Critical for AWS
-
-**💰 Cost Control:**
-- Without rate limiting, DDoS attacks could cost you hundreds/thousands in AWS charges
-- Rate limiting protects against:
-  - High EC2/Lambda compute costs
-  - Excessive RDS connections
-  - Data transfer charges
-  - CloudWatch log storage costs
-
-**📊 Monitoring & Debugging:**
-- Winston logger integrates natively with AWS CloudWatch
-- Track security events, errors, and usage patterns
-- Set up CloudWatch Alarms for anomalies
-- Debug production issues without SSH access
-
-### AWS Deployment Options
-
-#### Option 1: AWS Elastic Beanstalk (Easiest)
-```bash
-# Install EB CLI
-pip install awsebcli
-
-# Initialize and deploy
-eb init -p node.js one-piece-api
-eb create one-piece-api-env
-eb setenv JWT_SECRET=your_secret ADMIN_USERNAME=admin ADMIN_PASSWORD_HASH=your_hash
-eb open
-```
-
-**Pros:** Automatic load balancing, auto-scaling, managed updates
-**Cost:** ~$25-50/month (t2.micro)
-
-#### Option 2: AWS Lambda + API Gateway (Serverless)
-```bash
-# Install Serverless Framework
-npm install -g serverless
-
-# Deploy
-serverless deploy --stage production
-```
-
-**Pros:** Pay only for requests, auto-scales, no server management
-**Cost:** ~$0-5/month for low traffic (free tier eligible)
-
-#### Option 3: AWS ECS + Fargate (Container-based)
-```bash
-# Build and push Docker image
-docker build -t onepiece-api .
-docker tag onepiece-api:latest YOUR_ECR_REPO/onepiece-api:latest
-docker push YOUR_ECR_REPO/onepiece-api:latest
-
-# Deploy with ECS
-aws ecs update-service --cluster your-cluster --service onepiece-api --force-new-deployment
-```
-
-**Pros:** Full control, easy scaling, Docker-based
-**Cost:** ~$15-30/month (Fargate minimal)
-
-#### Option 4: AWS EC2 (Traditional)
-```bash
-# SSH into EC2 instance
-ssh -i your-key.pem ec2-user@your-instance-ip
-
-# Clone and setup
-git clone your-repo
-cd express-onepiece-api
-npm install
-pm2 start src/index.js --name onepiece-api
-pm2 startup
-pm2 save
-```
-
-**Pros:** Full control, familiar deployment
-**Cost:** ~$5-10/month (t2.micro free tier)
-
-### AWS Configuration Recommendations
-
-**For Production on AWS:**
-
-```env
-# Strict rate limiting (protect your wallet!)
-RATE_LIMIT_MAX_REQUESTS=50      # Lower = better protection
-RATE_LIMIT_LOGIN_MAX=3          # Prevent brute force
-
-# Logging for CloudWatch
-LOG_LEVEL=info                  # Balance detail vs cost
-LOG_HTTP_REQUESTS=false         # Disable to reduce log volume
-
-# Security
-JWT_EXPIRES_IN=1h               # Shorter tokens = more secure
-NODE_ENV=production
-```
-
-### CloudWatch Integration
-
-Winston logs automatically work with CloudWatch when deployed to AWS:
-
-**Setup CloudWatch Logs (EC2/ECS/Beanstalk):**
-1. Install CloudWatch agent or use AWS-provided logging
-2. Logs in `logs/` directory are automatically shipped to CloudWatch
-3. Set retention policy to control costs (7-30 days recommended)
-
-**View logs:**
-```bash
-# AWS CLI
-aws logs tail /aws/elasticbeanstalk/one-piece-api/var/log/nodejs/nodejs.log --follow
-
-# Or use CloudWatch Console
-```
-
-**Create Alarms:**
-- Alert on error rate > X per minute
-- Alert on login failures > Y per hour
-- Alert on rate limit triggers > Z per hour
-
-### Cost Optimization Tips
-
-1. **Enable rate limiting** (prevents runaway costs)
-2. **Use CloudWatch Logs Insights** (query logs efficiently)
-3. **Set log retention** (7-30 days, not indefinite)
-4. **Monitor with CloudWatch Alarms** (get notified early)
-5. **Use AWS Free Tier** (12 months free for new accounts)
-6. **Consider Lambda** (for low traffic, very cheap)
-7. **Enable auto-scaling** (scale down when not in use)
-
-### Expected AWS Costs (Rough Estimates)
-
-| Service | Configuration | Monthly Cost |
-|---------|--------------|--------------|
-| **Lambda + API Gateway** | 1M requests/month | $3-5 |
-| **Elastic Beanstalk** | t3.micro, 24/7 | $25-40 |
-| **ECS Fargate** | 0.25 vCPU, 0.5GB | $15-25 |
-| **EC2 t2.micro** | Free tier or $8/month | $0-8 |
-| **RDS t3.micro** | MySQL 20GB | $15-20 |
-| **CloudWatch Logs** | 5GB/month | Free |
-| **Data Transfer** | <15GB/month | Free |
-
-**Total for small project:** $10-50/month depending on traffic and setup
-
-### Security Checklist for AWS
-
-- ✅ Rate limiting enabled (protects costs)
-- ✅ HTTPS enabled (use ALB or CloudFront)
-- ✅ Security groups configured (restrict ports)
-- ✅ IAM roles with least privilege
-- ✅ Secrets in AWS Secrets Manager (not .env)
-- ✅ CloudWatch Alarms configured
-- ✅ Auto-scaling enabled
-- ✅ Backups configured (RDS automated backups)
-
-### Next Steps After AWS Deployment
-
-1. **Set up your Nuxt.js client** (frontend)
-2. **Deploy client to AWS** (S3 + CloudFront or Amplify)
-3. **Connect frontend to API**
-4. **Configure CORS** for your domain
-5. **Set up CI/CD** (GitHub Actions → AWS)
-
-## API Endpoints
-
-### Health Check
-
-- **GET** `/api/health`
-  - Returns API health status
-  - Public access (no authentication required)
-  - Response: `{ status: 'OK', message: '...', timestamp: '...' }`
-
-### Authentication
-
-#### Login
-- **POST** `/api/auth/login`
-  - Authenticate admin user and receive JWT token
-  - **Body:**
-    ```json
-    {
-      "username": "admin",
-      "password": "your_password"
-    }
-    ```
-  - **Response:**
-    ```json
-    {
-      "success": true,
-      "message": "Login successful",
-      "data": {
-        "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-        "expiresIn": "24h",
-        "user": {
-          "username": "admin",
-          "role": "admin"
-        }
-      }
-    }
-    ```
-
-#### Verify Token
-- **GET** `/api/auth/verify`
-  - Verify if a JWT token is valid
-  - **Requires authentication**
-  - **Headers:** `Authorization: Bearer <token>`
-
-#### Generate Password Hash (Development/Test Only)
-- **POST** `/api/auth/generate-hash`
-  - Generate bcrypt hash for a password
-  - **Only available in NODE_ENV=development or test**
-  - **Not available in production**
-  - **Body:**
-    ```json
-    {
-      "password": "your_secure_password"
-    }
-    ```
-
-### Devil Fruit Types
-
-- **GET** `/api/fruit-types`
-  - Get all devil fruit types
-  - Response: `{ success: true, count: number, data: [...] }`
-
-- **GET** `/api/fruit-types/:id`
-  - Get a specific fruit type by ID
-  - Response: `{ success: true, data: {...} }`
-
-- **POST** `/api/fruit-types`
-  - Create a new fruit type
-  - Body: `{ name: string (required), description: string (optional) }`
-  - Response: `{ success: true, message: '...', data: {...} }`
-
-- **PUT** `/api/fruit-types/:id`
-  - Update an existing fruit type
-  - Body: `{ name: string (optional), description: string (optional) }`
-  - Response: `{ success: true, message: '...', data: {...} }`
-
-- **DELETE** `/api/fruit-types/:id`
-  - Delete a fruit type (only if it has no associated fruits)
-  - Response: `{ success: true, message: '...' }`
-
-## Authentication & Authorization
-
-This API uses JWT (JSON Web Tokens) for authentication.
-
-### Quick Start
-
-1. **Generate password hash:**
-```bash
-# Start the dev server
-npm run dev
-
-# Generate hash
-curl -X POST http://localhost:3000/api/auth/generate-hash \
-  -H "Content-Type: application/json" \
-  -d '{"password": "your_secure_password"}'
-```
-
-2. **Update .env with the hash:**
-```env
-ADMIN_PASSWORD_HASH=$2a$10$...  # Use the hash from step 1
-```
-
-3. **Login and get token:**
-```bash
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "your_secure_password"}'
-```
-
-4. **Use token in protected routes:**
-```bash
-curl -X GET http://localhost:3000/api/auth/verify \
-  -H "Authorization: Bearer YOUR_TOKEN_HERE"
-```
-
-### Protecting Routes
-
-To protect your routes, add the auth middleware:
-
-```javascript
-const authMiddleware = require('./middlewares/auth.middleware');
-
-// Public routes (no authentication)
-router.get('/items', itemController.getAll);
-
-// Protected routes (authentication required)
-router.post('/items', authMiddleware, itemController.create);
-router.put('/items/:id', authMiddleware, itemController.update);
-router.delete('/items/:id', authMiddleware, itemController.delete);
-```
-
-### Security Best Practices
-
-- ✅ Use strong, unique passwords
-- ✅ Change `JWT_SECRET` to a long random string (64+ characters)
-- ✅ Set appropriate token expiration times
-- ✅ Never commit `.env` file (already in `.gitignore`)
-- ✅ Remove `/api/auth/generate-hash` endpoint in production
-- ✅ Use HTTPS in production
-
-## Database Setup
-
-1. Create the database by running the SQL script:
-```bash
+# Create database
 mysql -u root -p < database/schema.sql
 ```
 
-2. Verify that the `onepiece_db` database is created with all tables.
+### 2. Configuration
 
-## Testing
+Configuration files are in the `configs/` directory:
 
-Run the test suite:
 ```bash
-npm test
+# The .env file is already created with defaults
+# Edit it if you need to change anything
+nano configs/.env
 ```
 
-View coverage report:
-```bash
-npm test -- --coverage
+Main variables:
+```env
+PORT=3000
+NODE_ENV=development
+
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=onepiece_db
+
+JWT_SECRET=dev-secret-key
+JWT_EXPIRES_IN=24h
 ```
 
-Run tests in watch mode:
+> 📖 **Full configuration guide:** See [configs/README.md](configs/README.md)
+
+### 3. Generate Password Hash
+
 ```bash
-npm run test:watch
+# Start server
+npm run dev
+
+# Generate hash (in another terminal)
+curl -X POST http://localhost:3000/api/auth/generate-hash \
+  -H "Content-Type: application/json" \
+  -d '{"password": "admin123"}'
+
+# Copy the hash to .env
+# ADMIN_PASSWORD_HASH=$2a$10$...
 ```
 
-Tests include:
-- ✓ Health check endpoint
-- ✓ Authentication and JWT
-- ✓ Complete CRUD for devil fruit types
-- ✓ Validations and error handling
-- ✓ Rate limiting
-## Postman Collection
+### 4. Ready!
 
-Import the `onepiece-api.postman_collection.json` file into Postman to test the API endpoints.
+```bash
+# Start in development mode
+npm run dev
 
-## Project Structure
+# Login
+curl -X POST http://localhost:3000/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "admin123"}'
+```
+
+---
+
+## 📚 Documentation
+
+| Document | Description |
+|----------|-------------|
+| **[📖 Sequelize Guide](docs/SEQUELIZE_GUIDE.md)** | How to use ORM, models, relations |
+| **[🏢 Service Layer Pattern](docs/SERVICE_LAYER_PATTERN.md)** | Architecture, separation of concerns |
+| **[🔐 Authentication](docs/AUTHENTICATION.md)** | JWT, login, route protection |
+| **[☁️ AWS Deployment](docs/AWS_DEPLOYMENT.md)** | Deploy on Lambda, Beanstalk, ECS, EC2 |
+| **[📁 Project Structure](docs/PROJECT_STRUCTURE.md)** | Folder organization and architecture |
+| **[🗄️ Database](database/README.md)** | Schema, tables, seed data |
+| **[⚙️ Environment Config](configs/README.md)** | Environment variables and secrets |
+
+---
+
+## 🛠️ Available Scripts
+
+```bash
+npm start              # Production
+npm run dev            # Development (hot reload)
+npm test               # Tests with coverage
+npm run test:watch     # Tests in watch mode
+npm run lint           # Check code quality
+npm run lint:fix       # Fix linting issues
+npm run audit          # Security audit
+```
+
+---
+
+## 🌐 API Endpoints
+
+### Health & Auth
+
+```bash
+GET  /api/health                # Health check (public)
+POST /api/auth/login            # Login (get JWT)
+GET  /api/auth/verify           # Verify token (requires auth)
+```
+
+### Devil Fruit Types
+
+```bash
+GET    /api/fruit-types         # Get all (public)
+GET    /api/fruit-types/:id     # Get one (public)
+POST   /api/fruit-types         # Create (requires auth)
+PUT    /api/fruit-types/:id     # Update (requires auth)
+DELETE /api/fruit-types/:id     # Delete (requires auth)
+```
+
+> 💡 **Postman Collection:** Import `onepiece-api.postman_collection.json`
+
+---
+
+## 🏗️ Architecture
+
+This project follows the **Service Layer Pattern** for clean, maintainable code:
 
 ```
 express-onepiece-api/
+├── configs/              # Environment variables (.env)
 ├── src/
-│   ├── config/
-│   │   └── db.config.js          # Database configuration
-│   ├── controllers/              # API controllers
-│   │   ├── auth.controller.js
-│   │   ├── health.controller.js
-│   │   └── fruit-types.controller.js
-│   ├── routes/                   # Route definitions
-│   │   ├── auth.routes.js
-│   │   ├── health.routes.js
-│   │   └── fruit-types.routes.js
-│   ├── middlewares/              # Custom middlewares
-│   │   ├── auth.middleware.js
-│   │   └── rate-limiter.js
-│   ├── utils/                    # Utilities and helpers
-│   │   ├── jwt.util.js
-│   │   └── logger.js
-│   ├── app.js                    # Express configuration
-│   └── index.js                  # Entry point
-├── __tests__/                    # Unit tests
-│   ├── auth.test.js
-│   ├── health.test.js
-│   ├── fruit-types.test.js
-│   └── rate-limiter.test.js
-├── configs/                      # Environment configuration
-│   ├── .env                      # Local development (not committed)
-│   ├── .env.test                 # Test environment (not committed)
-│   ├── .env.qa                   # QA template
-│   ├── .env.production           # Production template
-│   ├── .env.example              # Template reference
-│   └── README.md                 # Configuration guide
-├── database/                     # Database scripts
-│   ├── schema.sql                # Database creation script
-│   └── README.md
-├── logs/                         # Application logs (not committed)
-│   ├── combined.log
-│   ├── error.log
-│   └── security.log
-├── coverage/                     # Coverage reports
-├── jest.setup.js                 # Jest test configuration
-├── Dockerfile
-├── package.json
-└── README.md
+│   ├── config/          # Code configuration
+│   ├── models/          # Sequelize models (schema only)
+│   ├── services/        # Business logic layer ⭐ NEW
+│   ├── controllers/     # HTTP handling
+│   ├── routes/          # Route definitions
+│   ├── middlewares/     # Auth, rate limiting
+│   └── utils/           # JWT, logger
+├── __tests__/           # Unit tests (mocking services)
+├── database/            # SQL schema and docs
+└── docs/                # Technical documentation
 ```
 
-## License
+**Flow:** `Client → Controller → Service → Model → Database`
 
-MIT
+> 📖 **Full details:** See [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
+
+### ⚠️ `configs/` vs `src/config/` - What's the difference?
+
+| `configs/` | `src/config/` |
+|------------|---------------|
+| `.env` files | `.js` files |
+| Secrets (DON'T commit) | Code (DO commit) |
+| Environment variables | Configuration logic |
+| Passwords, API keys | DB setup, Sequelize config |
+
+**Analogy:** `configs/` are the keys, `src/config/` is the lock.
+
+---
+
+## 🧪 Testing
+
+```bash
+# Run tests
+npm test
+
+# With coverage
+npm test -- --coverage
+
+# Watch mode
+npm run test:watch
+```
+
+**Current coverage:** 66% (51/51 tests passing ✅)
+
+---
+
+## 🐳 Docker
+
+```bash
+# Build
+docker build -t onepiece-api .
+
+# Run
+docker run -p 3000:3000 --env-file configs/.env onepiece-api
+```
+
+---
+
+## ☁️ Deployment
+
+### AWS (Recommended)
+
+This project is optimized for AWS with:
+- Rate limiting (cost protection)
+- CloudWatch logging
+- Auto-scaling ready
+
+**Deployment options:**
+- **Lambda + API Gateway** - Serverless, cheapest (~$5/month)
+- **Elastic Beanstalk** - Easiest (~$25-40/month)
+- **ECS + Fargate** - Containers (~$15-25/month)
+- **EC2** - Full control (~$0-10/month with free tier)
+
+> ☁️ **Complete guide:** See [docs/AWS_DEPLOYMENT.md](docs/AWS_DEPLOYMENT.md)
+
+### Heroku, Railway, Render
+
+Also works on any PaaS that supports Node.js:
+
+```bash
+# Set environment variables
+heroku config:set JWT_SECRET=your_secret
+heroku config:set DB_HOST=your_db_host
+# ... etc
+
+# Deploy
+git push heroku main
+```
+
+---
+
+## 🔒 Security
+
+### Development ✅
+```env
+ADMIN_PASSWORD_HASH=simple_hash
+JWT_SECRET=dev-key
+JWT_EXPIRES_IN=24h
+```
+
+### Production ⚠️
+```env
+ADMIN_PASSWORD_HASH=$2a$10$secure_hash
+JWT_SECRET=64_char_random_string
+JWT_EXPIRES_IN=1h
+NODE_ENV=production
+```
+
+> 🔐 **Complete guide:** See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md)
+
+**Security checklist:**
+- ✅ Rate limiting enabled
+- ✅ Short JWT expiration in production
+- ✅ HTTPS in production
+- ✅ Secrets in AWS Secrets Manager (not .env)
+- ✅ Security groups configured
+- ✅ Logging and monitoring active
+
+---
+
+## 🤝 Contributing
+
+1. Fork the project
+2. Create a branch: `git checkout -b feature/new-feature`
+3. Commit changes: `git commit -m 'Add new feature'`
+4. Push: `git push origin feature/new-feature`
+5. Open a Pull Request
+
+---
+
+## 📝 License
+
+MIT License - See [LICENSE](LICENSE) for details.
+
+---
+
+## 🎯 Roadmap
+
+- [ ] Implement more models (Characters, Organizations, Ships)
+- [ ] Add relationships between models
+- [ ] Refresh tokens
+- [ ] GraphQL endpoint
+- [ ] OpenAPI/Swagger documentation
+- [ ] Redis caching
+- [ ] WebSockets for real-time updates
+
+---
+
+## 🐛 Troubleshooting
+
+### Can't connect to database
+```bash
+# Check if MySQL is running
+mysql -u root -p
+
+# Check variables in .env
+cat configs/.env
+```
+
+### Tests failing
+```bash
+# Clean node_modules
+rm -rf node_modules package-lock.json
+npm install
+
+# Check that .env.test exists
+ls configs/.env.test
+```
+
+### Authentication error
+```bash
+# Regenerate hash
+curl -X POST http://localhost:3000/api/auth/generate-hash \
+  -H "Content-Type: application/json" \
+  -d '{"password": "your_password"}'
+
+# Update ADMIN_PASSWORD_HASH in .env
+```
+
+> 📖 More troubleshooting in each specific guide in [docs/](docs/)
+
+---
+
+## 💬 Support
+
+- 📧 Email: your-email@example.com
+- 🐛 Issues: [GitHub Issues](https://github.com/your-repo/issues)
+- 📖 Docs: [docs/](docs/)
+
+---
+
+<p align="center">
+  Made with ❤️ and ☕
+</p>
