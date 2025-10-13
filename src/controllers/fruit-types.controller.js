@@ -1,4 +1,4 @@
-const { pool } = require('../config/db.config');
+const fruitTypeService = require('../services/fruit-type.service');
 
 /**
  * Get all fruit types
@@ -6,14 +6,12 @@ const { pool } = require('../config/db.config');
  */
 const getAllFruitTypes = async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      'SELECT id, name, description, created_at, updated_at FROM devil_fruit_types ORDER BY id ASC'
-    );
+    const fruitTypes = await fruitTypeService.getAllTypes();
 
     res.status(200).json({
       success: true,
-      count: rows.length,
-      data: rows
+      count: fruitTypes.length,
+      data: fruitTypes
     });
   } catch (error) {
     console.error('Error fetching fruit types:', error);
@@ -41,12 +39,9 @@ const getFruitTypeById = async (req, res) => {
       });
     }
 
-    const [rows] = await pool.query(
-      'SELECT id, name, description, created_at, updated_at FROM devil_fruit_types WHERE id = ?',
-      [id]
-    );
+    const fruitType = await fruitTypeService.getTypeById(id);
 
-    if (rows.length === 0) {
+    if (!fruitType) {
       return res.status(404).json({
         success: false,
         message: `Fruit type with ID ${id} not found`
@@ -55,7 +50,7 @@ const getFruitTypeById = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: rows[0]
+      data: fruitType
     });
   } catch (error) {
     console.error('Error fetching fruit type:', error);
@@ -90,38 +85,25 @@ const createFruitType = async (req, res) => {
       });
     }
 
-    // Check if a type with this name already exists
-    const [existing] = await pool.query(
-      'SELECT id FROM devil_fruit_types WHERE name = ?',
-      [name.trim()]
-    );
-
-    if (existing.length > 0) {
-      return res.status(409).json({
-        success: false,
-        message: 'A fruit type with this name already exists'
-      });
-    }
-
-    // Insert new fruit type
-    const [result] = await pool.query(
-      'INSERT INTO devil_fruit_types (name, description) VALUES (?, ?)',
-      [name.trim(), description ? description.trim() : null]
-    );
-
-    // Get the created record
-    const [newRecord] = await pool.query(
-      'SELECT id, name, description, created_at, updated_at FROM devil_fruit_types WHERE id = ?',
-      [result.insertId]
-    );
+    // Create via service
+    const newFruitType = await fruitTypeService.createType({ name, description });
 
     res.status(201).json({
       success: true,
       message: 'Fruit type created successfully',
-      data: newRecord[0]
+      data: newFruitType
     });
   } catch (error) {
     console.error('Error creating fruit type:', error);
+
+    // Handle known service errors
+    if (error.code === 'DUPLICATE_NAME') {
+      return res.status(409).json({
+        success: false,
+        message: error.message
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Error creating fruit type',
@@ -147,19 +129,6 @@ const updateFruitType = async (req, res) => {
       });
     }
 
-    // Check if fruit type exists
-    const [existing] = await pool.query(
-      'SELECT id FROM devil_fruit_types WHERE id = ?',
-      [id]
-    );
-
-    if (existing.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: `Fruit type with ID ${id} not found`
-      });
-    }
-
     // Validate name if provided
     if (name !== undefined) {
       if (name.trim() === '') {
@@ -175,62 +144,42 @@ const updateFruitType = async (req, res) => {
           message: 'Name cannot exceed 50 characters'
         });
       }
-
-      // Check if another type with this name exists
-      const [duplicate] = await pool.query(
-        'SELECT id FROM devil_fruit_types WHERE name = ? AND id != ?',
-        [name.trim(), id]
-      );
-
-      if (duplicate.length > 0) {
-        return res.status(409).json({
-          success: false,
-          message: 'Another fruit type with this name already exists'
-        });
-      }
     }
 
-    // Build update query dynamically
-    const updates = [];
-    const values = [];
-
-    if (name !== undefined) {
-      updates.push('name = ?');
-      values.push(name.trim());
-    }
-
-    if (description !== undefined) {
-      updates.push('description = ?');
-      values.push(description ? description.trim() : null);
-    }
-
-    if (updates.length === 0) {
+    // Check if any fields are provided
+    if (name === undefined && description === undefined) {
       return res.status(400).json({
         success: false,
         message: 'No fields provided to update'
       });
     }
 
-    values.push(id);
-
-    await pool.query(
-      `UPDATE devil_fruit_types SET ${updates.join(', ')} WHERE id = ?`,
-      values
-    );
-
-    // Get the updated record
-    const [updated] = await pool.query(
-      'SELECT id, name, description, created_at, updated_at FROM devil_fruit_types WHERE id = ?',
-      [id]
-    );
+    // Update via service
+    const updatedFruitType = await fruitTypeService.updateType(id, { name, description });
 
     res.status(200).json({
       success: true,
       message: 'Fruit type updated successfully',
-      data: updated[0]
+      data: updatedFruitType
     });
   } catch (error) {
     console.error('Error updating fruit type:', error);
+
+    // Handle known service errors
+    if (error.code === 'NOT_FOUND') {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    if (error.code === 'DUPLICATE_NAME') {
+      return res.status(409).json({
+        success: false,
+        message: error.message
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Error updating fruit type',
@@ -255,42 +204,32 @@ const deleteFruitType = async (req, res) => {
       });
     }
 
-    // Check if fruit type exists
-    const [existing] = await pool.query(
-      'SELECT id, name FROM devil_fruit_types WHERE id = ?',
-      [id]
-    );
-
-    if (existing.length === 0) {
-      return res.status(404).json({
-        success: false,
-        message: `Fruit type with ID ${id} not found`
-      });
-    }
-
-    // Check if there are devil fruits associated with this type
-    const [associatedFruits] = await pool.query(
-      'SELECT COUNT(*) as count FROM devil_fruits WHERE type_id = ?',
-      [id]
-    );
-
-    if (associatedFruits[0].count > 0) {
-      return res.status(409).json({
-        success: false,
-        message: 'Cannot delete fruit type because it has associated devil fruits',
-        associatedFruits: associatedFruits[0].count
-      });
-    }
-
-    // Delete the fruit type
-    await pool.query('DELETE FROM devil_fruit_types WHERE id = ?', [id]);
+    // Delete via service
+    const deleted = await fruitTypeService.deleteType(id);
 
     res.status(200).json({
       success: true,
-      message: `Fruit type "${existing[0].name}" deleted successfully`
+      message: `Fruit type "${deleted.name}" deleted successfully`
     });
   } catch (error) {
     console.error('Error deleting fruit type:', error);
+
+    // Handle known service errors
+    if (error.code === 'NOT_FOUND') {
+      return res.status(404).json({
+        success: false,
+        message: error.message
+      });
+    }
+
+    if (error.code === 'HAS_ASSOCIATIONS') {
+      return res.status(409).json({
+        success: false,
+        message: error.message,
+        associatedFruits: error.associatedCount
+      });
+    }
+
     res.status(500).json({
       success: false,
       message: 'Error deleting fruit type',
