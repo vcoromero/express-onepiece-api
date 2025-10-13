@@ -2,6 +2,26 @@
 
 This directory contains environment configuration templates for different deployment environments.
 
+## ⚠️ `configs/` vs `src/config/` - What's the difference?
+
+### `configs/` (This folder) - Environment Variables
+- Contains `.env` files with **secrets and environment-specific configuration**
+- ❌ **NOT committed** to git (except templates)
+- 🔒 **Sensitive** information (passwords, API keys, secrets)
+- 📝 Plain **text files** (.env)
+
+### `src/config/` - Code Configuration  
+- Contains `.js` files with **configuration logic**
+- ✅ **ARE committed** to git (it's source code)
+- 🔓 **Don't contain secrets** (read from `process.env`)
+- 💻 **JavaScript code** files (.js)
+
+**Analogy:**
+- `configs/` = Your house keys (don't share them)
+- `src/config/` = The lock (the code that uses the keys)
+
+See [docs/PROJECT_STRUCTURE.md](../docs/PROJECT_STRUCTURE.md) for more details.
+
 ## Quick Setup
 
 1. **All environment files are in the `configs/` directory:**
@@ -141,6 +161,8 @@ LOG_LEVEL=debug
 LOG_FILE=logs/development.log
 LOG_HTTP_REQUESTS=true  # Log all requests in development
 ```
+
+### Test Environment (configs/.env.test)
 
 ```env
 # Server
@@ -313,10 +335,10 @@ require('dotenv').config();
 
 ```bash
 # 1. Create .env file
-touch .env
+touch configs/.env
 
 # 2. Add basic configuration
-cat > .env << 'EOF'
+cat > configs/.env << 'EOF'
 PORT=3000
 NODE_ENV=development
 JWT_SECRET=my-dev-secret-key
@@ -340,4 +362,3 @@ curl -X POST http://localhost:3000/api/auth/login \
 ```
 
 Done! 🎉
-
