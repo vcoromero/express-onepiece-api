@@ -13,7 +13,6 @@ Controller → Service → Model → Database
 ## 📋 Responsibilities
 
 ### ✅ Services SHOULD:
-
 - Implement business rules and logic
 - Orchestrate multiple models
 - Handle transactions
@@ -22,7 +21,6 @@ Controller → Service → Model → Database
 - Throw meaningful errors with error codes
 
 ### ❌ Services SHOULD NOT:
-
 - Handle HTTP requests/responses (that's for controllers)
 - Access `req` or `res` objects
 - Format HTTP responses
@@ -43,7 +41,7 @@ Manages Devil Fruit Types business logic.
 - `nameExists(name, excludeId)` - Check if name is taken
 - `hasAssociatedFruits(id)` - Check if type has fruits
 
-**Example Usage:**
+**Usage:**
 ```javascript
 const fruitTypeService = require('./services/fruit-type.service');
 
@@ -65,6 +63,7 @@ touch src/services/character.service.js
 ```javascript
 const Character = require('../models/character.model');
 const Race = require('../models/race.model');
+const { Op } = require('sequelize');
 
 class CharacterService {
   /**
@@ -97,21 +96,14 @@ class CharacterService {
     }
 
     // Business logic: Check name uniqueness
-    const exists = await this.nameExists(data.name);
+    const exists = await Character.findOne({ where: { name: data.name } });
     if (exists) {
       const error = new Error('Character name already exists');
       error.code = 'DUPLICATE_NAME';
       throw error;
     }
 
-    // Create character
     return await Character.create(data);
-  }
-
-  // Helper methods
-  async nameExists(name) {
-    const existing = await Character.findOne({ where: { name } });
-    return existing !== null;
   }
 }
 
@@ -123,7 +115,7 @@ module.exports = new CharacterService();
 
 ```javascript
 // src/services/index.js
-const fruitTypeService = require('./fruitType.service');
+const fruitTypeService = require('./fruit-type.service');
 const characterService = require('./character.service');
 
 module.exports = {
@@ -166,11 +158,11 @@ const getAllCharacters = async (req, res) => {
 
 ```javascript
 // __tests__/services/character.service.test.js
-jest.mock('../../src/models/Character');
-jest.mock('../../src/models/Race');
+jest.mock('../../src/models/character.model');
+jest.mock('../../src/models/race.model');
 
-const Character = require('../../src/models/Character');
-const Race = require('../../src/models/Race');
+const Character = require('../../src/models/character.model');
+const Race = require('../../src/models/race.model');
 const characterService = require('../../src/services/character.service');
 
 describe('CharacterService', () => {
@@ -218,7 +210,6 @@ async createType(data) {
     error.code = 'DUPLICATE_NAME'; // ← Custom error code
     throw error;
   }
-  // ...
 }
 ```
 
@@ -234,7 +225,6 @@ try {
   if (error.code === 'NOT_FOUND') {
     return res.status(404).json({ message: error.message });
   }
-  // Generic error
   res.status(500).json({ message: 'Internal error' });
 }
 ```
@@ -248,21 +238,17 @@ async createCharacterWithOrganization(characterData, orgData) {
   const transaction = await sequelize.transaction();
   
   try {
-    // Step 1: Create character
     const character = await Character.create(characterData, { transaction });
     
-    // Step 2: Add to organization
     await CharacterOrganization.create({
       character_id: character.id,
       organization_id: orgData.organization_id,
       role: orgData.role
     }, { transaction });
     
-    // Commit if all successful
     await transaction.commit();
     return character;
   } catch (error) {
-    // Rollback on any error
     await transaction.rollback();
     throw error;
   }
@@ -295,8 +281,3 @@ async getAllCharacters(filters = {}) {
 - [Service Layer Pattern Guide](../../docs/SERVICE_LAYER_PATTERN.md)
 - [Sequelize Guide](../../docs/SEQUELIZE_GUIDE.md)
 - [Project Structure](../../docs/PROJECT_STRUCTURE.md)
-
----
-
-**Questions?** Open an issue in the repo.
-
