@@ -1,15 +1,4 @@
-# Authentication Guide - One Piece API
-
-## 📋 Table of Contents
-
-1. [Introduction](#introduction)
-2. [Quick Setup](#quick-setup)
-3. [Generate Password Hash](#generate-password-hash)
-4. [Login and Tokens](#login-and-tokens)
-5. [Protecting Routes](#protecting-routes)
-6. [Best Practices](#best-practices)
-
----
+# JWT Authentication - One Piece API
 
 ## 🔐 Introduction
 
@@ -28,31 +17,21 @@ This API uses **JWT (JSON Web Tokens)** for authentication.
 ### 1. Generate Password Hash
 
 ```bash
-# Start dev server
 npm run dev
 
-# Generate hash for your password
 curl -X POST http://localhost:3000/api/auth/generate-hash \
   -H "Content-Type: application/json" \
   -d '{"password": "your_secure_password"}'
 
-# Response:
-# {
-#   "success": true,
-#   "hash": "$2a$10$..."
-# }
+# Response: { "success": true, "hash": "$2a$10$..." }
 ```
 
 ### 2. Configure .env
 
-Add the hash to your `configs/.env` file:
-
 ```env
-# Admin Credentials
 ADMIN_USERNAME=admin
 ADMIN_PASSWORD_HASH=$2a$10$...  # ← Your hash here
 
-# JWT Configuration
 JWT_SECRET=your-very-long-random-secret-key
 JWT_EXPIRES_IN=24h
 ```
@@ -62,10 +41,7 @@ JWT_EXPIRES_IN=24h
 ```bash
 curl -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{
-    "username": "admin",
-    "password": "your_secure_password"
-  }'
+  -d '{"username": "admin", "password": "your_secure_password"}'
 ```
 
 **Response:**
@@ -76,10 +52,7 @@ curl -X POST http://localhost:3000/api/auth/login \
   "data": {
     "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "expiresIn": "24h",
-    "user": {
-      "username": "admin",
-      "role": "admin"
-    }
+    "user": { "username": "admin", "role": "admin" }
   }
 }
 ```
@@ -89,109 +62,48 @@ curl -X POST http://localhost:3000/api/auth/login \
 ```bash
 curl -X POST http://localhost:3000/api/fruit-types \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
-  -d '{
-    "name": "Mythical Zoan",
-    "description": "Rare type"
-  }'
+  -H "Authorization: Bearer eyJhbGciOi..." \
+  -d '{"name": "Mythical Zoan", "description": "Rare type"}'
 ```
 
 ---
 
-## 🔑 Generate Password Hash
-
-### Method 1: Development Endpoint (Recommended)
-
-**⚠️ This endpoint ONLY works in NODE_ENV=development or test**
-
-```bash
-curl -X POST http://localhost:3000/api/auth/generate-hash \
-  -H "Content-Type: application/json" \
-  -d '{"password": "MySecurePassword123!"}'
-```
-
-### Method 2: Direct Node.js
-
-```bash
-node -e "const bcrypt = require('bcryptjs'); bcrypt.hash('YourPassword', 10).then(h => console.log(h));"
-```
-
-### Method 3: Node.js Script
-
-Create `generate-hash.js`:
-
-```javascript
-const bcrypt = require('bcryptjs');
-
-const password = process.argv[2];
-if (!password) {
-  console.log('Usage: node generate-hash.js "your_password"');
-  process.exit(1);
-}
-
-bcrypt.hash(password, 10).then(hash => {
-  console.log('\nPassword Hash:');
-  console.log(hash);
-  console.log('\nAdd to your .env:');
-  console.log(`ADMIN_PASSWORD_HASH=${hash}`);
-});
-```
-
-Usage:
-```bash
-node generate-hash.js "MySecurePassword123!"
-```
-
----
-
-## 🎫 Login and Tokens
+## 🎫 Endpoints
 
 ### POST /api/auth/login
-
-Authenticates user and returns a JWT token.
+Authenticates user and returns JWT token.
 
 **Request:**
 ```json
-{
-  "username": "admin",
-  "password": "your_password"
-}
+{ "username": "admin", "password": "your_password" }
 ```
 
-**Response (Success):**
+**Response (Success - 200):**
 ```json
 {
   "success": true,
-  "message": "Login successful",
   "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNjk5OTk5OTk5LCJleHAiOjE3MDAwODYzOTl9.abc123...",
+    "token": "eyJ...",
     "expiresIn": "24h",
-    "user": {
-      "username": "admin",
-      "role": "admin"
-    }
+    "user": { "username": "admin", "role": "admin" }
   }
 }
 ```
 
-**Response (Error):**
+**Response (Error - 401):**
 ```json
-{
-  "success": false,
-  "message": "Invalid credentials"
-}
+{ "success": false, "message": "Invalid credentials" }
 ```
 
 ### GET /api/auth/verify
-
 Verifies if a token is valid.
 
 **Headers:**
 ```
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Authorization: Bearer eyJ...
 ```
 
-**Response (Success):**
+**Response (Success - 200):**
 ```json
 {
   "success": true,
@@ -205,20 +117,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 }
 ```
 
-**Response (Error - Invalid Token):**
+**Response (Error - 401):**
 ```json
-{
-  "success": false,
-  "message": "Invalid or expired token"
-}
-```
-
-**Response (Error - No Token):**
-```json
-{
-  "success": false,
-  "message": "Authentication token not provided"
-}
+{ "success": false, "message": "Invalid or expired token" }
 ```
 
 ---
@@ -228,48 +129,19 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ### Using Auth Middleware
 
 ```javascript
-const express = require('express');
-const router = express.Router();
 const authMiddleware = require('../middlewares/auth.middleware');
-const controller = require('../controllers/your.controller');
 
-// PUBLIC routes - No authentication required
+// Public routes - No authentication required
 router.get('/items', controller.getAll);
 router.get('/items/:id', controller.getById);
 
-// PROTECTED routes - Authentication required
+// Protected routes - Authentication required
 router.post('/items', authMiddleware, controller.create);
 router.put('/items/:id', authMiddleware, controller.update);
 router.delete('/items/:id', authMiddleware, controller.delete);
-
-module.exports = router;
-```
-
-### Custom Middleware
-
-If you need additional validations:
-
-```javascript
-const authMiddleware = require('../middlewares/auth.middleware');
-
-// Middleware that checks specific role
-const requireAdmin = (req, res, next) => {
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({
-      success: false,
-      message: 'Access denied. Admin role required.'
-    });
-  }
-  next();
-};
-
-// Usage
-router.delete('/items/:id', authMiddleware, requireAdmin, controller.delete);
 ```
 
 ### Access User Info in Controllers
-
-The middleware adds `req.user` with token information:
 
 ```javascript
 const createItem = async (req, res) => {
@@ -278,7 +150,7 @@ const createItem = async (req, res) => {
     const username = req.user.username;
     const role = req.user.role;
     
-    console.log(`User ${username} (${role}) is creating an item`);
+    console.log(`User ${username} (${role}) creating item`);
     
     // Your logic here...
   } catch (error) {
@@ -292,10 +164,9 @@ const createItem = async (req, res) => {
 ## ✅ Best Practices
 
 ### Development
-
 ```env
 # ✅ Simple passwords are OK
-ADMIN_PASSWORD_HASH=$2a$10$simple_hash_for_dev
+ADMIN_PASSWORD_HASH=$2a$10$simple_hash_dev
 
 # ✅ Simple JWT Secret
 JWT_SECRET=dev-secret-key-12345
@@ -308,7 +179,6 @@ NODE_ENV=development
 ```
 
 ### Production
-
 ```env
 # ⚠️ STRONG and unique password
 # Generate with: openssl rand -base64 32
@@ -316,7 +186,7 @@ ADMIN_PASSWORD_HASH=$2a$10$secure_production_hash
 
 # ⚠️ LONG and random JWT Secret (64+ characters)
 # Generate with: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-JWT_SECRET=f3d4e5c6b7a8910234567890abcdef...128_characters_total
+JWT_SECRET=f3d4e5c6b7a8910234567890abcdef...128_chars_total
 
 # ⚠️ Short-lived tokens
 JWT_EXPIRES_IN=1h
@@ -327,39 +197,39 @@ NODE_ENV=production
 
 ### General Security
 
-1. **HTTPS in production**
-   - Never send tokens over HTTP
-   - Use ALB, CloudFront, or API Gateway with SSL
+1. **HTTPS in production** - Never send tokens over HTTP
+2. **Tokens in headers, NOT in URL** - Avoid visible logs
+3. **Rate limiting on login** - 5 attempts per 15 min (already included)
+4. **Renew tokens** - Implement refresh tokens for better UX
+5. **Remove generate-hash in production** - Endpoint automatically disables with NODE_ENV=production
+6. **Rotate secrets** - Change JWT_SECRET periodically
+7. **Security logging** - App already logs failed login attempts
 
-2. **Tokens in headers, NOT in URL**
-   ```bash
-   # ✅ CORRECT
-   curl -H "Authorization: Bearer TOKEN" https://api.example.com/items
-   
-   # ❌ WRONG (token visible in logs)
-   curl https://api.example.com/items?token=TOKEN
-   ```
+---
 
-3. **Rate limiting on login**
-   - Project already includes rate limiting
-   - Login limited to 5 attempts per 15 minutes
-   - Prevents brute force attacks
+## 🔑 Generate Secure Values
 
-4. **Renew tokens**
-   - Implement refresh tokens for better UX
-   - Or increase JWT_EXPIRES_IN in development
+### Method 1: Development Endpoint (Recommended)
 
-5. **Remove generate-hash in production**
-   - Endpoint automatically disables with NODE_ENV=production
-   - NEVER expose it in production
+⚠️ **This endpoint ONLY works in NODE_ENV=development or test**
 
-6. **Rotate secrets**
-   - Change JWT_SECRET periodically
-   - Change admin password every 3-6 months
+```bash
+curl -X POST http://localhost:3000/api/auth/generate-hash \
+  -H "Content-Type: application/json" \
+  -d '{"password": "MySecurePassword123!"}'
+```
 
-7. **Security logging**
-   - App already logs failed login attempts
-   - Check `logs/security.log` regularly
+### Method 2: Direct Node.js
+
+```bash
+node -e "const bcrypt = require('bcryptjs'); bcrypt.hash('YourPassword', 10).then(h => console.log(h));"
+```
+
+### JWT Secret Generation
+
+```bash
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+```
 
 ---
 
@@ -371,8 +241,8 @@ NODE_ENV=production
 
 **Solution:**
 1. Regenerate the hash
-2. Verify you copied the entire hash (must start with `$2a$10$`)
-3. Ensure there are no spaces or line breaks
+2. Verify you copied the complete hash (must start with `$2a$10$`)
+3. No spaces or line breaks
 
 ### "Authentication token not provided"
 
@@ -380,7 +250,6 @@ NODE_ENV=production
 
 **Solution:**
 ```bash
-# Include the header
 curl -H "Authorization: Bearer YOUR_TOKEN_HERE" ...
 ```
 
@@ -408,7 +277,7 @@ JWT_EXPIRES_IN=24h
 
 ---
 
-## 🔄 Implement Refresh Tokens (Advanced)
+## 🔄 Refresh Tokens (Advanced)
 
 To improve UX without sacrificing security:
 
@@ -420,7 +289,7 @@ To improve UX without sacrificing security:
 // 4. Store refresh tokens in DB with user/device info
 ```
 
-This allows:
+**Benefits:**
 - Keep access tokens short (more secure)
 - Don't force login every 15 minutes (better UX)
 - Invalidate specific sessions (better control)
@@ -432,7 +301,3 @@ This allows:
 - [JWT.io](https://jwt.io/) - Token debugger
 - [bcrypt](https://github.com/kelektiv/node.bcrypt.js) - Password hashing
 - [OWASP Auth Cheatsheet](https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html)
-
----
-
-**Questions?** Open an issue in the repo.
