@@ -34,10 +34,12 @@ npm install
 3. Configure environment variables:
 ```bash
 # Create .env file in project root
-cp .env.example .env
+touch .env
 ```
 
-Edit the `.env` file with your configuration:
+See `configs/README.md` for detailed configuration guide and environment templates.
+
+**Quick setup:**
 ```env
 # Server
 PORT=3000
