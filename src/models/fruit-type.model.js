@@ -21,14 +21,11 @@ class DevilFruitType extends Model {
    * @param {Object} models - All models
    */
   static associate(models) {
-    // Example: When DevilFruit model exists, uncomment below:
-    // this.hasMany(models.DevilFruit, {
-    //   foreignKey: 'type_id',
-    //   as: 'fruits'
-    // });
-    
-    // Prevent unused parameter warning
-    void models;
+    // Relationship with DevilFruit
+    this.hasMany(models.DevilFruit, {
+      foreignKey: 'type_id',
+      as: 'fruits'
+    });
   }
 }
 

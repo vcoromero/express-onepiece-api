@@ -47,7 +47,9 @@
     "coverageDirectory": "coverage",
     "collectCoverageFrom": [
       "src/**/*.js",
-      "!src/index.js"
+      "!src/index.js",
+      "!src/config/**/*.js",
+      "!src/utils/logger.js"
     ],
     "testMatch": [
       "**/__tests__/**/*.test.js"

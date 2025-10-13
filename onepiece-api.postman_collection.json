@@ -522,6 +522,651 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Devil Fruits",
+      "item": [
+        {
+          "name": "Get All Devil Fruits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits?page=1&limit=10&sortBy=id&sortOrder=ASC",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search term for name",
+                  "disabled": true
+                },
+                {
+                  "key": "type_id",
+                  "value": "",
+                  "description": "Filter by type ID",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "id",
+                  "description": "Sort field (id, name, created_at)"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "ASC",
+                  "description": "Sort order (ASC, DESC)"
+                }
+              ]
+            },
+            "description": "Get all devil fruits with pagination and filtering"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits?page=1&limit=10&sortBy=id&sortOrder=ASC",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "id"
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "ASC"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"count\": 2,\n    \"pagination\": {\n        \"currentPage\": 1,\n        \"totalPages\": 1,\n        \"totalItems\": 2,\n        \"itemsPerPage\": 10\n    },\n    \"data\": [\n        {\n            \"id\": 1,\n            \"name\": \"Gomu Gomu no Mi\",\n            \"japanese_name\": \"ゴムゴムの実\",\n            \"type_id\": 1,\n            \"description\": \"Rubber fruit\",\n            \"abilities\": \"Stretching abilities\",\n            \"weaknesses\": \"Cutting attacks\",\n            \"awakening_description\": \"Sun God Nika form\",\n            \"current_user_id\": 1,\n            \"previous_users\": [2, 3],\n            \"image_url\": \"https://example.com/gomu-gomu.jpg\",\n            \"created_at\": \"2024-01-01T00:00:00.000Z\",\n            \"updated_at\": \"2024-01-01T00:00:00.000Z\",\n            \"type\": {\n                \"id\": 1,\n                \"name\": \"Paramecia\",\n                \"description\": \"Grants superhuman abilities, most common type\"\n            }\n        }\n    ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Devil Fruit by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits", "1"]
+            },
+            "description": "Get a specific devil fruit by ID"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"Gomu Gomu no Mi\",\n        \"japanese_name\": \"ゴムゴムの実\",\n        \"type_id\": 1,\n        \"description\": \"Rubber fruit\",\n        \"abilities\": \"Stretching abilities\",\n        \"weaknesses\": \"Cutting attacks\",\n        \"awakening_description\": \"Sun God Nika form\",\n        \"current_user_id\": 1,\n        \"previous_users\": [2, 3],\n        \"image_url\": \"https://example.com/gomu-gomu.jpg\",\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T00:00:00.000Z\",\n        \"type\": {\n            \"id\": 1,\n            \"name\": \"Paramecia\",\n            \"description\": \"Grants superhuman abilities, most common type\"\n        }\n    }\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Devil fruit with ID 99999 not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Devil Fruits by Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits/type/1?page=1&limit=10&sortBy=id&sortOrder=ASC",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits", "type", "1"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "id",
+                  "description": "Sort field (id, name, created_at)"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "ASC",
+                  "description": "Sort order (ASC, DESC)"
+                }
+              ]
+            },
+            "description": "Get devil fruits filtered by type ID"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits/type/1?page=1&limit=10&sortBy=id&sortOrder=ASC",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits", "type", "1"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "sortBy",
+                      "value": "id"
+                    },
+                    {
+                      "key": "sortOrder",
+                      "value": "ASC"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"count\": 1,\n    \"pagination\": {\n        \"currentPage\": 1,\n        \"totalPages\": 1,\n        \"totalItems\": 1,\n        \"itemsPerPage\": 10\n    },\n    \"data\": [\n        {\n            \"id\": 1,\n            \"name\": \"Gomu Gomu no Mi\",\n            \"japanese_name\": \"ゴムゴムの実\",\n            \"type_id\": 1,\n            \"description\": \"Rubber fruit\",\n            \"abilities\": \"Stretching abilities\",\n            \"weaknesses\": \"Cutting attacks\",\n            \"awakening_description\": \"Sun God Nika form\",\n            \"current_user_id\": 1,\n            \"previous_users\": [2, 3],\n            \"image_url\": \"https://example.com/gomu-gomu.jpg\",\n            \"created_at\": \"2024-01-01T00:00:00.000Z\",\n            \"updated_at\": \"2024-01-01T00:00:00.000Z\",\n            \"type\": {\n                \"id\": 1,\n                \"name\": \"Paramecia\",\n                \"description\": \"Grants superhuman abilities, most common type\"\n            }\n        }\n    ]\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Devil Fruit",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Mera Mera no Mi\",\n    \"japanese_name\": \"メラメラの実\",\n    \"type_id\": 3,\n    \"description\": \"Flame-Flame Fruit\",\n    \"abilities\": \"Allows user to create, control, and become fire\",\n    \"weaknesses\": \"Water and sea stone\",\n    \"awakening_description\": \"Can set surroundings on fire\",\n    \"current_user_id\": 1,\n    \"previous_users\": [2, 3],\n    \"image_url\": \"https://example.com/mera-mera.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits"]
+            },
+            "description": "Create a new devil fruit (requires authentication)"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Mera Mera no Mi\",\n    \"japanese_name\": \"メラメラの実\",\n    \"type_id\": 3,\n    \"description\": \"Flame-Flame Fruit\",\n    \"abilities\": \"Allows user to create, control, and become fire\",\n    \"weaknesses\": \"Water and sea stone\",\n    \"awakening_description\": \"Can set surroundings on fire\",\n    \"current_user_id\": 1,\n    \"previous_users\": [2, 3],\n    \"image_url\": \"https://example.com/mera-mera.jpg\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"message\": \"Devil fruit created successfully\",\n    \"data\": {\n        \"id\": 2,\n        \"name\": \"Mera Mera no Mi\",\n        \"japanese_name\": \"メラメラの実\",\n        \"type_id\": 3,\n        \"description\": \"Flame-Flame Fruit\",\n        \"abilities\": \"Allows user to create, control, and become fire\",\n        \"weaknesses\": \"Water and sea stone\",\n        \"awakening_description\": \"Can set surroundings on fire\",\n        \"current_user_id\": 1,\n        \"previous_users\": [2, 3],\n        \"image_url\": \"https://example.com/mera-mera.jpg\",\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T00:00:00.000Z\",\n        \"type\": {\n            \"id\": 3,\n            \"name\": \"Logia\",\n            \"description\": \"Grants power to transform into natural elements\"\n        }\n    }\n}"
+            },
+            {
+              "name": "Validation Error - Missing Name",
+              "originalRequest": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"type_id\": 1,\n    \"description\": \"Fruit without name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Name is required\"\n}"
+            },
+            {
+              "name": "Unauthorized - No Token",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Test Fruit\",\n    \"type_id\": 1\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Access denied. No token provided.\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Devil Fruit",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Gomu Gomu no Mi Updated\",\n    \"japanese_name\": \"ゴムゴムの実（更新）\",\n    \"description\": \"Updated rubber fruit description\",\n    \"abilities\": \"Enhanced stretching abilities\",\n    \"weaknesses\": \"Updated weaknesses\",\n    \"awakening_description\": \"Updated awakening form\",\n    \"current_user_id\": 2,\n    \"previous_users\": [1, 2, 3],\n    \"image_url\": \"https://example.com/gomu-gomu-updated.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits", "1"]
+            },
+            "description": "Update an existing devil fruit (requires authentication)"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Gomu Gomu no Mi Updated\",\n    \"japanese_name\": \"ゴムゴムの実（更新）\",\n    \"description\": \"Updated rubber fruit description\",\n    \"abilities\": \"Enhanced stretching abilities\",\n    \"weaknesses\": \"Updated weaknesses\",\n    \"awakening_description\": \"Updated awakening form\",\n    \"current_user_id\": 2,\n    \"previous_users\": [1, 2, 3],\n    \"image_url\": \"https://example.com/gomu-gomu-updated.jpg\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"message\": \"Devil fruit updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"Gomu Gomu no Mi Updated\",\n        \"japanese_name\": \"ゴムゴムの実（更新）\",\n        \"type_id\": 1,\n        \"description\": \"Updated rubber fruit description\",\n        \"abilities\": \"Enhanced stretching abilities\",\n        \"weaknesses\": \"Updated weaknesses\",\n        \"awakening_description\": \"Updated awakening form\",\n        \"current_user_id\": 2,\n        \"previous_users\": [1, 2, 3],\n        \"image_url\": \"https://example.com/gomu-gomu-updated.jpg\",\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T01:00:00.000Z\",\n        \"type\": {\n            \"id\": 1,\n            \"name\": \"Paramecia\",\n            \"description\": \"Grants superhuman abilities, most common type\"\n        }\n    }\n}"
+            },
+            {
+              "name": "Partial Update - Name Only",
+              "originalRequest": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"New Name Only\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"message\": \"Devil fruit updated successfully\",\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"New Name Only\",\n        \"japanese_name\": \"Original Japanese Name\",\n        \"type_id\": 1,\n        \"description\": \"Original description\",\n        \"abilities\": \"Original abilities\",\n        \"weaknesses\": \"Original weaknesses\",\n        \"awakening_description\": \"Original awakening\",\n        \"current_user_id\": 1,\n        \"previous_users\": [2, 3],\n        \"image_url\": \"https://example.com/original.jpg\",\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T01:00:00.000Z\",\n        \"type\": {\n            \"id\": 1,\n            \"name\": \"Paramecia\",\n            \"description\": \"Grants superhuman abilities, most common type\"\n        }\n    }\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Name\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Devil fruit with ID 99999 not found\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Devil Fruit",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits/2",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits", "2"]
+            },
+            "description": "Delete a devil fruit (requires authentication)"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits/2",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits", "2"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"message\": \"Devil fruit \\\"Mera Mera no Mi\\\" deleted successfully\"\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{jwt_token}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Devil fruit with ID 99999 not found\"\n}"
+            },
+            {
+              "name": "Unauthorized - No Token",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/devil-fruits/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "devil-fruits", "1"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Access denied. No token provided.\"\n}"
+            }
+          ]
+        }
+      ]
     }
   ],
   "variable": [

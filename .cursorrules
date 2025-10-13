@@ -1,0 +1,242 @@
+# CursorAI Rules for One Piece API Project
+
+## Project Overview
+This is a One Piece API built with Express.js, Sequelize, and JWT authentication. The API manages devil fruits, characters, and related entities from the One Piece universe.
+
+## Architecture Patterns
+- **Service Layer Pattern**: Business logic is separated into service classes
+- **Model-View-Controller**: Controllers handle HTTP requests, services handle business logic, models handle data
+- **Repository Pattern**: Data access is abstracted through Sequelize models
+- **Middleware Pattern**: Authentication, rate limiting, and error handling are implemented as middleware
+
+## Code Standards
+
+### File Structure
+```
+src/
+├── app.js                 # Main application entry point
+├── index.js              # Server startup
+├── config/               # Configuration files
+├── controllers/          # HTTP request handlers
+├── middlewares/          # Custom middleware functions
+├── models/              # Sequelize models
+├── routes/               # Route definitions
+├── services/             # Business logic layer
+└── utils/                # Utility functions
+```
+
+### Naming Conventions
+- **Files**: kebab-case (e.g., `devil-fruit.controller.js`)
+- **Classes**: PascalCase (e.g., `DevilFruitService`)
+- **Functions/Variables**: camelCase (e.g., `getAllFruits`)
+- **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_RETRY_ATTEMPTS`)
+- **Database tables**: snake_case (e.g., `devil_fruits`)
+
+### Model Guidelines
+- Models should ONLY contain schema definition, validations, and relationships
+- Business logic belongs in service classes
+- Always include proper JSDoc comments
+- Use appropriate Sequelize data types and constraints
+- Include proper indexes for performance
+
+### Service Guidelines
+- Services contain ALL business logic
+- Services should be stateless
+- Always handle errors appropriately with custom error codes
+- Include comprehensive JSDoc documentation
+- Use dependency injection where possible
+
+### Controller Guidelines
+- Controllers should be thin - delegate to services
+- Always validate input parameters
+- Return consistent response formats
+- Handle HTTP status codes appropriately
+- Include proper error handling
+
+### Route Guidelines
+- Use RESTful conventions
+- Apply appropriate middleware (auth, rate limiting)
+- Group related routes logically
+- Include proper route documentation
+
+## Database Guidelines
+
+### Schema Alignment
+- **CRITICAL**: All models MUST align with the database schema defined in `database/schema.sql`
+- When creating/updating models, verify field names, types, and constraints match the schema
+- Include all required fields from the schema
+- Do not add fields that don't exist in the schema
+- Use proper foreign key relationships as defined in the schema
+
+### Model Relationships
+- Use proper Sequelize associations (belongsTo, hasMany, etc.)
+- Define associations in the `associate` method
+- Use consistent foreign key naming
+- Include proper cascade options
+
+## Testing Requirements
+
+### Test Coverage
+- **CRITICAL**: All code must maintain a minimum of 80% test coverage
+- **NO PULL REQUESTS** will be accepted without meeting the 80% coverage requirement
+- All controllers must have comprehensive unit tests
+- Services should be tested with mocked dependencies
+- Include tests for error cases and edge cases
+- Coverage is measured by: `npm test -- --coverage`
+
+### Test Structure
+- Use Jest for testing
+- Mock external dependencies
+- Test both success and failure scenarios
+- Include proper test descriptions
+- Follow the established mocking strategy in `jest.setup.js`
+
+## Security Guidelines
+
+### Authentication
+- Use JWT tokens for authentication
+- Protect sensitive endpoints with auth middleware
+- Implement proper token validation
+- Use secure password hashing (bcrypt)
+
+### Rate Limiting
+- Apply rate limiting to all endpoints
+- Use different limits for different operations
+- Implement proper rate limit headers
+
+### Input Validation
+- Validate all input parameters
+- Sanitize user input
+- Use appropriate HTTP status codes
+- Return meaningful error messages
+
+## Documentation Requirements
+
+### API Documentation
+- Update Postman collection when adding new endpoints
+- Include comprehensive endpoint documentation
+- Provide example requests and responses
+- Document authentication requirements
+
+### Code Documentation
+- Use JSDoc for all functions and classes
+- Include parameter and return type documentation
+- Document complex business logic
+- Keep documentation up to date
+
+## Postman Collection Updates
+
+### CRITICAL RULE: Postman Collection Maintenance
+**When adding new endpoints or modifying existing ones, you MUST update the Postman collection (`onepiece-api.postman_collection.json`) with:**
+
+1. **New Endpoint Requests**: Add complete request configurations with:
+   - Proper HTTP method and URL
+   - Required headers (Content-Type, Authorization)
+   - Request body examples with all fields
+   - Query parameters with descriptions
+
+2. **Response Examples**: Include multiple response scenarios:
+   - Successful responses (200, 201, etc.)
+   - Error responses (400, 401, 404, 409, 500)
+   - Validation error examples
+   - Authentication error examples
+
+3. **Authentication**: Ensure protected endpoints include:
+   - Bearer token authentication setup
+   - Unauthorized response examples
+   - Token validation examples
+
+4. **Request Examples**: Provide realistic request bodies with:
+   - All required fields
+   - Optional fields with examples
+   - Proper data types and formats
+   - Japanese names and descriptions for One Piece content
+
+5. **Query Parameters**: Document all query parameters with:
+   - Descriptions and default values
+   - Valid options for enum fields
+   - Pagination parameters
+   - Filtering and sorting options
+
+### Postman Collection Structure
+- Organize endpoints by feature (Devil Fruits, Fruit Types, etc.)
+- Use consistent naming conventions
+- Include proper descriptions for each request
+- Group related endpoints together
+- Use environment variables for base URLs and tokens
+
+## Error Handling
+
+### Error Response Format
+```json
+{
+  "success": false,
+  "message": "Human-readable error message",
+  "error": "Technical error details (development only)"
+}
+```
+
+### HTTP Status Codes
+- 200: Success
+- 201: Created
+- 400: Bad Request (validation errors)
+- 401: Unauthorized (authentication required)
+- 404: Not Found
+- 409: Conflict (duplicate resources)
+- 500: Internal Server Error
+
+## Performance Guidelines
+
+### Database Optimization
+- Use appropriate indexes
+- Avoid N+1 queries
+- Use eager loading for relationships
+- Implement pagination for list endpoints
+
+### Caching
+- Consider caching for frequently accessed data
+- Use appropriate cache headers
+- Implement cache invalidation strategies
+
+## Deployment Guidelines
+
+### Environment Configuration
+- Use environment variables for configuration
+- Separate development, testing, and production configs
+- Never commit sensitive data to version control
+
+### Logging
+- Use structured logging
+- Log important business events
+- Include request/response logging for debugging
+- Implement proper log levels
+
+## One Piece Universe Guidelines
+
+### Content Accuracy
+- Use accurate One Piece terminology
+- Include Japanese names for devil fruits
+- Maintain consistency with the One Piece universe
+- Use proper character names and spellings
+
+### Data Relationships
+- Maintain proper relationships between entities
+- Follow One Piece canon for character relationships
+- Use appropriate devil fruit classifications
+- Include proper bounty and power level information
+
+## Code Quality
+
+### Linting
+- Use ESLint for JavaScript linting
+- Follow consistent code formatting
+- Fix all linting errors before committing
+- Use Prettier for code formatting
+
+### Code Review
+- All code changes should be reviewed
+- Ensure tests pass before merging
+- Verify Postman collection is updated
+- Check for security vulnerabilities
+
+## Remember: Always update the Postman collection when adding new endpoints!
