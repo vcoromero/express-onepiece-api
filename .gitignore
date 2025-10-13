@@ -17,3 +17,5 @@ configs/.env*
 .npm
 .eslintcache
 
+logs/*
+!logs/.gitkeep

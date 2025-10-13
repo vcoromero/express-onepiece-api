@@ -3,22 +3,17 @@ const bcrypt = require('bcryptjs');
 const app = require('../src/app');
 const JWTUtil = require('../src/utils/jwt.util');
 
-// Mock environment variables
-const mockAdminUsername = 'testadmin';
+// Use credentials from configs/.env.test
+const mockAdminUsername = process.env.ADMIN_USERNAME || 'testadmin';
 const mockAdminPassword = 'testpassword123';
-let mockAdminPasswordHash;
 
 describe('Authentication API Tests', () => {
   beforeAll(async () => {
-    // Generate password hash for tests
-    mockAdminPasswordHash = await bcrypt.hash(mockAdminPassword, 10);
-    
-    // Set environment variables for tests
-    process.env.JWT_SECRET = 'test-secret-key';
-    process.env.JWT_EXPIRES_IN = '1h';
-    process.env.ADMIN_USERNAME = mockAdminUsername;
-    process.env.ADMIN_PASSWORD_HASH = mockAdminPasswordHash;
-    process.env.NODE_ENV = 'development';
+    // Environment variables are already loaded from configs/.env.test via jest.setup.js
+    // Just verify they exist
+    if (!process.env.JWT_SECRET || !process.env.ADMIN_PASSWORD_HASH) {
+      throw new Error('Environment variables not loaded. Check jest.setup.js and configs/.env.test');
+    }
   });
 
   describe('POST /api/auth/login', () => {
