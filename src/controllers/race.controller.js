@@ -45,7 +45,7 @@ class RaceController {
       const { id } = req.params;
 
       // Validate ID is a valid number
-      if (!id || isNaN(id)) {
+      if (!id || isNaN(id) || parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid race ID',
@@ -86,7 +86,7 @@ class RaceController {
       const updateData = req.body;
 
       // Validate ID is a valid number
-      if (!id || isNaN(id)) {
+      if (!id || isNaN(id) || parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid race ID',
@@ -107,16 +107,16 @@ class RaceController {
 
       if (!result.success) {
         switch (result.error) {
-          case 'NOT_FOUND':
-            return res.status(404).json(result);
-          case 'INVALID_ID':
-          case 'NO_FIELDS_PROVIDED':
-          case 'INVALID_NAME':
-            return res.status(400).json(result);
-          case 'DUPLICATE_NAME':
-            return res.status(409).json(result);
-          default:
-            return res.status(500).json(result);
+        case 'NOT_FOUND':
+          return res.status(404).json(result);
+        case 'INVALID_ID':
+        case 'NO_FIELDS_PROVIDED':
+        case 'INVALID_NAME':
+          return res.status(400).json(result);
+        case 'DUPLICATE_NAME':
+          return res.status(409).json(result);
+        default:
+          return res.status(500).json(result);
         }
       }
 
