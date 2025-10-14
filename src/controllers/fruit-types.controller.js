@@ -62,7 +62,6 @@ const getFruitTypeById = async (req, res) => {
   }
 };
 
-
 /**
  * Update an existing fruit type
  * @route PUT /api/fruit-types/:id
@@ -138,7 +137,6 @@ const updateFruitType = async (req, res) => {
     });
   }
 };
-
 
 module.exports = {
   getAllFruitTypes,
