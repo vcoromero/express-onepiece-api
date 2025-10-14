@@ -62,55 +62,6 @@ const getFruitTypeById = async (req, res) => {
   }
 };
 
-/**
- * Create a new fruit type
- * @route POST /api/fruit-types
- */
-const createFruitType = async (req, res) => {
-  try {
-    const { name, description } = req.body;
-
-    // Validations
-    if (!name || name.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        message: 'Name is required'
-      });
-    }
-
-    if (name.length > 50) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name cannot exceed 50 characters'
-      });
-    }
-
-    // Create via service
-    const newFruitType = await fruitTypeService.createType({ name, description });
-
-    res.status(201).json({
-      success: true,
-      message: 'Fruit type created successfully',
-      data: newFruitType
-    });
-  } catch (error) {
-    console.error('Error creating fruit type:', error);
-
-    // Handle known service errors
-    if (error.code === 'DUPLICATE_NAME') {
-      return res.status(409).json({
-        success: false,
-        message: error.message
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Error creating fruit type',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-};
 
 /**
  * Update an existing fruit type
@@ -188,60 +139,9 @@ const updateFruitType = async (req, res) => {
   }
 };
 
-/**
- * Delete a fruit type
- * @route DELETE /api/fruit-types/:id
- */
-const deleteFruitType = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Validate ID
-    if (!id || isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid ID'
-      });
-    }
-
-    // Delete via service
-    const deleted = await fruitTypeService.deleteType(id);
-
-    res.status(200).json({
-      success: true,
-      message: `Fruit type "${deleted.name}" deleted successfully`
-    });
-  } catch (error) {
-    console.error('Error deleting fruit type:', error);
-
-    // Handle known service errors
-    if (error.code === 'NOT_FOUND') {
-      return res.status(404).json({
-        success: false,
-        message: error.message
-      });
-    }
-
-    if (error.code === 'HAS_ASSOCIATIONS') {
-      return res.status(409).json({
-        success: false,
-        message: error.message,
-        associatedFruits: error.associatedCount
-      });
-    }
-
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting fruit type',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
-  }
-};
 
 module.exports = {
   getAllFruitTypes,
   getFruitTypeById,
-  createFruitType,
-  updateFruitType,
-  deleteFruitType
+  updateFruitType
 };

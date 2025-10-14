@@ -22,9 +22,7 @@ jest.mock('../src/utils/jwt.util', () => ({
 jest.mock('../src/services/fruit-type.service', () => ({
   getAllTypes: jest.fn(),
   getTypeById: jest.fn(),
-  createType: jest.fn(),
   updateType: jest.fn(),
-  deleteType: jest.fn(),
   nameExists: jest.fn(),
   hasAssociatedFruits: jest.fn()
 }));
@@ -121,133 +119,6 @@ describe('Fruit Types API Endpoints', () => {
     });
   });
 
-  describe('POST /api/fruit-types', () => {
-    it('should return 401 when no authentication token is provided', async () => {
-      const newFruitType = {
-        name: 'Unauthorized Test',
-        description: 'This should fail'
-      };
-
-      const response = await request(app)
-        .post('/api/fruit-types')
-        .send(newFruitType);
-
-      expect(response.status).toBe(401);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('Authentication token not provided');
-    });
-
-    it('should create a new fruit type with valid data and authentication', async () => {
-      const newFruitType = {
-        name: 'Test Type',
-        description: 'This is a test type'
-      };
-
-      // Mock service response
-      const mockCreatedRecord = { id: 123, name: 'Test Type', description: 'This is a test type', created_at: new Date(), updated_at: new Date() };
-      fruitTypeService.createType.mockResolvedValueOnce(mockCreatedRecord);
-
-      const response = await request(app)
-        .post('/api/fruit-types')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(newFruitType);
-
-      expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body).toHaveProperty('message');
-      expect(response.body.data).toHaveProperty('id', 123);
-      expect(response.body.data).toHaveProperty('name', newFruitType.name);
-      expect(response.body.data).toHaveProperty('description', newFruitType.description);
-      expect(fruitTypeService.createType).toHaveBeenCalledWith(newFruitType);
-    });
-
-    it('should return 400 if name is missing', async () => {
-      const invalidFruitType = {
-        description: 'Description without name'
-      };
-
-      const response = await request(app)
-        .post('/api/fruit-types')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(invalidFruitType);
-
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('Name');
-    });
-
-    it('should return 400 if name is empty', async () => {
-      const invalidFruitType = {
-        name: '   ',
-        description: 'Empty name'
-      };
-
-      const response = await request(app)
-        .post('/api/fruit-types')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(invalidFruitType);
-
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('success', false);
-    });
-
-    it('should return 409 if name already exists', async () => {
-      const duplicateFruitType = {
-        name: 'Paramecia',
-        description: 'Duplicate attempt'
-      };
-
-      // Mock service throwing duplicate error
-      const error = new Error('A fruit type with this name already exists');
-      error.code = 'DUPLICATE_NAME';
-      fruitTypeService.createType.mockRejectedValueOnce(error);
-
-      const response = await request(app)
-        .post('/api/fruit-types')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(duplicateFruitType);
-
-      expect(response.status).toBe(409);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('exists');
-    });
-
-    it('should return 400 if name exceeds 50 characters', async () => {
-      const longNameFruitType = {
-        name: 'A'.repeat(51),
-        description: 'Name too long'
-      };
-
-      const response = await request(app)
-        .post('/api/fruit-types')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(longNameFruitType);
-
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('50 characters');
-    });
-
-    it('should create fruit type without description', async () => {
-      const fruitTypeNoDesc = {
-        name: 'Test Without Desc'
-      };
-
-      // Mock service response
-      const mockCreatedRecord = { id: 456, name: 'Test Without Desc', description: null, created_at: new Date(), updated_at: new Date() };
-      fruitTypeService.createType.mockResolvedValueOnce(mockCreatedRecord);
-
-      const response = await request(app)
-        .post('/api/fruit-types')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(fruitTypeNoDesc);
-
-      expect(response.status).toBe(201);
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body.data).toHaveProperty('id');
-      expect(response.body.data).toHaveProperty('name', fruitTypeNoDesc.name);
-    });
-  });
 
   describe('PUT /api/fruit-types/:id', () => {
     it('should return 401 when no authentication token is provided', async () => {
@@ -387,71 +258,6 @@ describe('Fruit Types API Endpoints', () => {
     });
   });
 
-  describe('DELETE /api/fruit-types/:id', () => {
-    it('should return 401 when no authentication token is provided', async () => {
-      const response = await request(app).delete('/api/fruit-types/1');
-
-      expect(response.status).toBe(401);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('Authentication token not provided');
-    });
-
-    it('should return 409 when trying to delete a type with associated fruits', async () => {
-      // Mock service throwing has associations error
-      const error = new Error('Cannot delete fruit type because it has associated devil fruits');
-      error.code = 'HAS_ASSOCIATIONS';
-      error.associatedCount = 5;
-      fruitTypeService.deleteType.mockRejectedValueOnce(error);
-
-      const response = await request(app)
-        .delete('/api/fruit-types/1')
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(response.status).toBe(409);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('associated');
-      expect(response.body).toHaveProperty('associatedFruits', 5);
-    });
-
-    it('should successfully delete a fruit type without associations', async () => {
-      // Mock service response
-      const mockDeleted = { id: 10, name: 'Delete Test' };
-      fruitTypeService.deleteType.mockResolvedValueOnce(mockDeleted);
-
-      const response = await request(app)
-        .delete('/api/fruit-types/10')
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body.message).toContain('deleted');
-      expect(fruitTypeService.deleteType).toHaveBeenCalledWith('10');
-    });
-
-    it('should return 404 for a non-existent ID', async () => {
-      // Mock service throwing not found error
-      const error = new Error('Fruit type with ID 99999 not found');
-      error.code = 'NOT_FOUND';
-      fruitTypeService.deleteType.mockRejectedValueOnce(error);
-
-      const response = await request(app)
-        .delete('/api/fruit-types/99999')
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(response.status).toBe(404);
-      expect(response.body).toHaveProperty('success', false);
-    });
-
-    it('should return 400 for an invalid ID', async () => {
-      const response = await request(app)
-        .delete('/api/fruit-types/invalid')
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('Invalid ID');
-    });
-  });
 
   describe('Error Handling', () => {
     it('should handle service errors on GET all', async () => {
@@ -476,19 +282,6 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.body.message).toContain('Error fetching fruit type');
     });
 
-    it('should handle service errors on POST', async () => {
-      // Mock service error (generic error, not duplicate)
-      fruitTypeService.createType.mockRejectedValueOnce(new Error('Service error'));
-
-      const response = await request(app)
-        .post('/api/fruit-types')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Error Test', description: 'Test error handling' });
-
-      expect(response.status).toBe(500);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('Error creating fruit type');
-    });
 
     it('should handle service errors on PUT', async () => {
       // Mock service error (generic error, not not_found or duplicate)
@@ -504,17 +297,5 @@ describe('Fruit Types API Endpoints', () => {
       expect(response.body.message).toContain('Error updating fruit type');
     });
 
-    it('should handle service errors on DELETE', async () => {
-      // Mock service error (generic error, not not_found or has_associations)
-      fruitTypeService.deleteType.mockRejectedValueOnce(new Error('Service error'));
-
-      const response = await request(app)
-        .delete('/api/fruit-types/999')
-        .set('Authorization', `Bearer ${authToken}`);
-
-      expect(response.status).toBe(500);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('Error deleting fruit type');
-    });
   });
 });
