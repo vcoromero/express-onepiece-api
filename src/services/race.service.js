@@ -56,7 +56,7 @@ class RaceService {
    */
   async getRaceById(id) {
     try {
-      if (!id || isNaN(id)) {
+      if (!id || isNaN(id) || parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid race ID',
@@ -96,7 +96,7 @@ class RaceService {
    */
   async updateRace(id, updateData) {
     try {
-      if (!id || isNaN(id)) {
+      if (!id || isNaN(id) || parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid race ID',
@@ -222,7 +222,7 @@ class RaceService {
         }]
       });
       
-      return race && race.characters && race.characters.length > 0;
+      return !!(race && race.characters && race.characters.length > 0);
     } catch (error) {
       console.error('Error in isRaceInUse:', error);
       return false;
