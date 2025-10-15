@@ -6,6 +6,9 @@
 const FruitType = require('./fruit-type.model');
 const DevilFruit = require('./devil-fruit.model');
 const HakiType = require('./haki-type.model');
+const Race = require('./race.model');
+const CharacterType = require('./character-type.model');
+const OrganizationType = require('./organization-type.model');
 
 // Future models can be added here:
 // const Character = require('./character.model');
@@ -19,7 +22,10 @@ DevilFruit.associate({ DevilFruitType: FruitType });
 module.exports = {
   FruitType,
   DevilFruit,
-  HakiType
+  HakiType,
+  Race,
+  CharacterType,
+  OrganizationType
   // Add more models as they are created
 };
 
