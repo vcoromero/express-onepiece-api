@@ -1802,6 +1802,246 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Organization Types",
+      "item": [
+        {
+          "name": "Get All Organization Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organization-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-types"]
+            },
+            "description": "Get all organization types in the One Piece universe"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/organization-types",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "organization-types"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"organizationTypes\": [\n            {\n                \"id\": 1,\n                \"name\": \"Pirate Crew\",\n                \"description\": \"Groups of pirates sailing together under a captain\",\n                \"created_at\": \"2024-01-01T00:00:00.000Z\",\n                \"updated_at\": \"2024-01-01T00:00:00.000Z\"\n            },\n            {\n                \"id\": 2,\n                \"name\": \"Marine\",\n                \"description\": \"Military force of the World Government\",\n                \"created_at\": \"2024-01-01T00:00:00.000Z\",\n                \"updated_at\": \"2024-01-01T00:00:00.000Z\"\n            },\n            {\n                \"id\": 3,\n                \"name\": \"Revolutionary Army\",\n                \"description\": \"Organization fighting against the World Government\",\n                \"created_at\": \"2024-01-01T00:00:00.000Z\",\n                \"updated_at\": \"2024-01-01T00:00:00.000Z\"\n            }\n        ],\n        \"total\": 3\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Organization Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organization-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-types", "1"]
+            },
+            "description": "Get a specific organization type by ID"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/organization-types/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "organization-types", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"Pirate Crew\",\n        \"description\": \"Groups of pirates sailing together under a captain\",\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T00:00:00.000Z\"\n    }\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/organization-types/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "organization-types", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Organization type with ID 99999 not found\",\n    \"error\": \"NOT_FOUND\"\n}"
+            },
+            {
+              "name": "Invalid ID",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/organization-types/invalid",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "organization-types", "invalid"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Invalid organization type ID\",\n    \"error\": \"INVALID_ID\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Organization Type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Pirate Crew Updated\",\n    \"description\": \"Updated description for Pirate Crew organization type\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organization-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-types", "1"]
+            },
+            "description": "Update an organization type (requires authentication)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Pirate Crew Updated\",\n    \"description\": \"Updated description for Pirate Crew organization type\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/organization-types/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "organization-types", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"Pirate Crew Updated\",\n        \"description\": \"Updated description for Pirate Crew organization type\",\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T00:00:00.000Z\"\n    },\n    \"message\": \"Organization type updated successfully\"\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Organization Type\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/organization-types/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "organization-types", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Organization type with ID 99999 not found\",\n    \"error\": \"NOT_FOUND\"\n}"
+            },
+            {
+              "name": "Unauthorized",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Unauthorized Update\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/organization-types/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "organization-types", "1"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Authentication token not provided\"\n}"
+            }
+          ]
+        }
+      ]
     }
   ],
   "variable": [
