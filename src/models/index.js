@@ -8,6 +8,7 @@ const DevilFruit = require('./devil-fruit.model');
 const HakiType = require('./haki-type.model');
 const Race = require('./race.model');
 const CharacterType = require('./character-type.model');
+const OrganizationType = require('./organization-type.model');
 
 // Future models can be added here:
 // const Character = require('./character.model');
@@ -23,7 +24,8 @@ module.exports = {
   DevilFruit,
   HakiType,
   Race,
-  CharacterType
+  CharacterType,
+  OrganizationType
   // Add more models as they are created
 };
 

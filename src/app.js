@@ -8,6 +8,7 @@ const devilFruitRoutes = require('./routes/devil-fruit.routes');
 const hakiTypeRoutes = require('./routes/haki-type.routes');
 const raceRoutes = require('./routes/race.routes');
 const characterTypeRoutes = require('./routes/character-type.routes');
+const organizationTypeRoutes = require('./routes/organization-type.routes');
 const { generalLimiter } = require('./middlewares/rate-limiter');
 const logger = require('./utils/logger');
 
@@ -44,6 +45,7 @@ app.use('/api', devilFruitRoutes);
 app.use('/api', hakiTypeRoutes);
 app.use('/api', raceRoutes);
 app.use('/api', characterTypeRoutes);
+app.use('/api', organizationTypeRoutes);
 
 // 404 handler
 app.use((req, res) => {
