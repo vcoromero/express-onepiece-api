@@ -219,7 +219,7 @@ describe('Character Service', () => {
 
       expect(result.success).toBe(true);
       expect(result.data.name).toBe('Monkey D. Luffy');
-      expect(Character.findByPk).toHaveBeenCalled();
+      expect(Character.findByPk).toHaveBeenCalledWith(1);
     });
 
     it('should return error for invalid ID', async () => {
@@ -336,7 +336,6 @@ describe('Character Service', () => {
         race: { id: 1, name: 'Human' },
         character_type: { id: 1, name: 'Pirate' }
       };
-
       const existingCharacter = {
         id: 1,
         name: 'Monkey D. Luffy',
@@ -494,7 +493,7 @@ describe('Character Service', () => {
       const result = await characterService.searchCharacters('luffy');
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe('Failed to fetch characters');
+      expect(result.message).toBe('Failed to search characters');
     });
   });
 });
