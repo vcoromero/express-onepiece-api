@@ -18,33 +18,63 @@ class Character extends Model {
       as: 'race'
     });
 
-    // Character belongs to CharacterType
-    this.belongsTo(models.CharacterType, {
-      foreignKey: 'character_type_id',
-      as: 'character_type'
-    });
-
     // Character has many DevilFruits (through ownership)
     this.hasMany(models.DevilFruit, {
       foreignKey: 'current_user_id',
       as: 'current_devil_fruits'
     });
 
-    // Character can have many HakiTypes (many-to-many)
-    // This will be implemented when CharacterHaki model is created
-    // this.belongsToMany(models.HakiType, {
-    //   through: models.CharacterHaki,
-    //   foreignKey: 'character_id',
-    //   as: 'haki_types'
-    // });
+    // Character can have many DevilFruits (many-to-many through CharacterDevilFruit)
+    this.belongsToMany(models.DevilFruit, {
+      through: models.CharacterDevilFruit,
+      foreignKey: 'character_id',
+      as: 'devil_fruits'
+    });
 
-    // Character can belong to many Organizations (many-to-many)
-    // This will be implemented when CharacterOrganization model is created
-    // this.belongsToMany(models.Organization, {
-    //   through: models.CharacterOrganization,
-    //   foreignKey: 'character_id',
-    //   as: 'organizations'
-    // });
+    // Character has many CharacterDevilFruit relationships
+    this.hasMany(models.CharacterDevilFruit, {
+      foreignKey: 'character_id',
+      as: 'character_devil_fruits'
+    });
+
+    // Character can have many HakiTypes (many-to-many through CharacterHaki)
+    this.belongsToMany(models.HakiType, {
+      through: models.CharacterHaki,
+      foreignKey: 'character_id',
+      as: 'haki_types'
+    });
+
+    // Character has many CharacterHaki relationships
+    this.hasMany(models.CharacterHaki, {
+      foreignKey: 'character_id',
+      as: 'character_haki'
+    });
+
+    // Character can belong to many Organizations (many-to-many through CharacterOrganization)
+    this.belongsToMany(models.Organization, {
+      through: models.CharacterOrganization,
+      foreignKey: 'character_id',
+      as: 'organizations'
+    });
+
+    // Character has many CharacterOrganization relationships
+    this.hasMany(models.CharacterOrganization, {
+      foreignKey: 'character_id',
+      as: 'character_organizations'
+    });
+
+    // Character can have many CharacterTypes (many-to-many through CharacterCharacterType)
+    this.belongsToMany(models.CharacterType, {
+      through: models.CharacterCharacterType,
+      foreignKey: 'character_id',
+      as: 'character_types'
+    });
+
+    // Character has many CharacterCharacterType relationships
+    this.hasMany(models.CharacterCharacterType, {
+      foreignKey: 'character_id',
+      as: 'character_character_types'
+    });
   }
 }
 
@@ -74,10 +104,10 @@ Character.init(
       },
       comment: 'Name of the character'
     },
-    japanese_name: {
+    alias: {
       type: DataTypes.STRING(100),
       allowNull: true,
-      comment: 'Japanese name of the character'
+      comment: 'Alias or nickname of the character'
     },
     race_id: {
       type: DataTypes.INTEGER.UNSIGNED,
@@ -87,26 +117,6 @@ Character.init(
         key: 'id'
       },
       comment: 'Foreign key to races table'
-    },
-    character_type_id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: true,
-      references: {
-        model: 'character_types',
-        key: 'id'
-      },
-      comment: 'Foreign key to character_types table'
-    },
-    bounty: {
-      type: DataTypes.BIGINT.UNSIGNED,
-      allowNull: true,
-      validate: {
-        min: {
-          args: [0],
-          msg: 'Bounty cannot be negative'
-        }
-      },
-      comment: 'Bounty in Berries (null if unknown or not applicable)'
     },
     age: {
       type: DataTypes.INTEGER.UNSIGNED,
@@ -123,46 +133,53 @@ Character.init(
       },
       comment: 'Age of the character (null if unknown)'
     },
-    height: {
-      type: DataTypes.DECIMAL(5, 2),
+    birthday: {
+      type: DataTypes.STRING(20),
       allowNull: true,
+      comment: 'Birthday of the character'
+    },
+    height: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      comment: 'Height of the character'
+    },
+    bounty: {
+      type: DataTypes.BIGINT.UNSIGNED,
+      allowNull: true,
+      defaultValue: 0,
       validate: {
         min: {
           args: [0],
-          msg: 'Height cannot be negative'
-        },
-        max: {
-          args: [1000],
-          msg: 'Height cannot exceed 1000 cm'
+          msg: 'Bounty cannot be negative'
         }
       },
-      comment: 'Height in centimeters (null if unknown)'
+      comment: 'Bounty in Berries (null if unknown or not applicable)'
+    },
+    origin: {
+      type: DataTypes.STRING(100),
+      allowNull: true,
+      comment: 'Origin or birthplace of the character'
+    },
+    status: {
+      type: DataTypes.ENUM('alive', 'deceased', 'unknown'),
+      allowNull: false,
+      defaultValue: 'alive',
+      comment: 'Status of the character'
     },
     description: {
       type: DataTypes.TEXT,
       allowNull: true,
       comment: 'Description of the character'
     },
-    abilities: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      comment: 'Special abilities and skills of the character'
-    },
     image_url: {
       type: DataTypes.STRING(255),
       allowNull: true,
       comment: 'URL of the character image'
     },
-    is_alive: {
-      type: DataTypes.BOOLEAN,
-      allowNull: false,
-      defaultValue: true,
-      comment: 'Whether the character is alive or not'
-    },
-    first_appearance: {
-      type: DataTypes.STRING(50),
+    debut: {
+      type: DataTypes.STRING(100),
       allowNull: true,
-      comment: 'First appearance (e.g., "Chapter 1", "Episode 1")'
+      comment: 'First appearance (chapter/episode)'
     },
     created_at: {
       type: DataTypes.DATE,
@@ -192,20 +209,20 @@ Character.init(
         fields: ['name']
       },
       {
-        name: 'idx_race',
-        fields: ['race_id']
-      },
-      {
-        name: 'idx_character_type',
-        fields: ['character_type_id']
+        name: 'idx_alias',
+        fields: ['alias']
       },
       {
         name: 'idx_bounty',
         fields: ['bounty']
       },
       {
-        name: 'idx_is_alive',
-        fields: ['is_alive']
+        name: 'idx_status',
+        fields: ['status']
+      },
+      {
+        name: 'idx_race',
+        fields: ['race_id']
       }
     ]
   }
