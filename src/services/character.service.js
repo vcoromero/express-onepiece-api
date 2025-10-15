@@ -1,4 +1,4 @@
-const { Character, Race, CharacterType } = require('../models');
+const { Character, Race, HakiType, CharacterHaki, DevilFruit, CharacterDevilFruit, CharacterType, CharacterCharacterType, Organization, CharacterOrganization } = require('../models');
 const { Op } = require('sequelize');
 
 /**
@@ -18,10 +18,13 @@ class CharacterService {
         limit = 10,
         search,
         race_id,
-        character_type_id,
         min_bounty,
         max_bounty,
-        is_alive,
+        status,
+        devil_fruit_id,
+        character_type_id,
+        organization_id,
+        haki_type_id,
         sortBy = 'name',
         sortOrder = 'asc'
       } = options;
@@ -37,7 +40,7 @@ class CharacterService {
       if (search) {
         whereClause[Op.or] = [
           { name: { [Op.like]: `%${search}%` } },
-          { japanese_name: { [Op.like]: `%${search}%` } },
+          { alias: { [Op.like]: `%${search}%` } },
           { description: { [Op.like]: `%${search}%` } }
         ];
       }
@@ -46,8 +49,8 @@ class CharacterService {
         whereClause.race_id = race_id;
       }
 
-      if (character_type_id) {
-        whereClause.character_type_id = character_type_id;
+      if (status) {
+        whereClause.status = status;
       }
 
       if (min_bounty !== undefined || max_bounty !== undefined) {
@@ -60,36 +63,123 @@ class CharacterService {
         }
       }
 
-      if (is_alive !== undefined) {
-        whereClause.is_alive = is_alive === 'true' || is_alive === true;
+      // Build include conditions for filtering
+      const includeConditions = [];
+      
+      if (devil_fruit_id) {
+        includeConditions.push({
+          model: DevilFruit,
+          as: 'devil_fruits',
+          where: { id: devil_fruit_id },
+          through: { where: { is_current: true } },
+          required: true
+        });
+      }
+
+      if (character_type_id) {
+        includeConditions.push({
+          model: CharacterType,
+          as: 'character_types',
+          where: { id: character_type_id },
+          through: { where: { is_current: true } },
+          required: true
+        });
+      }
+
+      if (organization_id) {
+        includeConditions.push({
+          model: Organization,
+          as: 'organizations',
+          where: { id: organization_id },
+          through: { where: { is_current: true } },
+          required: true
+        });
+      }
+
+      if (haki_type_id) {
+        includeConditions.push({
+          model: HakiType,
+          as: 'haki_types',
+          where: { id: haki_type_id },
+          required: true
+        });
       }
 
       // Validate sort parameters
-      const validSortFields = ['name', 'japanese_name', 'bounty', 'age', 'height', 'created_at', 'updated_at'];
+      const validSortFields = ['name', 'alias', 'bounty', 'age', 'status', 'created_at', 'updated_at'];
       const validSortBy = validSortFields.includes(sortBy) ? sortBy : 'name';
       const validSortOrder = ['asc', 'desc'].includes(sortOrder.toLowerCase()) ? sortOrder.toLowerCase() : 'asc';
 
-      // Get total count
-      const total = await Character.count({ where: whereClause });
+      // Get total count (without includes for better performance)
+      const total = await Character.count({ 
+        where: whereClause,
+        distinct: true,
+        col: 'id'
+      });
+
+      // Build base includes
+      const baseIncludes = [
+        {
+          model: Race,
+          as: 'race',
+          attributes: ['id', 'name']
+        },
+        {
+          model: DevilFruit,
+          as: 'devil_fruits',
+          through: {
+            model: CharacterDevilFruit,
+            attributes: ['acquired_date', 'is_current'],
+            where: { is_current: true }
+          },
+          attributes: ['id', 'name', 'japanese_name'],
+          required: false
+        },
+        {
+          model: CharacterType,
+          as: 'character_types',
+          through: {
+            model: CharacterCharacterType,
+            attributes: ['acquired_date', 'is_current'],
+            where: { is_current: true }
+          },
+          attributes: ['id', 'name'],
+          required: false
+        },
+        {
+          model: Organization,
+          as: 'organizations',
+          through: {
+            model: CharacterOrganization,
+            attributes: ['role', 'is_current'],
+            where: { is_current: true }
+          },
+          attributes: ['id', 'name', 'status'],
+          required: false
+        }
+      ];
+
+      // Add HakiType include if filtering by haki
+      if (haki_type_id) {
+        baseIncludes.push({
+          model: HakiType,
+          as: 'haki_types',
+          where: { id: haki_type_id },
+          required: true
+        });
+      }
+
+      // Merge include conditions
+      const allIncludes = [...baseIncludes, ...includeConditions];
 
       // Get characters with pagination
       const characters = await Character.findAll({
         where: whereClause,
-        include: [
-          {
-            model: Race,
-            as: 'race',
-            attributes: ['id', 'name']
-          },
-          {
-            model: CharacterType,
-            as: 'character_type',
-            attributes: ['id', 'name']
-          }
-        ],
+        include: allIncludes,
         order: [[validSortBy, validSortOrder]],
         limit: limitNum,
-        offset: offset
+        offset: offset,
+        distinct: true
       });
 
       const totalPages = Math.ceil(total / limitNum);
@@ -141,9 +231,40 @@ class CharacterService {
             attributes: ['id', 'name', 'description']
           },
           {
+            model: HakiType,
+            as: 'haki_types',
+            through: {
+              model: CharacterHaki,
+              attributes: ['mastery_level', 'awakened', 'notes']
+            },
+            attributes: ['id', 'name', 'description', 'color']
+          },
+          {
+            model: DevilFruit,
+            as: 'devil_fruits',
+            through: {
+              model: CharacterDevilFruit,
+              attributes: ['acquired_date', 'is_current', 'notes']
+            },
+            attributes: ['id', 'name', 'japanese_name', 'description', 'abilities', 'weaknesses', 'awakening_description', 'image_url']
+          },
+          {
             model: CharacterType,
-            as: 'character_type',
+            as: 'character_types',
+            through: {
+              model: CharacterCharacterType,
+              attributes: ['acquired_date', 'is_current']
+            },
             attributes: ['id', 'name', 'description']
+          },
+          {
+            model: Organization,
+            as: 'organizations',
+            through: {
+              model: CharacterOrganization,
+              attributes: ['role', 'joined_date', 'left_date', 'is_current']
+            },
+            attributes: ['id', 'name', 'status', 'description']
           }
         ]
       });
@@ -179,17 +300,17 @@ class CharacterService {
     try {
       const {
         name,
-        japanese_name,
+        alias,
         race_id,
-        character_type_id,
         bounty,
         age,
+        birthday,
         height,
+        origin,
+        status = 'alive',
         description,
-        abilities,
         image_url,
-        is_alive = true,
-        first_appearance
+        debut
       } = characterData;
 
       // Validate required fields
@@ -222,29 +343,20 @@ class CharacterService {
         };
       }
 
-      // Validate character_type_id if provided
-      if (character_type_id && !(await this.characterTypeExists(character_type_id))) {
-        return {
-          success: false,
-          message: 'Invalid character type ID',
-          error: 'INVALID_CHARACTER_TYPE'
-        };
-      }
-
       // Create character
       const newCharacter = await Character.create({
         name: name.trim(),
-        japanese_name: japanese_name ? japanese_name.trim() : null,
+        alias: alias ? alias.trim() : null,
         race_id: race_id || null,
-        character_type_id: character_type_id || null,
         bounty: bounty || null,
         age: age || null,
-        height: height || null,
+        birthday: birthday ? birthday.trim() : null,
+        height: height ? height.trim() : null,
+        origin: origin ? origin.trim() : null,
+        status: status,
         description: description ? description.trim() : null,
-        abilities: abilities ? abilities.trim() : null,
         image_url: image_url ? image_url.trim() : null,
-        is_alive: is_alive,
-        first_appearance: first_appearance ? first_appearance.trim() : null
+        debut: debut ? debut.trim() : null
       });
 
       // Reload with associations
@@ -253,11 +365,6 @@ class CharacterService {
           {
             model: Race,
             as: 'race',
-            attributes: ['id', 'name']
-          },
-          {
-            model: CharacterType,
-            as: 'character_type',
             attributes: ['id', 'name']
           }
         ]
@@ -344,15 +451,6 @@ class CharacterService {
         };
       }
 
-      // Validate character_type_id if provided
-      if (updateData.character_type_id !== undefined && updateData.character_type_id !== null && !(await this.characterTypeExists(updateData.character_type_id))) {
-        return {
-          success: false,
-          message: 'Invalid character type ID',
-          error: 'INVALID_CHARACTER_TYPE'
-        };
-      }
-
       // Update character
       await character.update(updateData);
       await character.reload({
@@ -360,11 +458,6 @@ class CharacterService {
           {
             model: Race,
             as: 'race',
-            attributes: ['id', 'name']
-          },
-          {
-            model: CharacterType,
-            as: 'character_type',
             attributes: ['id', 'name']
           }
         ]
@@ -446,21 +539,6 @@ class CharacterService {
       return !!race;
     } catch (error) {
       console.error('Error in raceExists:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Check if character type exists
-   * @param {number} characterTypeId - Character type ID
-   * @returns {Promise<boolean>} True if character type exists
-   */
-  async characterTypeExists(characterTypeId) {
-    try {
-      const characterType = await CharacterType.findByPk(characterTypeId);
-      return !!characterType;
-    } catch (error) {
-      console.error('Error in characterTypeExists:', error);
       return false;
     }
   }
