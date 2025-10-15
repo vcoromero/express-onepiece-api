@@ -107,16 +107,16 @@ class OrganizationTypeController {
 
       if (!result.success) {
         switch (result.error) {
-          case 'NOT_FOUND':
-            return res.status(404).json(result);
-          case 'INVALID_ID':
-          case 'NO_FIELDS_PROVIDED':
-          case 'INVALID_NAME':
-            return res.status(400).json(result);
-          case 'DUPLICATE_NAME':
-            return res.status(409).json(result);
-          default:
-            return res.status(500).json(result);
+        case 'NOT_FOUND':
+          return res.status(404).json(result);
+        case 'INVALID_ID':
+        case 'NO_FIELDS_PROVIDED':
+        case 'INVALID_NAME':
+          return res.status(400).json(result);
+        case 'DUPLICATE_NAME':
+          return res.status(409).json(result);
+        default:
+          return res.status(500).json(result);
         }
       }
 
