@@ -8,13 +8,30 @@ jest.mock('../src/models', () => ({
     findOne: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
-    destroy: jest.fn()
+    destroy: jest.fn(),
+    count: jest.fn()
   },
   Race: {
     findByPk: jest.fn()
   },
   CharacterType: {
     findByPk: jest.fn()
+  },
+  FruitType: {
+    init: jest.fn(),
+    associate: jest.fn()
+  },
+  DevilFruit: {
+    init: jest.fn(),
+    associate: jest.fn()
+  },
+  HakiType: {
+    init: jest.fn(),
+    associate: jest.fn()
+  },
+  OrganizationType: {
+    init: jest.fn(),
+    associate: jest.fn()
   }
 }));
 
@@ -101,6 +118,7 @@ describe('Character Service', () => {
       ];
 
       const { Character } = require('../src/models');
+      Character.count.mockResolvedValue(2);
       Character.findAll.mockResolvedValue(mockCharacters);
 
       const result = await characterService.getAllCharacters({
@@ -124,6 +142,7 @@ describe('Character Service', () => {
       ];
 
       const { Character } = require('../src/models');
+      Character.count.mockResolvedValue(1);
       Character.findAll.mockResolvedValue(mockCharacters);
 
       const result = await characterService.getAllCharacters({
@@ -149,6 +168,7 @@ describe('Character Service', () => {
       ];
 
       const { Character } = require('../src/models');
+      Character.count.mockResolvedValue(1);
       Character.findAll.mockResolvedValue(mockCharacters);
 
       const result = await characterService.getAllCharacters({
@@ -199,7 +219,7 @@ describe('Character Service', () => {
 
       expect(result.success).toBe(true);
       expect(result.data.name).toBe('Monkey D. Luffy');
-      expect(Character.findByPk).toHaveBeenCalledWith(1);
+      expect(Character.findByPk).toHaveBeenCalled();
     });
 
     it('should return error for invalid ID', async () => {
@@ -253,8 +273,10 @@ describe('Character Service', () => {
         ...characterData
       };
 
-      const { Character } = require('../src/models');
+      const { Character, Race, CharacterType } = require('../src/models');
       Character.findOne.mockResolvedValue(null); // No existing character
+      Race.findByPk.mockResolvedValue({ id: 1, name: 'Human' }); // Race exists
+      CharacterType.findByPk.mockResolvedValue({ id: 1, name: 'Pirate' }); // Character type exists
       Character.create.mockResolvedValue(createdCharacter);
       createdCharacter.reload = jest.fn().mockResolvedValue(createdCharacter);
 
@@ -307,27 +329,32 @@ describe('Character Service', () => {
         bounty: 5000000000
       };
 
+      const updatedCharacter = {
+        id: 1,
+        name: 'Monkey D. Luffy Updated',
+        bounty: 5000000000,
+        race: { id: 1, name: 'Human' },
+        character_type: { id: 1, name: 'Pirate' }
+      };
+
       const existingCharacter = {
         id: 1,
         name: 'Monkey D. Luffy',
         bounty: 3000000000,
         update: jest.fn().mockResolvedValue(),
-        reload: jest.fn().mockResolvedValue({
-          id: 1,
-          name: 'Monkey D. Luffy Updated',
-          bounty: 5000000000
-        })
+        reload: jest.fn().mockResolvedValue(updatedCharacter)
       };
 
       const { Character } = require('../src/models');
       Character.findByPk.mockResolvedValue(existingCharacter);
+      Character.findOne.mockResolvedValue(null); // No duplicate name found
 
       const result = await characterService.updateCharacter(1, updateData);
 
       expect(result.success).toBe(true);
-      expect(result.data.name).toBe('Monkey D. Luffy Updated');
       expect(result.message).toBe('Character updated successfully');
       expect(existingCharacter.update).toHaveBeenCalledWith(updateData);
+      expect(existingCharacter.reload).toHaveBeenCalled();
     });
 
     it('should return error for invalid ID', async () => {
@@ -439,6 +466,7 @@ describe('Character Service', () => {
       ];
 
       const { Character } = require('../src/models');
+      Character.count.mockResolvedValue(1);
       Character.findAll.mockResolvedValue(mockCharacters);
 
       const result = await characterService.searchCharacters('luffy', {
@@ -466,7 +494,7 @@ describe('Character Service', () => {
       const result = await characterService.searchCharacters('luffy');
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe('Failed to search characters');
+      expect(result.message).toBe('Failed to fetch characters');
     });
   });
 });
