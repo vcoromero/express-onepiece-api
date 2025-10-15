@@ -2042,6 +2042,429 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Characters",
+      "item": [
+        {
+          "name": "Get All Characters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/characters?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all characters with pagination and filtering"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/characters?page=1&limit=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "characters"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"characters\": [\n            {\n                \"id\": 1,\n                \"name\": \"Monkey D. Luffy\",\n                \"japanese_name\": \"モンキー・D・ルフィ\",\n                \"bounty\": 3000000000,\n                \"age\": 19,\n                \"height\": 174,\n                \"is_alive\": true,\n                \"race\": {\n                    \"id\": 1,\n                    \"name\": \"Human\"\n                },\n                \"character_type\": {\n                    \"id\": 1,\n                    \"name\": \"Pirate\"\n                }\n            },\n            {\n                \"id\": 2,\n                \"name\": \"Roronoa Zoro\",\n                \"japanese_name\": \"ロロノア・ゾロ\",\n                \"bounty\": 1111000000,\n                \"age\": 21,\n                \"height\": 181,\n                \"is_alive\": true,\n                \"race\": {\n                    \"id\": 1,\n                    \"name\": \"Human\"\n                },\n                \"character_type\": {\n                    \"id\": 1,\n                    \"name\": \"Pirate\"\n                }\n            }\n        ],\n        \"pagination\": {\n            \"currentPage\": 1,\n            \"totalPages\": 1,\n            \"totalItems\": 2,\n            \"itemsPerPage\": 10,\n            \"hasNextPage\": false,\n            \"hasPrevPage\": false\n        }\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Character by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/characters/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters", "1"]
+            },
+            "description": "Get a specific character by ID"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/characters/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "characters", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"Monkey D. Luffy\",\n        \"alias\": \"Straw Hat Luffy\",\n        \"age\": 19,\n        \"birthday\": \"May 5\",\n        \"height\": \"174 cm\",\n        \"bounty\": 3000000000,\n        \"race_id\": 1,\n        \"origin\": \"East Blue - Foosha Village\",\n        \"status\": \"alive\",\n        \"description\": \"Captain of the Straw Hat Pirates, one of the Four Emperors, dreams of becoming Pirate King\",\n        \"image_url\": null,\n        \"debut\": \"Chapter 1\",\n        \"created_at\": \"2025-10-12T06:19:43.000Z\",\n        \"updated_at\": \"2025-10-12T06:19:43.000Z\",\n        \"race\": {\n            \"id\": 1,\n            \"name\": \"Human\",\n            \"description\": \"Regular humans, the most common race in One Piece\"\n        },\n        \"haki_types\": [\n            {\n                \"id\": 1,\n                \"name\": \"Observation Haki\",\n                \"description\": \"Allows user to sense presence and emotions of others, predict movements\",\n                \"color\": \"Red\",\n                \"CharacterHaki\": {\n                    \"mastery_level\": \"advanced\",\n                    \"awakened\": true,\n                    \"notes\": null\n                }\n            },\n            {\n                \"id\": 2,\n                \"name\": \"Armament Haki\",\n                \"description\": \"Allows user to use spiritual armor for offense and defense, can touch Logia users\",\n                \"color\": \"Black\",\n                \"CharacterHaki\": {\n                    \"mastery_level\": \"advanced\",\n                    \"awakened\": true,\n                    \"notes\": null\n                }\n            },\n            {\n                \"id\": 3,\n                \"name\": \"Conqueror Haki\",\n                \"description\": \"Rare Haki that allows user to exert willpower over others, knock out weak-willed\",\n                \"color\": \"Dark Red/Black\",\n                \"CharacterHaki\": {\n                    \"mastery_level\": \"advanced\",\n                    \"awakened\": true,\n                    \"notes\": null\n                }\n            }\n        ],\n        \"devil_fruits\": [\n            {\n                \"id\": 1,\n                \"name\": \"Gomu Gomu no Mi\",\n                \"japanese_name\": \"ゴムゴムの実\",\n                \"description\": \"Rubber-Rubber Fruit, actually the Hito Hito no Mi, Model: Nika\",\n                \"abilities\": \"Grants user rubber body, immunity to electricity, awakens as Sun God Nika\",\n                \"weaknesses\": null,\n                \"awakening_description\": null,\n                \"image_url\": null,\n                \"CharacterDevilFruit\": {\n                    \"acquired_date\": \"Age 7\",\n                    \"is_current\": true,\n                    \"notes\": null\n                }\n            }\n        ]\n    }\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/characters/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "characters", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Character with ID 99999 not found\",\n    \"error\": \"NOT_FOUND\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Search Characters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/characters/search?q=luffy",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "luffy"
+                }
+              ]
+            },
+            "description": "Search characters by name, japanese name, or description"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/characters/search?q=luffy",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "characters", "search"],
+                  "query": [
+                    {
+                      "key": "q",
+                      "value": "luffy"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"characters\": [\n            {\n                \"id\": 1,\n                \"name\": \"Monkey D. Luffy\",\n                \"japanese_name\": \"モンキー・D・ルフィ\",\n                \"bounty\": 3000000000,\n                \"age\": 19,\n                \"height\": 174,\n                \"is_alive\": true,\n                \"race\": {\n                    \"id\": 1,\n                    \"name\": \"Human\"\n                },\n                \"character_type\": {\n                    \"id\": 1,\n                    \"name\": \"Pirate\"\n                }\n            }\n        ],\n        \"pagination\": {\n            \"currentPage\": 1,\n            \"totalPages\": 1,\n            \"totalItems\": 1,\n            \"itemsPerPage\": 10,\n            \"hasNextPage\": false,\n            \"hasPrevPage\": false\n        }\n    }\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Character",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Monkey D. Luffy\",\n    \"japanese_name\": \"モンキー・D・ルフィ\",\n    \"race_id\": 1,\n    \"character_type_id\": 1,\n    \"bounty\": 3000000000,\n    \"age\": 19,\n    \"height\": 174,\n    \"description\": \"Captain of the Straw Hat Pirates\",\n    \"abilities\": \"Gomu Gomu no Mi powers\",\n    \"is_alive\": true,\n    \"first_appearance\": \"Chapter 1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/characters",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters"]
+            },
+            "description": "Create a new character (requires authentication)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Monkey D. Luffy\",\n    \"japanese_name\": \"モンキー・D・ルフィ\",\n    \"race_id\": 1,\n    \"character_type_id\": 1,\n    \"bounty\": 3000000000,\n    \"age\": 19,\n    \"height\": 174,\n    \"description\": \"Captain of the Straw Hat Pirates\",\n    \"abilities\": \"Gomu Gomu no Mi powers\",\n    \"is_alive\": true,\n    \"first_appearance\": \"Chapter 1\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/characters",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "characters"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"Monkey D. Luffy\",\n        \"japanese_name\": \"モンキー・D・ルフィ\",\n        \"race_id\": 1,\n        \"character_type_id\": 1,\n        \"bounty\": 3000000000,\n        \"age\": 19,\n        \"height\": 174,\n        \"description\": \"Captain of the Straw Hat Pirates\",\n        \"abilities\": \"Gomu Gomu no Mi powers\",\n        \"is_alive\": true,\n        \"first_appearance\": \"Chapter 1\",\n        \"race\": {\n            \"id\": 1,\n            \"name\": \"Human\"\n        },\n        \"character_type\": {\n            \"id\": 1,\n            \"name\": \"Pirate\"\n        }\n    },\n    \"message\": \"Character created successfully\"\n}"
+            },
+            {
+              "name": "Unauthorized",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Unauthorized Character\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/characters",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "characters"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Authentication token not provided\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Character",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Monkey D. Luffy Updated\",\n    \"bounty\": 5000000000,\n    \"description\": \"Updated description for Luffy\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/characters/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters", "1"]
+            },
+            "description": "Update a character (requires authentication)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Monkey D. Luffy Updated\",\n    \"bounty\": 5000000000,\n    \"description\": \"Updated description for Luffy\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/characters/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "characters", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"Monkey D. Luffy Updated\",\n        \"bounty\": 5000000000,\n        \"description\": \"Updated description for Luffy\",\n        \"race\": {\n            \"id\": 1,\n            \"name\": \"Human\"\n        },\n        \"character_type\": {\n            \"id\": 1,\n            \"name\": \"Pirate\"\n        }\n    },\n    \"message\": \"Character updated successfully\"\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Character\"\n}"
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/characters/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "characters", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Character with ID 99999 not found\",\n    \"error\": \"NOT_FOUND\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Character",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/characters/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters", "1"]
+            },
+            "description": "Delete a character (requires authentication)"
+          },
+          "response": [
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/characters/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "characters", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"message\": \"Character deleted successfully\"\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/characters/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "characters", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Character with ID 99999 not found\",\n    \"error\": \"NOT_FOUND\"\n}"
+            },
+            {
+              "name": "Has Associations",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/characters/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "characters", "1"]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Cannot delete character with associated devil fruits\",\n    \"error\": \"HAS_ASSOCIATIONS\"\n}"
+            }
+          ]
+        }
+      ]
     }
   ],
   "variable": [
