@@ -3,7 +3,7 @@
 A RESTful API inspired by One Piece, built with Express.js, MySQL, and Sequelize ORM.
 
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com)
-[![Coverage](https://img.shields.io/badge/coverage-89.87%25-brightgreen)](https://github.com)
+[![Coverage](https://img.shields.io/badge/coverage-93.75%25-brightgreen)](https://github.com)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -15,7 +15,7 @@ A RESTful API inspired by One Piece, built with Express.js, MySQL, and Sequelize
 - ✅ **JWT Authentication** - Secure token-based auth
 - ✅ **Rate Limiting** - Protection against abuse
 - ✅ **Winston Logger** - CloudWatch ready
-- ✅ **Jest Tests** - 167 tests, 89.87% coverage
+- ✅ **Jest Tests** - 451 tests, 93.75% coverage
 - ✅ **Docker Ready** - Containerization included
 - ✅ **AWS Optimized** - Deployment guides included
 
@@ -178,6 +178,38 @@ DELETE /api/devil-fruits/:id                # Delete (requires auth)
 - `sortBy` - Sort field (id, name, created_at)
 - `sortOrder` - Sort order (ASC, DESC)
 
+### Haki Types
+
+```bash
+GET    /api/haki-types          # Get all (public)
+GET    /api/haki-types/:id      # Get one (public)
+PUT    /api/haki-types/:id      # Update (requires auth)
+```
+
+### Races
+
+```bash
+GET    /api/races               # Get all (public)
+GET    /api/races/:id           # Get one (public)
+PUT    /api/races/:id           # Update (requires auth)
+```
+
+### Character Types
+
+```bash
+GET    /api/character-types     # Get all (public)
+GET    /api/character-types/:id # Get one (public)
+PUT    /api/character-types/:id # Update (requires auth)
+```
+
+### Organization Types
+
+```bash
+GET    /api/organization-types     # Get all (public)
+GET    /api/organization-types/:id # Get one (public)
+PUT    /api/organization-types/:id # Update (requires auth)
+```
+
 > 💡 **Postman Collection:** Import `onepiece-api.postman_collection.json`
 
 ---
@@ -232,7 +264,7 @@ npm test -- --coverage
 npm run test:watch
 ```
 
-**Current coverage:** 89.87% (167/167 tests passing ✅)
+**Current coverage:** 93.75% (451/451 tests passing ✅)
 
 ---
 
