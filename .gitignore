@@ -20,3 +20,6 @@ configs/.env*
 logs/*
 !logs/.gitkeep
 .cursor/*
+
+# Project tracking files (internal use only)
+PROJECT_STATUS.md

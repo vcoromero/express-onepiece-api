@@ -12,13 +12,11 @@ class CharacterType extends Model {
    * @param {object} models - The models object containing all defined models.
    */
   static associate(models) {
-    // CharacterType has many CharacterCharacterTypes (many-to-many relationship with Character)
-    // This association will be defined when the CharacterCharacterType model is created
-    // this.belongsToMany(models.Character, {
-    //   through: models.CharacterCharacterType,
-    //   foreignKey: 'character_type_id',
-    //   as: 'characters'
-    // });
+    // CharacterType has many Characters (one-to-many relationship)
+    this.hasMany(models.Character, {
+      foreignKey: 'character_type_id',
+      as: 'characters'
+    });
   }
 }
 
