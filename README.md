@@ -210,6 +210,28 @@ GET    /api/organization-types/:id # Get one (public)
 PUT    /api/organization-types/:id # Update (requires auth)
 ```
 
+### Ships
+
+```bash
+GET    /api/ships                    # Get all with pagination & filters (public)
+GET    /api/ships/:id                # Get one by ID (public)
+GET    /api/ships/status/:status     # Get by status (public)
+POST   /api/ships                    # Create (requires auth)
+PUT    /api/ships/:id                # Update (requires auth)
+DELETE /api/ships/:id                # Delete (requires auth)
+```
+
+#### Ships Query Parameters
+
+**GET /api/ships** supports:
+- `page` - Page number (default: 1)
+- `limit` - Items per page (default: 10, max: 100)
+- `search` - Search term for name
+- `status` - Filter by status (active, destroyed, retired)
+
+**GET /api/ships/status/:status** supports:
+- `status` - Ship status (active, destroyed, retired)
+
 > 💡 **Postman Collection:** Import `onepiece-api.postman_collection.json`
 
 ---
@@ -360,7 +382,9 @@ MIT License - See [LICENSE](LICENSE) for details.
 
 ## 🎯 Roadmap
 
-- [ ] Implement more models (Characters, Organizations, Ships)
+- [x] Implement Ships model with full CRUD operations
+- [ ] Implement Characters model
+- [ ] Implement Organizations model
 - [ ] Add relationships between models
 - [ ] Refresh tokens
 - [ ] GraphQL endpoint
