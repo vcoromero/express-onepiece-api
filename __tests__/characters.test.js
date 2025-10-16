@@ -219,7 +219,7 @@ describe('Character Service', () => {
 
       expect(result.success).toBe(true);
       expect(result.data.name).toBe('Monkey D. Luffy');
-      expect(Character.findByPk).toHaveBeenCalled();
+      expect(Character.findByPk).toHaveBeenCalledWith(1);
     });
 
     it('should return error for invalid ID', async () => {
@@ -256,16 +256,17 @@ describe('Character Service', () => {
     it('should create character successfully', async () => {
       const characterData = {
         name: 'Monkey D. Luffy',
-        japanese_name: 'モンキー・D・ルフィ',
+        alias: 'Straw Hat Luffy',
         race_id: 1,
-        character_type_id: 1,
         bounty: 3000000000,
         age: 19,
-        height: 174,
+        birthday: 'May 5',
+        height: '174 cm',
+        origin: 'East Blue',
+        status: 'alive',
         description: 'Captain of the Straw Hat Pirates',
-        abilities: 'Gomu Gomu no Mi powers',
-        is_alive: true,
-        first_appearance: 'Chapter 1'
+        image_url: 'https://example.com/luffy.jpg',
+        debut: 'Chapter 1'
       };
 
       const createdCharacter = {
@@ -336,7 +337,6 @@ describe('Character Service', () => {
         race: { id: 1, name: 'Human' },
         character_type: { id: 1, name: 'Pirate' }
       };
-
       const existingCharacter = {
         id: 1,
         name: 'Monkey D. Luffy',
@@ -494,7 +494,7 @@ describe('Character Service', () => {
       const result = await characterService.searchCharacters('luffy');
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe('Failed to fetch characters');
+      expect(result.message).toBe('Failed to search characters');
     });
   });
 });
