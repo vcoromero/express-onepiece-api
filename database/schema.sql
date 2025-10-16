@@ -402,7 +402,8 @@ INSERT INTO characters (name, alias, age, birthday, height, bounty, race_id, ori
 ('Charlotte Linlin', 'Big Mom', 68, 'February 15', '880 cm', 4388000000, 1, 'Unknown', 'alive', 'Former Emperor, captain of Big Mom Pirates, defeated in Wano', 'Chapter 651'),
 ('Gol D. Roger', 'Gold Roger, Pirate King', 53, 'December 31', '274 cm', 5564800000, 1, 'East Blue - Loguetown', 'deceased', 'Former Pirate King, started the Great Pirate Era', 'Chapter 1'),
 ('Edward Newgate', 'Whitebeard', 72, 'April 6', '666 cm', 5046000000, 1, 'Sphinx', 'deceased', 'Former Emperor, known as strongest man in the world, died at Marineford', 'Chapter 234'),
-('Buggy', 'Buggy the Clown', 39, 'August 8', '192 cm', 3189000000, 1, 'Unknown', 'alive', 'Captain of Buggy Pirates, one of the Four Emperors, founder of Cross Guild', 'Chapter 9');
+('Buggy', 'Buggy the Clown', 39, 'August 8', '192 cm', 3189000000, 1, 'Unknown', 'alive', 'Captain of Buggy Pirates, one of the Four Emperors, founder of Cross Guild', 'Chapter 9'),
+('X Drake', 'Red Flag X Drake', 33, 'October 11', '233 cm', 222000000, 1, 'North Blue', 'alive', 'Former Marine Rear Admiral turned pirate, captain of Drake Pirates', 'Chapter 498');
 
 -- Insert Devil Fruits
 INSERT INTO devil_fruits (name, japanese_name, type_id, description, abilities, current_user_id) VALUES
@@ -434,7 +435,9 @@ INSERT INTO organizations (name, organization_type_id, leader_id, ship_id, base_
 ('Whitebeard Pirates', 5, 20, 3, 'Moby Dick', 5046000000, 'disbanded', 'Former Yonko crew led by Edward Newgate, disbanded after Marineford War'),
 ('Roger Pirates', 1, 19, 4, NULL, 5564800000, 'disbanded', 'Legendary crew led by Gol D. Roger, conquered Grand Line'),
 ('Revolutionary Army', 3, NULL, NULL, 'Kamabakka Kingdom', 602000000, 'active', 'Organization led by Monkey D. Dragon, opposing World Government'),
-('Marines', 2, NULL, NULL, 'Marineford', 0, 'active', 'Military force of the World Government');
+('Marines', 2, NULL, NULL, 'Marineford', 0, 'active', 'Military force of the World Government'),
+('Big Mom Pirates', 5, 18, 6, 'Whole Cake Island', 4388000000, 'active', 'Former Yonko crew led by Charlotte Linlin, defeated in Wano'),
+('Drake Pirates', 1, 22, 10, 'Perfumer (Mobile)', 222000000, 'active', 'Pirate crew led by X Drake, former Marine');
 
 -- ============================================
 -- SEED DATA - RELATIONSHIP TABLES
@@ -477,7 +480,11 @@ INSERT INTO character_organizations (character_id, organization_id, role, is_cur
 (20, 7, 'Captain', FALSE, 'Founded'),
 (19, 8, 'Captain', FALSE, 'Founded'),
 (12, 1, 'Temporary Member', FALSE, 'Alabasta Arc'),
-(12, 7, '2nd Division Commander', FALSE, 'After leaving Straw Hats');
+(12, 7, '2nd Division Commander', FALSE, 'After leaving Straw Hats'),
+-- Big Mom Pirates
+(18, 11, 'Captain', TRUE, 'Founded'),
+-- Drake Pirates
+(22, 12, 'Captain', TRUE, 'Founded');
 
 -- Insert Character Haki
 INSERT INTO character_haki (character_id, haki_type_id, mastery_level, awakened) VALUES
@@ -606,7 +613,11 @@ INSERT INTO character_character_types (character_id, character_type_id, is_curre
 -- Buggy (Current Yonko!)
 (21, 1, TRUE),  -- Pirate
 (21, 2, TRUE),  -- Captain
-(21, 6, TRUE);  -- Yonko (CURRENT!)
+(21, 6, TRUE),  -- Yonko (CURRENT!)
+-- X Drake
+(22, 1, TRUE),  -- Pirate
+(22, 2, TRUE),  -- Captain
+(22, 8, TRUE);  -- Supernova
 
 -- ============================================
 -- USEFUL VIEWS FOR COMMON QUERIES
