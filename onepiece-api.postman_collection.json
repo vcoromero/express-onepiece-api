@@ -2465,6 +2465,698 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Ships",
+      "item": [
+        {
+          "name": "Get All Ships",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ships?page=1&limit=10&status=active&search=Thousand",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)"
+                },
+                {
+                  "key": "status",
+                  "value": "active",
+                  "description": "Filter by status: active, destroyed, retired"
+                },
+                {
+                  "key": "search",
+                  "value": "Thousand",
+                  "description": "Search term for ship name"
+                }
+              ]
+            },
+            "description": "Get all ships with pagination and filtering options"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/ships?page=1&limit=10",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "1"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"name\": \"Thousand Sunny\",\n            \"description\": \"The second ship of the Straw Hat Pirates, built by Franky using Adam Wood\",\n            \"status\": \"active\",\n            \"image_url\": null,\n            \"created_at\": \"2024-01-01T00:00:00.000Z\",\n            \"updated_at\": \"2024-01-01T00:00:00.000Z\",\n            \"organizations\": [\n                {\n                    \"id\": 1,\n                    \"name\": \"Straw Hat Pirates\",\n                    \"status\": \"active\"\n                }\n            ]\n        }\n    ],\n    \"pagination\": {\n        \"currentPage\": 1,\n        \"totalPages\": 1,\n        \"totalItems\": 10,\n        \"itemsPerPage\": 10,\n        \"hasNextPage\": false,\n        \"hasPrevPage\": false\n    },\n    \"message\": \"Ships retrieved successfully\"\n}"
+            },
+            {
+              "name": "Invalid Parameters",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/ships?page=0&limit=200",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships"],
+                  "query": [
+                    {
+                      "key": "page",
+                      "value": "0"
+                    },
+                    {
+                      "key": "limit",
+                      "value": "200"
+                    }
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Limit must be between 1 and 100\",\n    \"error\": \"Invalid limit parameter\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Ship by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ships/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships", "1"]
+            },
+            "description": "Get a specific ship by its ID"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/ships/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"Thousand Sunny\",\n        \"description\": \"The second ship of the Straw Hat Pirates, built by Franky using Adam Wood\",\n        \"status\": \"active\",\n        \"image_url\": null,\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T00:00:00.000Z\",\n        \"organizations\": [\n            {\n                \"id\": 1,\n                \"name\": \"Straw Hat Pirates\",\n                \"status\": \"active\",\n                \"total_bounty\": 8816000000\n            }\n        ]\n    },\n    \"message\": \"Ship retrieved successfully\"\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/ships/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Ship not found\",\n    \"error\": \"No ship exists with the provided ID\"\n}"
+            },
+            {
+              "name": "Invalid ID",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/ships/invalid",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships", "invalid"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Invalid ship ID\",\n    \"error\": \"ID must be a positive integer\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Get Ships by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ships/status/active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships", "status", "active"]
+            },
+            "description": "Get all ships with a specific status (active, destroyed, retired)"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/ships/status/active",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships", "status", "active"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": [\n        {\n            \"id\": 1,\n            \"name\": \"Thousand Sunny\",\n            \"description\": \"The second ship of the Straw Hat Pirates, built by Franky using Adam Wood\",\n            \"status\": \"active\",\n            \"image_url\": null,\n            \"created_at\": \"2024-01-01T00:00:00.000Z\",\n            \"updated_at\": \"2024-01-01T00:00:00.000Z\",\n            \"organizations\": []\n        }\n    ],\n    \"message\": \"Ships with status 'active' retrieved successfully\"\n}"
+            },
+            {
+              "name": "Invalid Status",
+              "originalRequest": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/api/ships/status/invalid",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships", "status", "invalid"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Invalid status. Must be active, destroyed, or retired\",\n    \"error\": \"Invalid status parameter\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Ship",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "description": "JWT token for authentication"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Going Merry\",\n    \"description\": \"The first ship of the Straw Hat Pirates, a caravel gifted by Kaya\",\n    \"status\": \"destroyed\",\n    \"image_url\": \"https://example.com/going-merry.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ships",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships"]
+            },
+            "description": "Create a new ship (requires authentication)"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Going Merry\",\n    \"description\": \"The first ship of the Straw Hat Pirates, a caravel gifted by Kaya\",\n    \"status\": \"destroyed\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/ships",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships"]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 11,\n        \"name\": \"Going Merry\",\n        \"description\": \"The first ship of the Straw Hat Pirates, a caravel gifted by Kaya\",\n        \"status\": \"destroyed\",\n        \"image_url\": null,\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T00:00:00.000Z\",\n        \"organizations\": []\n    },\n    \"message\": \"Ship created successfully\"\n}"
+            },
+            {
+              "name": "Validation Error - Missing Name",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"description\": \"A ship without a name\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/ships",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Ship name is required\",\n    \"error\": \"Name field is missing or invalid\"\n}"
+            },
+            {
+              "name": "Unauthorized - No Token",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Unauthorized Ship\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/ships",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships"]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Access denied. No token provided.\",\n    \"error\": \"UNAUTHORIZED\"\n}"
+            },
+            {
+              "name": "Name Already Exists",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Thousand Sunny\",\n    \"description\": \"Duplicate ship name\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/ships",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships"]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"A ship with this name already exists\",\n    \"error\": \"Ship name must be unique\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Ship",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "description": "JWT token for authentication"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Thousand Sunny Go\",\n    \"description\": \"Updated description for the Straw Hat Pirates' ship\",\n    \"status\": \"active\",\n    \"image_url\": \"https://example.com/thousand-sunny-go.jpg\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ships/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships", "1"]
+            },
+            "description": "Update an existing ship (requires authentication)"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Thousand Sunny Go\",\n    \"description\": \"Updated description for the Straw Hat Pirates' ship\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/ships/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"id\": 1,\n        \"name\": \"Thousand Sunny Go\",\n        \"description\": \"Updated description for the Straw Hat Pirates' ship\",\n        \"status\": \"active\",\n        \"image_url\": null,\n        \"created_at\": \"2024-01-01T00:00:00.000Z\",\n        \"updated_at\": \"2024-01-01T00:00:00.000Z\",\n        \"organizations\": [\n            {\n                \"id\": 1,\n                \"name\": \"Straw Hat Pirates\",\n                \"status\": \"active\",\n                \"total_bounty\": 8816000000\n            }\n        ]\n    },\n    \"message\": \"Ship updated successfully\"\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"name\": \"Updated Ship\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/ships/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Ship not found\",\n    \"error\": \"No ship exists with the provided ID\"\n}"
+            },
+            {
+              "name": "Empty Request Body",
+              "originalRequest": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{base_url}}/api/ships/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships", "1"]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"At least one field must be provided for update\",\n    \"error\": \"Empty request body\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Ship",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}",
+                "description": "JWT token for authentication"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/ships/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships", "1"]
+            },
+            "description": "Delete a ship (requires authentication)"
+          },
+          "response": [
+            {
+              "name": "Successful Response",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/ships/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships", "1"]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": true,\n    \"data\": {\n        \"message\": \"Ship deleted successfully\",\n        \"deletedShip\": {\n            \"id\": 1,\n            \"name\": \"Thousand Sunny\"\n        }\n    },\n    \"message\": \"Ship deleted successfully\"\n}"
+            },
+            {
+              "name": "Not Found",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/ships/99999",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships", "99999"]
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Ship not found\",\n    \"error\": \"No ship exists with the provided ID\"\n}"
+            },
+            {
+              "name": "Ship In Use",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "Authorization",
+                    "value": "Bearer {{jwt_token}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{base_url}}/api/ships/1",
+                  "host": ["{{base_url}}"],
+                  "path": ["api", "ships", "1"]
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n    \"success\": false,\n    \"message\": \"Cannot delete ship that is currently in use by an organization\",\n    \"error\": \"Ship is associated with one or more organizations\"\n}"
+            }
+          ]
+        }
+      ]
     }
   ],
   "variable": [
