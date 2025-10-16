@@ -256,16 +256,17 @@ describe('Character Service', () => {
     it('should create character successfully', async () => {
       const characterData = {
         name: 'Monkey D. Luffy',
-        japanese_name: 'モンキー・D・ルフィ',
+        alias: 'Straw Hat Luffy',
         race_id: 1,
-        character_type_id: 1,
         bounty: 3000000000,
         age: 19,
-        height: 174,
+        birthday: 'May 5',
+        height: '174 cm',
+        origin: 'East Blue',
+        status: 'alive',
         description: 'Captain of the Straw Hat Pirates',
-        abilities: 'Gomu Gomu no Mi powers',
-        is_alive: true,
-        first_appearance: 'Chapter 1'
+        image_url: 'https://example.com/luffy.jpg',
+        debut: 'Chapter 1'
       };
 
       const createdCharacter = {
