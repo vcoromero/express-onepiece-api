@@ -1,0 +1,47 @@
+service: onepiece-api
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  region: us-east-1
+  stage: ${opt:stage, 'dev'}
+  role: arn:aws:iam::317286500342:role/OnePieceAPIRole
+  environment:
+    NODE_ENV: production
+    ADMIN_USERNAME: ${env:ADMIN_USERNAME}
+    ADMIN_PASSWORD_HASH: ${env:ADMIN_PASSWORD_HASH}
+    DB_HOST: ${env:DB_HOST}
+    DB_USER: ${env:DB_USER}
+    DB_PASSWORD: ${env:DB_PASSWORD}
+    DB_NAME: ${env:DB_NAME}
+    DB_PORT: ${env:DB_PORT}
+    JWT_SECRET: ${env:JWT_SECRET}
+    JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
+    LOG_HTTP_REQUESTS: ${env:LOG_HTTP_REQUESTS}
+    RATE_LIMIT_WINDOW_MS: ${env:RATE_LIMIT_WINDOW_MS}
+    RATE_LIMIT_MAX_REQUESTS: ${env:RATE_LIMIT_MAX_REQUESTS}
+  vpc:
+    securityGroupIds:
+      - ${env:SECURITY_GROUP_ID}
+    subnetIds:
+      - ${env:SUBNET_ID_1}
+      - ${env:SUBNET_ID_2}
+
+functions:
+  api:
+    handler: src/lambda.handler
+    events:
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors: true
+    timeout: 300  # 5 minutos
+    memorySize: 1024  # 1GB RAM
+
+plugins:
+  - serverless-offline
+  - serverless-dotenv-plugin
+
+custom:
+  serverless-offline:
+    httpPort: 3000
