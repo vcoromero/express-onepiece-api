@@ -70,7 +70,7 @@ describe('DevilFruitService', () => {
         expect.objectContaining({
           where: {
             name: {
-              [Op.iLike]: '%Gomu%'
+              [Op.like]: '%Gomu%'
             }
           }
         })
@@ -370,7 +370,6 @@ describe('DevilFruitService', () => {
 
       await expect(service.getAllFruits()).rejects.toThrow('Database connection failed');
     });
-
 
     it('should handle database errors in createFruit', async () => {
       const fruitData = { name: 'Test Fruit', type_id: 1 };

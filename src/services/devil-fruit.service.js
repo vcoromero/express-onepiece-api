@@ -36,7 +36,7 @@ class DevilFruitService {
     // Apply filters
     if (search) {
       where.name = {
-        [Op.iLike]: `%${search}%`
+        [Op.like]: `%${search}%`
       };
     }
 
