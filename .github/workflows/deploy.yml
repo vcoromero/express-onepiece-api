@@ -39,3 +39,20 @@ jobs:
       run: serverless deploy
       env:
         NODE_ENV: production
+        # Environment Variables
+        ADMIN_USERNAME: ${{ secrets.ADMIN_USERNAME }}
+        ADMIN_PASSWORD_HASH: ${{ secrets.ADMIN_PASSWORD_HASH }}
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        JWT_EXPIRES_IN: ${{ secrets.JWT_EXPIRES_IN }}
+        LOG_HTTP_REQUESTS: ${{ secrets.LOG_HTTP_REQUESTS }}
+        RATE_LIMIT_WINDOW_MS: ${{ secrets.RATE_LIMIT_WINDOW_MS }}
+        RATE_LIMIT_MAX_REQUESTS: ${{ secrets.RATE_LIMIT_MAX_REQUESTS }}
+        # VPC Settings
+        SECURITY_GROUP_ID: ${{ secrets.SECURITY_GROUP_ID }}
+        SUBNET_ID_1: ${{ secrets.SUBNET_ID_1 }}
+        SUBNET_ID_2: ${{ secrets.SUBNET_ID_2 }}
