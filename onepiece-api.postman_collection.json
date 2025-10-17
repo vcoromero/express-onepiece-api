@@ -3180,5 +3180,166 @@
       "value": "",
       "type": "string"
     }
+  ],
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/health",
+          "host": ["{{base_url}}"],
+          "path": ["api", "health"]
+        },
+        "description": "Check if the API is running and healthy"
+      }
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "Get All Organizations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations?page=1&limit=10&sortBy=name&sortOrder=ASC",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "name"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "ASC"
+                }
+              ]
+            },
+            "description": "Get all organizations with pagination and filtering"
+          }
+        },
+        {
+          "name": "Get Organization by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "1"]
+            },
+            "description": "Get organization by ID with full details"
+          }
+        },
+        {
+          "name": "Get Organizations by Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/type/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "type", "1"]
+            },
+            "description": "Get organizations by organization type ID"
+          }
+        },
+        {
+          "name": "Get Organization Members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/1/members",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "1", "members"]
+            },
+            "description": "Get all members of an organization"
+          }
+        },
+        {
+          "name": "Create Organization",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Pirate Crew\",\n  \"organizationTypeId\": 1,\n  \"leaderId\": 1,\n  \"shipId\": 1,\n  \"flagDescription\": \"Black flag with skull and crossbones\",\n  \"jollyRogerUrl\": \"https://example.com/flag.jpg\",\n  \"baseLocation\": \"Grand Line\",\n  \"totalBounty\": 1000000000,\n  \"status\": \"active\",\n  \"description\": \"A new pirate crew seeking adventure\",\n  \"foundedDate\": \"2024\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organizations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations"]
+            },
+            "description": "Create a new organization (requires JWT authentication)"
+          }
+        },
+        {
+          "name": "Update Organization",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Pirate Crew\",\n  \"description\": \"Updated description\",\n  \"totalBounty\": 2000000000,\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organizations/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "1"]
+            },
+            "description": "Update an organization (requires JWT authentication)"
+          }
+        },
+        {
+          "name": "Delete Organization",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "1"]
+            },
+            "description": "Delete an organization (requires JWT authentication). Cannot delete if organization has active members."
+          }
+        }
+      ],
+      "description": "Organization management endpoints for CRUD operations on organizations including pirate crews, marines, and other groups"
+    }
   ]
 }

@@ -1,161 +1,212 @@
-const { DataTypes, Model } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const { sequelize } = require('../config/sequelize.config');
 
 /**
  * Organization Model
- * Represents organizations in the One Piece universe (pirate crews, marines, etc.).
- * Business logic should be in services/organization.service.js
+ * Represents organizations including pirate crews, marines, revolutionary army
+ * @description Organizations are dynamic entities that can be created, modified, and deleted
+ * @author Database Expert
+ * @version 1.0.0
  */
-class Organization extends Model {
-  /**
-   * Defines associations with other models.
-   * @param {object} models - The models object containing all defined models.
-   */
-  static associate(models) {
-    // Organization belongs to OrganizationType
-    this.belongsTo(models.OrganizationType, {
-      foreignKey: 'organization_type_id',
-      as: 'organization_type'
-    });
-
-    // Organization belongs to Character (leader)
-    this.belongsTo(models.Character, {
-      foreignKey: 'leader_id',
-      as: 'leader'
-    });
-
-    // Organization belongs to Ship
-    this.belongsTo(models.Ship, {
-      foreignKey: 'ship_id',
-      as: 'ship'
-    });
-
-    // Organization has many CharacterOrganizations
-    this.hasMany(models.CharacterOrganization, {
-      foreignKey: 'organization_id',
-      as: 'character_organizations'
-    });
-  }
-}
-
-Organization.init(
-  {
-    id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      autoIncrement: true,
-      primaryKey: true,
-      comment: 'Primary key'
-    },
-    name: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-      comment: 'Name of the organization'
-    },
-    organization_type_id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: false,
-      references: {
-        model: 'organization_types',
-        key: 'id'
-      },
-      comment: 'Foreign key to organization_types table'
-    },
-    leader_id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: true,
-      references: {
-        model: 'characters',
-        key: 'id'
-      },
-      comment: 'Foreign key to characters table (leader)'
-    },
-    ship_id: {
-      type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: true,
-      references: {
-        model: 'ships',
-        key: 'id'
-      },
-      comment: 'Foreign key to ships table'
-    },
-    flag_description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      comment: 'Description of the organization flag'
-    },
-    jolly_roger_url: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-      comment: 'URL of the jolly roger image'
-    },
-    base_location: {
-      type: DataTypes.STRING(100),
-      allowNull: true,
-      comment: 'Base location of the organization'
-    },
-    total_bounty: {
-      type: DataTypes.BIGINT.UNSIGNED,
-      allowNull: true,
-      defaultValue: 0,
-      comment: 'Total bounty of all members'
-    },
-    status: {
-      type: DataTypes.ENUM('active', 'disbanded', 'destroyed'),
-      allowNull: false,
-      defaultValue: 'active',
-      comment: 'Status of the organization'
-    },
-    description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      comment: 'Description of the organization'
-    },
-    founded_date: {
-      type: DataTypes.STRING(50),
-      allowNull: true,
-      comment: 'Date when the organization was founded'
-    },
-    created_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-      comment: 'Record creation timestamp'
-    },
-    updated_at: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-      comment: 'Record last update timestamp'
-    }
+const Organization = sequelize.define('Organization', {
+  id: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    primaryKey: true,
+    autoIncrement: true,
+    allowNull: false,
+    comment: 'Unique organization identifier'
   },
-  {
-    sequelize,
-    modelName: 'Organization',
-    tableName: 'organizations',
-    timestamps: true,
-    createdAt: 'created_at',
-    updatedAt: 'updated_at',
-    underscored: true,
-    comment: 'Organizations including pirate crews, marines, revolutionary army',
-    indexes: [
-      {
-        name: 'idx_name',
-        fields: ['name']
+  name: {
+    type: DataTypes.STRING(100),
+    allowNull: false,
+    validate: {
+      notEmpty: {
+        msg: 'Organization name cannot be empty'
       },
-      {
-        name: 'idx_type',
-        fields: ['organization_type_id']
-      },
-      {
-        name: 'idx_leader',
-        fields: ['leader_id']
-      },
-      {
-        name: 'idx_status',
-        fields: ['status']
+      len: {
+        args: [1, 100],
+        msg: 'Organization name must be between 1 and 100 characters'
       }
-    ]
+    },
+    comment: 'Organization name'
+  },
+  organizationTypeId: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    allowNull: false,
+    field: 'organization_type_id',
+    references: {
+      model: 'organization_types',
+      key: 'id'
+    },
+    comment: 'Foreign key to organization_types table'
+  },
+  leaderId: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    allowNull: true,
+    field: 'leader_id',
+    references: {
+      model: 'characters',
+      key: 'id'
+    },
+    comment: 'Foreign key to characters table (organization leader)'
+  },
+  shipId: {
+    type: DataTypes.INTEGER.UNSIGNED,
+    allowNull: true,
+    field: 'ship_id',
+    references: {
+      model: 'ships',
+      key: 'id'
+    },
+    comment: 'Foreign key to ships table (organization flagship)'
+  },
+  flagDescription: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    field: 'flag_description',
+    comment: 'Description of the organization flag'
+  },
+  jollyRogerUrl: {
+    type: DataTypes.STRING(255),
+    allowNull: true,
+    field: 'jolly_roger_url',
+    validate: {
+      isUrl: {
+        msg: 'Jolly Roger URL must be a valid URL'
+      }
+    },
+    comment: 'URL to organization jolly roger image'
+  },
+  baseLocation: {
+    type: DataTypes.STRING(100),
+    allowNull: true,
+    field: 'base_location',
+    validate: {
+      len: {
+        args: [0, 100],
+        msg: 'Base location must be 100 characters or less'
+      }
+    },
+    comment: 'Organization base location'
+  },
+  totalBounty: {
+    type: DataTypes.BIGINT.UNSIGNED,
+    allowNull: false,
+    defaultValue: 0,
+    field: 'total_bounty',
+    validate: {
+      min: {
+        args: [0],
+        msg: 'Total bounty cannot be negative'
+      }
+    },
+    comment: 'Total bounty of all organization members in Berries'
+  },
+  status: {
+    type: DataTypes.ENUM('active', 'disbanded', 'destroyed'),
+    allowNull: false,
+    defaultValue: 'active',
+    validate: {
+      isIn: {
+        args: [['active', 'disbanded', 'destroyed']],
+        msg: 'Status must be active, disbanded, or destroyed'
+      }
+    },
+    comment: 'Organization current status'
+  },
+  description: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Organization description'
+  },
+  foundedDate: {
+    type: DataTypes.STRING(50),
+    allowNull: true,
+    field: 'founded_date',
+    validate: {
+      len: {
+        args: [0, 50],
+        msg: 'Founded date must be 50 characters or less'
+      }
+    },
+    comment: 'Date when organization was founded'
   }
-);
+}, {
+  tableName: 'organizations',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
+  indexes: [
+    {
+      name: 'idx_name',
+      fields: ['name']
+    },
+    {
+      name: 'idx_type',
+      fields: ['organization_type_id']
+    },
+    {
+      name: 'idx_leader',
+      fields: ['leader_id']
+    },
+    {
+      name: 'idx_status',
+      fields: ['status']
+    },
+    {
+      name: 'idx_organization_bounty_status',
+      fields: ['total_bounty', 'status']
+    }
+  ],
+  comment: 'Organizations including pirate crews, marines, revolutionary army'
+});
+
+/**
+ * Define model associations
+ * @description Establishes relationships with other models
+ */
+Organization.associate = (models) => {
+  // Belongs to OrganizationType
+  Organization.belongsTo(models.OrganizationType, {
+    foreignKey: 'organizationTypeId',
+    as: 'organizationType',
+    onDelete: 'RESTRICT',
+    onUpdate: 'CASCADE'
+  });
+
+  // Belongs to Character (leader)
+  Organization.belongsTo(models.Character, {
+    foreignKey: 'leaderId',
+    as: 'leader',
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE'
+  });
+
+  // Belongs to Ship
+  Organization.belongsTo(models.Ship, {
+    foreignKey: 'shipId',
+    as: 'ship',
+    onDelete: 'SET NULL',
+    onUpdate: 'CASCADE'
+  });
+
+  // Has many CharacterOrganizations (members)
+  Organization.hasMany(models.CharacterOrganization, {
+    foreignKey: 'organization_id',
+    as: 'members',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  });
+
+  // Many-to-many relationship with Characters through CharacterOrganizations
+  Organization.belongsToMany(models.Character, {
+    through: models.CharacterOrganization,
+    foreignKey: 'organization_id',
+    otherKey: 'character_id',
+    as: 'characters',
+    onDelete: 'CASCADE',
+    onUpdate: 'CASCADE'
+  });
+};
 
 module.exports = Organization;

@@ -10,6 +10,7 @@ const raceRoutes = require('./routes/race.routes');
 const characterTypeRoutes = require('./routes/character-type.routes');
 const organizationTypeRoutes = require('./routes/organization-type.routes');
 const characterRoutes = require('./routes/character.routes');
+const organizationRoutes = require('./routes/organization.routes');
 const shipRoutes = require('./routes/ship.routes');
 const { generalLimiter } = require('./middlewares/rate-limiter');
 const logger = require('./utils/logger');
@@ -49,6 +50,7 @@ app.use('/api', raceRoutes);
 app.use('/api', characterTypeRoutes);
 app.use('/api', organizationTypeRoutes);
 app.use('/api', characterRoutes);
+app.use('/api/organizations', organizationRoutes);
 app.use('/api/ships', shipRoutes);
 
 // 404 handler
