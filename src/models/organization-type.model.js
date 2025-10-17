@@ -12,13 +12,13 @@ class OrganizationType extends Model {
    * @param {object} models - The models object containing all defined models.
    */
   static associate(models) {
-    // OrganizationType has many OrganizationOrganizationTypes (many-to-many relationship with Organization)
-    // This association will be defined when the OrganizationOrganizationType model is created
-    // this.belongsToMany(models.Organization, {
-    //   through: models.OrganizationOrganizationType,
-    //   foreignKey: 'organization_type_id',
-    //   as: 'organizations'
-    // });
+    // OrganizationType has many Organizations (one-to-many relationship)
+    OrganizationType.hasMany(models.Organization, {
+      foreignKey: 'organizationTypeId',
+      as: 'organizations',
+      onDelete: 'RESTRICT',
+      onUpdate: 'CASCADE'
+    });
   }
 }
 
