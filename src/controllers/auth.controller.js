@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const JWTUtil = require('../utils/jwt.util');
 const logger = require('../utils/logger');
+const { getAdminCredentials } = require('../config/auth.config');
 
 /**
  * Authentication Controller
@@ -29,9 +30,8 @@ class AuthController {
         });
       }
 
-      // Get admin credentials from environment variables
-      const adminUsername = process.env.ADMIN_USERNAME;
-      const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+      // Get admin credentials from configuration
+      const { username: adminUsername, passwordHash: adminPasswordHash } = getAdminCredentials();
 
       if (!adminUsername || !adminPasswordHash) {
         logger.error('Authentication configuration error', {

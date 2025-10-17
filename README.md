@@ -14,10 +14,10 @@ A RESTful API inspired by One Piece, built with Express.js, MySQL, and Sequelize
 - ✅ **Sequelize ORM** - Clean, type-safe queries
 - ✅ **JWT Authentication** - Secure token-based auth
 - ✅ **Rate Limiting** - Protection against abuse
-- ✅ **Winston Logger** - CloudWatch ready
+- ✅ **Winston Logger** - Structured logging
 - ✅ **Jest Tests** - 778 tests, 94.21% coverage
 - ✅ **Docker Ready** - Containerization included
-- ✅ **AWS Optimized** - Deployment guides included
+- ✅ **Complete CRUD** - Characters, Ships, Organizations, Devil Fruits
 
 ---
 
@@ -101,12 +101,21 @@ curl -X POST http://localhost:3000/api/auth/login \
 | **[🏢 Service Layer Pattern](docs/SERVICE_LAYER_PATTERN.md)** | Layer architecture and separation of concerns |
 | **[📖 Sequelize ORM Guide](docs/SEQUELIZE_GUIDE.md)** | ORM usage, models and relationships |
 
+### API Documentation
+| Document | Description |
+|----------|-------------|
+| **[🔐 Authentication & Health](docs/AUTH_API.md)** | Authentication system and API health endpoints |
+| **[👥 Characters API](docs/CHARACTERS_API.md)** | Character management with relationships |
+| **[🏴‍☠️ Organizations API](docs/ORGANIZATIONS_API.md)** | Organization management with members and ships |
+| **[🚢 Ships API](docs/SHIPS_API.md)** | Ship management with organization relationships |
+| **[🍎 Devil Fruits API](docs/DEVIL_FRUITS_API.md)** | Devil fruit management with types and relationships |
+| **[📋 Catalog API](docs/CATALOG_API.md)** | Reference data for types, races, and categories |
+
 ### Configuration and Deployment
 | Document | Description |
 |----------|-------------|
 | **[⚙️ Environment Variables](configs/README.md)** | Environment-specific configuration and secrets |
 | **[🗄️ Database](database/README.md)** | MySQL schema, tables and initial data |
-| **[☁️ AWS Deployment](docs/AWS_DEPLOYMENT.md)** | Guides for Lambda, Beanstalk, ECS, EC2 |
 
 ### Security
 | Document | Description |
@@ -131,8 +140,20 @@ npm run audit          # Security audit
 
 ## 🌐 API Endpoints
 
-### Health & Auth
+### Quick Reference
 
+| Endpoint Group | Documentation | Description |
+|----------------|---------------|-------------|
+| **[🔐 Authentication & Health](docs/AUTH_API.md)** | Health check, login, token verification | Authentication system and API health |
+| **[👥 Characters](docs/CHARACTERS_API.md)** | Character CRUD, search, relationships | Character management with devil fruits, haki, organizations |
+| **[🏴‍☠️ Organizations](docs/ORGANIZATIONS_API.md)** | Organization CRUD, members, ships | Organization management with members and ships |
+| **[🚢 Ships](docs/SHIPS_API.md)** | Ship CRUD, status filtering | Ship management with organization relationships |
+| **[🍎 Devil Fruits](docs/DEVIL_FRUITS_API.md)** | Devil fruit CRUD, types, filtering | Devil fruit management with types and relationships |
+| **[📋 Catalog Data](docs/CATALOG_API.md)** | Types, races, haki types | Reference data for the main entities |
+
+### Endpoint Summary
+
+#### Health & Authentication
 ```bash
 GET  /api/health                # Health check (public)
 POST /api/auth/login            # Login (get JWT)
@@ -140,121 +161,65 @@ GET  /api/auth/verify           # Verify token (requires auth)
 POST /api/auth/generate-hash    # Generate password hash (dev only)
 ```
 
-### Devil Fruit Types
-
+#### Main Entities
 ```bash
-GET    /api/fruit-types         # Get all (public)
-GET    /api/fruit-types/:id     # Get one (public)
-POST   /api/fruit-types         # Create (requires auth)
-PUT    /api/fruit-types/:id     # Update (requires auth)
-DELETE /api/fruit-types/:id     # Delete (requires auth)
-```
+# Characters (30 endpoints total)
+GET    /api/characters                    # Get all with pagination & filters
+GET    /api/characters/search             # Search characters
+GET    /api/characters/:id                # Get one by ID
+POST   /api/characters                    # Create (requires auth)
+PUT    /api/characters/:id                # Update (requires auth)
+DELETE /api/characters/:id                # Delete (requires auth)
 
-### Devil Fruits
+# Organizations
+GET    /api/organizations                    # Get all with pagination & filters
+GET    /api/organizations/:id               # Get one by ID
+GET    /api/organizations/type/:typeId     # Get by organization type
+GET    /api/organizations/:id/members       # Get organization members
+POST   /api/organizations                    # Create (requires auth)
+PUT    /api/organizations/:id               # Update (requires auth)
+DELETE /api/organizations/:id               # Delete (requires auth)
 
-```bash
-GET    /api/devil-fruits                    # Get all with pagination & filters (public)
-GET    /api/devil-fruits/:id                # Get one by ID (public)
-GET    /api/devil-fruits/type/:typeId       # Get by type with pagination (public)
+# Ships
+GET    /api/ships                    # Get all with pagination & filters
+GET    /api/ships/:id                # Get one by ID
+GET    /api/ships/status/:status     # Get by status
+POST   /api/ships                    # Create (requires auth)
+PUT    /api/ships/:id                # Update (requires auth)
+DELETE /api/ships/:id                # Delete (requires auth)
+
+# Devil Fruits
+GET    /api/devil-fruits                    # Get all with pagination & filters
+GET    /api/devil-fruits/:id                # Get one by ID
+GET    /api/devil-fruits/type/:typeId       # Get by type with pagination
 POST   /api/devil-fruits                    # Create (requires auth)
 PUT    /api/devil-fruits/:id                # Update (requires auth)
 DELETE /api/devil-fruits/:id                # Delete (requires auth)
 ```
 
-#### Devil Fruits Query Parameters
-
-**GET /api/devil-fruits** supports:
-- `page` - Page number (default: 1)
-- `limit` - Items per page (default: 10, max: 100)
-- `search` - Search term for name
-- `type_id` - Filter by type ID
-- `rarity` - Filter by rarity (common, rare, legendary, mythical)
-- `sortBy` - Sort field (id, name, rarity, power_level, created_at)
-- `sortOrder` - Sort order (ASC, DESC)
-
-**GET /api/devil-fruits/type/:typeId** supports:
-- `page` - Page number (default: 1)
-- `limit` - Items per page (default: 10, max: 100)
-- `sortBy` - Sort field (id, name, created_at)
-- `sortOrder` - Sort order (ASC, DESC)
-
-### Haki Types
-
+#### Catalog Data (Reference Tables)
 ```bash
-GET    /api/haki-types          # Get all (public)
-GET    /api/haki-types/:id      # Get one (public)
-PUT    /api/haki-types/:id      # Update (requires auth)
+# Devil Fruit Types, Haki Types, Races, Character Types, Organization Types
+GET    /api/fruit-types         # Get all devil fruit types
+GET    /api/haki-types          # Get all haki types
+GET    /api/races               # Get all races
+GET    /api/character-types     # Get all character types
+GET    /api/organization-types  # Get all organization types
+# + CRUD operations for each (see detailed docs)
 ```
 
-### Races
+### Key Features
 
-```bash
-GET    /api/races               # Get all (public)
-GET    /api/races/:id           # Get one (public)
-PUT    /api/races/:id           # Update (requires auth)
-```
+- **🔍 Advanced Search**: Full-text search across all entities
+- **📄 Pagination**: All list endpoints support pagination (page, limit)
+- **🔧 Filtering**: Multiple filter options per endpoint
+- **📊 Sorting**: Customizable sorting by multiple fields
+- **🔗 Relationships**: Full relationship support between entities
+- **🔒 Authentication**: JWT-based authentication for protected endpoints
+- **⚡ Rate Limiting**: Built-in rate limiting for API protection
 
-### Character Types
-
-```bash
-GET    /api/character-types     # Get all (public)
-GET    /api/character-types/:id # Get one (public)
-PUT    /api/character-types/:id # Update (requires auth)
-```
-
-### Organization Types
-
-```bash
-GET    /api/organization-types     # Get all (public)
-GET    /api/organization-types/:id # Get one (public)
-PUT    /api/organization-types/:id # Update (requires auth)
-```
-
-### Organizations
-
-```bash
-GET    /api/organizations                    # Get all with pagination & filters (public)
-GET    /api/organizations/:id               # Get one by ID (public)
-GET    /api/organizations/:id/members       # Get organization members (public)
-POST   /api/organizations                    # Create (requires auth)
-PUT    /api/organizations/:id               # Update (requires auth)
-DELETE /api/organizations/:id               # Delete (requires auth)
-```
-
-#### Organizations Query Parameters
-
-**GET /api/organizations** supports:
-- `page` - Page number (default: 1)
-- `limit` - Items per page (default: 10, max: 100)
-- `search` - Search term for name
-- `status` - Filter by status (active, disbanded, destroyed)
-- `organizationTypeId` - Filter by organization type ID
-- `sortBy` - Sort field (name, totalBounty, status, createdAt)
-- `sortOrder` - Sort order (ASC, DESC)
-
-### Ships
-
-```bash
-GET    /api/ships                    # Get all with pagination & filters (public)
-GET    /api/ships/:id                # Get one by ID (public)
-GET    /api/ships/status/:status     # Get by status (public)
-POST   /api/ships                    # Create (requires auth)
-PUT    /api/ships/:id                # Update (requires auth)
-DELETE /api/ships/:id                # Delete (requires auth)
-```
-
-#### Ships Query Parameters
-
-**GET /api/ships** supports:
-- `page` - Page number (default: 1)
-- `limit` - Items per page (default: 10, max: 100)
-- `search` - Search term for name
-- `status` - Filter by status (active, destroyed, retired)
-
-**GET /api/ships/status/:status** supports:
-- `status` - Ship status (active, destroyed, retired)
-
-> 💡 **Postman Collection:** Import `onepiece-api.postman_collection.json`
+> 💡 **Postman Collection:** Import `onepiece-api.postman_collection.json`  
+> 📚 **Detailed Documentation:** See individual API documentation files in `docs/`
 
 ---
 
@@ -312,38 +277,13 @@ npm run test:watch
 
 ---
 
-## 🐳 Docker
-
-```bash
-# Build
-docker build -t onepiece-api .
-
-# Run
-docker run -p 3000:3000 --env-file configs/.env onepiece-api
-```
-
 ---
 
 ## ☁️ Deployment
 
-### AWS (Recommended)
+This project can be deployed on any platform that supports Node.js:
 
-This project is optimized for AWS with:
-- Rate limiting (cost protection)
-- CloudWatch logging
-- Auto-scaling ready
-
-**Deployment options:**
-- **Lambda + API Gateway** - Serverless, cheapest (~$5/month)
-- **Elastic Beanstalk** - Easiest (~$25-40/month)
-- **ECS + Fargate** - Containers (~$15-25/month)
-- **EC2** - Full control (~$0-10/month with free tier)
-
-> ☁️ **Complete guide:** See [docs/AWS_DEPLOYMENT.md](docs/AWS_DEPLOYMENT.md)
-
-### Heroku, Railway, Render
-
-Also works on any PaaS that supports Node.js:
+### Heroku, Railway, Render, Vercel
 
 ```bash
 # Set environment variables
@@ -353,6 +293,16 @@ heroku config:set DB_HOST=your_db_host
 
 # Deploy
 git push heroku main
+```
+
+### Docker
+
+```bash
+# Build
+docker build -t onepiece-api .
+
+# Run
+docker run -p 3000:3000 --env-file configs/.env onepiece-api
 ```
 
 ---

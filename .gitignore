@@ -11,6 +11,7 @@ yarn-error.log*
 .env.local
 configs/.env*
 !configs/.env.example
+!configs/.env.test
 *.pid
 *.seed
 *.pid.lock
@@ -23,3 +24,8 @@ logs/*
 
 # Project tracking files (internal use only)
 PROJECT_STATUS.md
+AWS_DEPLOYMENT_GUIDE.md
+
+# Serverless Framework
+.serverless/
+.serverless-*

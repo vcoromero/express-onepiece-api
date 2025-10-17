@@ -1,0 +1,1220 @@
+{
+  "info": {
+    "name": "One Piece API - Complete Collection",
+    "description": "Complete collection for testing One Piece API endpoints with JWT Authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "onepiece-api-complete"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/health",
+          "host": ["{{base_url}}"],
+          "path": ["api", "health"]
+        },
+        "description": "Check if the API is running and healthy"
+      }
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Automatically save token after successful login",
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('jwt_token', jsonData.data.token);",
+                  "    console.log('Token saved successfully');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{admin_username}}\",\n  \"password\": \"{{admin_password}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "login"]
+            },
+            "description": "Login endpoint - Returns JWT token for authentication"
+          }
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/verify",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "verify"]
+            },
+            "description": "Verify if a JWT token is valid"
+          }
+        },
+        {
+          "name": "Generate Password Hash (Dev Only)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"your_new_password_here\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/auth/generate-hash",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "generate-hash"]
+            },
+            "description": "Generate a bcrypt hash for a password - ONLY available in development mode"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Database Management",
+      "item": [
+        {
+          "name": "Sync Database",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/db/sync",
+              "host": ["{{base_url}}"],
+              "path": ["api", "db", "sync"]
+            },
+            "description": "Sync database with Sequelize models (Admin only)"
+          }
+        },
+        {
+          "name": "Get Database Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/db/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "db", "status"]
+            },
+            "description": "Get database status and structure (Admin only)"
+          }
+        },
+        {
+          "name": "Get Available SQL Files",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/db/available-sql-files",
+              "host": ["{{base_url}}"],
+              "path": ["api", "db", "available-sql-files"]
+            },
+            "description": "Get available SQL files in schemas directory (Admin only)"
+          }
+        },
+        {
+          "name": "Execute SQL Files",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"fileNames\": [\"01-seed-catalog-data.sql\", \"02-seed-main-data.sql\"]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/db/execute-sql",
+              "host": ["{{base_url}}"],
+              "path": ["api", "db", "execute-sql"]
+            },
+            "description": "Execute SQL files (single or multiple) - Admin only"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Devil Fruit Types",
+      "item": [
+        {
+          "name": "Get All Fruit Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/fruit-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "fruit-types"]
+            },
+            "description": "Retrieve all devil fruit types"
+          }
+        },
+        {
+          "name": "Get Fruit Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/fruit-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "fruit-types", "1"]
+            },
+            "description": "Retrieve a specific fruit type by ID"
+          }
+        },
+        {
+          "name": "Update Fruit Type",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Paramecia Updated\",\n    \"description\": \"Updated description for Paramecia type\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/fruit-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "fruit-types", "1"]
+            },
+            "description": "Update an existing fruit type (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Devil Fruits",
+      "item": [
+        {
+          "name": "Get All Devil Fruits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits?page=1&limit=10&sortBy=id&sortOrder=ASC",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search term for name",
+                  "disabled": true
+                },
+                {
+                  "key": "type_id",
+                  "value": "",
+                  "description": "Filter by type ID",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "id",
+                  "description": "Sort field (id, name, created_at)"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "ASC",
+                  "description": "Sort order (ASC, DESC)"
+                }
+              ]
+            },
+            "description": "Get all devil fruits with pagination and filtering"
+          }
+        },
+        {
+          "name": "Get Devil Fruit by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits", "1"]
+            },
+            "description": "Get a specific devil fruit by ID"
+          }
+        },
+        {
+          "name": "Get Devil Fruits by Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits/type/1?page=1&limit=10&sortBy=id&sortOrder=ASC",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits", "type", "1"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "id",
+                  "description": "Sort field (id, name, created_at)"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "ASC",
+                  "description": "Sort order (ASC, DESC)"
+                }
+              ]
+            },
+            "description": "Get devil fruits filtered by type ID"
+          }
+        },
+        {
+          "name": "Create Devil Fruit",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Mera Mera no Mi\",\n    \"japanese_name\": \"メラメラの実\",\n    \"type_id\": 3,\n    \"description\": \"Flame-Flame Fruit\",\n    \"abilities\": \"Allows user to create, control, and become fire\",\n    \"weaknesses\": \"Water and sea stone\",\n    \"awakening_description\": \"Can set surroundings on fire\",\n    \"current_user_id\": 1,\n    \"previous_users\": [2, 3],\n    \"image_url\": \"https://example.com/mera-mera.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits"]
+            },
+            "description": "Create a new devil fruit (requires authentication)"
+          }
+        },
+        {
+          "name": "Update Devil Fruit",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Gomu Gomu no Mi Updated\",\n    \"japanese_name\": \"ゴムゴムの実（更新）\",\n    \"description\": \"Updated rubber fruit description\",\n    \"abilities\": \"Enhanced stretching abilities\",\n    \"weaknesses\": \"Updated weaknesses\",\n    \"awakening_description\": \"Updated awakening form\",\n    \"current_user_id\": 2,\n    \"previous_users\": [1, 2, 3],\n    \"image_url\": \"https://example.com/gomu-gomu-updated.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits", "1"]
+            },
+            "description": "Update an existing devil fruit (requires authentication)"
+          }
+        },
+        {
+          "name": "Delete Devil Fruit",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits/2",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits", "2"]
+            },
+            "description": "Delete a devil fruit (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Haki Types",
+      "item": [
+        {
+          "name": "Get All Haki Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/haki-types?search=&sortBy=name&sortOrder=asc",
+              "host": ["{{base_url}}"],
+              "path": ["api", "haki-types"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search term for name/description (optional)"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "name",
+                  "description": "Field to sort by (name, color, created_at, updated_at)"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc",
+                  "description": "Sort order (asc/desc)"
+                }
+              ]
+            },
+            "description": "Get all Haki types with filtering and sorting"
+          }
+        },
+        {
+          "name": "Get Haki Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/haki-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "haki-types", "1"]
+            },
+            "description": "Get a specific Haki type by its ID"
+          }
+        },
+        {
+          "name": "Update Haki Type",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Enhanced Observation Haki\",\n    \"description\": \"Updated description with more details\",\n    \"color\": \"Crimson\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/haki-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "haki-types", "1"]
+            },
+            "description": "Update a Haki type (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Races",
+      "item": [
+        {
+          "name": "Get All Races",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/races",
+              "host": ["{{base_url}}"],
+              "path": ["api", "races"]
+            },
+            "description": "Get all races in the One Piece universe"
+          }
+        },
+        {
+          "name": "Get Race by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/races/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "races", "1"]
+            },
+            "description": "Get a specific race by ID"
+          }
+        },
+        {
+          "name": "Update Race",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Human Updated\",\n    \"description\": \"Updated description for Human race\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/races/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "races", "1"]
+            },
+            "description": "Update a race (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Character Types",
+      "item": [
+        {
+          "name": "Get All Character Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/character-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "character-types"]
+            },
+            "description": "Get all character types in the One Piece universe"
+          }
+        },
+        {
+          "name": "Get Character Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/character-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "character-types", "1"]
+            },
+            "description": "Get a specific character type by ID"
+          }
+        },
+        {
+          "name": "Update Character Type",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Pirate Updated\",\n    \"description\": \"Updated description for Pirate character type\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/character-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "character-types", "1"]
+            },
+            "description": "Update a character type (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organization Types",
+      "item": [
+        {
+          "name": "Get All Organization Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organization-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-types"]
+            },
+            "description": "Get all organization types in the One Piece universe"
+          }
+        },
+        {
+          "name": "Get Organization Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organization-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-types", "1"]
+            },
+            "description": "Get a specific organization type by ID"
+          }
+        },
+        {
+          "name": "Update Organization Type",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Pirate Crew Updated\",\n    \"description\": \"Updated description for Pirate Crew organization type\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organization-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-types", "1"]
+            },
+            "description": "Update an organization type (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Characters",
+      "item": [
+        {
+          "name": "Get All Characters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/characters?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all characters with pagination and filtering"
+          }
+        },
+        {
+          "name": "Get Character by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/characters/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters", "1"]
+            },
+            "description": "Get a specific character by ID"
+          }
+        },
+        {
+          "name": "Search Characters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/characters/search?q=luffy",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "luffy"
+                }
+              ]
+            },
+            "description": "Search characters by name, japanese name, or description"
+          }
+        },
+        {
+          "name": "Create Character",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Monkey D. Luffy\",\n    \"japanese_name\": \"モンキー・D・ルフィ\",\n    \"race_id\": 1,\n    \"character_type_id\": 1,\n    \"bounty\": 3000000000,\n    \"age\": 19,\n    \"height\": 174,\n    \"description\": \"Captain of the Straw Hat Pirates\",\n    \"abilities\": \"Gomu Gomu no Mi powers\",\n    \"is_alive\": true,\n    \"first_appearance\": \"Chapter 1\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/characters",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters"]
+            },
+            "description": "Create a new character (requires authentication)"
+          }
+        },
+        {
+          "name": "Update Character",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Monkey D. Luffy Updated\",\n    \"bounty\": 5000000000,\n    \"description\": \"Updated description for Luffy\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/characters/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters", "1"]
+            },
+            "description": "Update a character (requires authentication)"
+          }
+        },
+        {
+          "name": "Delete Character",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/characters/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters", "1"]
+            },
+            "description": "Delete a character (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ships",
+      "item": [
+        {
+          "name": "Get All Ships",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ships?page=1&limit=10&status=active&search=Thousand",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)"
+                },
+                {
+                  "key": "status",
+                  "value": "active",
+                  "description": "Filter by status: active, destroyed, retired"
+                },
+                {
+                  "key": "search",
+                  "value": "Thousand",
+                  "description": "Search term for ship name"
+                }
+              ]
+            },
+            "description": "Get all ships with pagination and filtering options"
+          }
+        },
+        {
+          "name": "Get Ship by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ships/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships", "1"]
+            },
+            "description": "Get a specific ship by its ID"
+          }
+        },
+        {
+          "name": "Get Ships by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ships/status/active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships", "status", "active"]
+            },
+            "description": "Get all ships with a specific status (active, destroyed, retired)"
+          }
+        },
+        {
+          "name": "Create Ship",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Going Merry\",\n    \"description\": \"The first ship of the Straw Hat Pirates, a caravel gifted by Kaya\",\n    \"status\": \"destroyed\",\n    \"image_url\": \"https://example.com/going-merry.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ships",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships"]
+            },
+            "description": "Create a new ship (requires authentication)"
+          }
+        },
+        {
+          "name": "Update Ship",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"name\": \"Thousand Sunny Go\",\n    \"description\": \"Updated description for the Straw Hat Pirates' ship\",\n    \"status\": \"active\",\n    \"image_url\": \"https://example.com/thousand-sunny-go.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/ships/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships", "1"]
+            },
+            "description": "Update an existing ship (requires authentication)"
+          }
+        },
+        {
+          "name": "Delete Ship",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ships/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships", "1"]
+            },
+            "description": "Delete a ship (requires authentication)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "Get All Organizations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations?page=1&limit=10&sortBy=name&sortOrder=ASC",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "name"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "ASC"
+                }
+              ]
+            },
+            "description": "Get all organizations with pagination and filtering"
+          }
+        },
+        {
+          "name": "Get Organization by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "1"]
+            },
+            "description": "Get organization by ID with full details"
+          }
+        },
+        {
+          "name": "Get Organizations by Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/type/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "type", "1"]
+            },
+            "description": "Get organizations by organization type ID"
+          }
+        },
+        {
+          "name": "Get Organization Members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/1/members",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "1", "members"]
+            },
+            "description": "Get all members of an organization"
+          }
+        },
+        {
+          "name": "Create Organization",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"New Pirate Crew\",\n  \"organizationTypeId\": 1,\n  \"leaderId\": 1,\n  \"shipId\": 1,\n  \"flagDescription\": \"Black flag with skull and crossbones\",\n  \"jollyRogerUrl\": \"https://example.com/flag.jpg\",\n  \"baseLocation\": \"Grand Line\",\n  \"totalBounty\": 1000000000,\n  \"status\": \"active\",\n  \"description\": \"A new pirate crew seeking adventure\",\n  \"foundedDate\": \"2024\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organizations",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations"]
+            },
+            "description": "Create a new organization (requires JWT authentication)"
+          }
+        },
+        {
+          "name": "Update Organization",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Pirate Crew\",\n  \"description\": \"Updated description\",\n  \"totalBounty\": 2000000000,\n  \"status\": \"active\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/organizations/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "1"]
+            },
+            "description": "Update an organization (requires JWT authentication)"
+          }
+        },
+        {
+          "name": "Delete Organization",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "1"]
+            },
+            "description": "Delete an organization (requires JWT authentication). Cannot delete if organization has active members."
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "admin_username",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "admin_password",
+      "value": "your_password_here",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
