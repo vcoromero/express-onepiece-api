@@ -1,24 +1,24 @@
 # Devil Fruits API Documentation
 
-Esta documentación describe los endpoints disponibles para la gestión de Devil Fruits en la API de One Piece.
+This documentation describes the available endpoints for devil fruit management in the One Piece API.
 
-## Endpoints Disponibles
+## Available Endpoints
 
-### 1. Obtener todas las Devil Fruits
+### 1. Get All Devil Fruits
 **GET** `/api/devil-fruits`
 
-Obtiene una lista paginada de todas las devil fruits con filtros opcionales.
+Gets a paginated list of all devil fruits with optional filters.
 
-#### Parámetros de Query:
-- `page` (opcional): Número de página (default: 1)
-- `limit` (opcional): Elementos por página (default: 10, max: 100)
-- `search` (opcional): Término de búsqueda para filtrar por nombre
-- `type_id` (opcional): ID del tipo de devil fruit para filtrar
-- `rarity` (opcional): Rarity para filtrar (common, rare, legendary, mythical)
-- `sortBy` (opcional): Campo para ordenar (id, name, rarity, power_level, created_at)
-- `sortOrder` (opcional): Orden (ASC, DESC)
+#### Query Parameters:
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10, max: 100)
+- `search` (optional): Search term to filter by name
+- `type_id` (optional): Devil fruit type ID to filter by
+- `rarity` (optional): Rarity to filter by (common, rare, legendary, mythical)
+- `sortBy` (optional): Sort field (id, name, rarity, power_level, created_at)
+- `sortOrder` (optional): Sort order (ASC, DESC)
 
-#### Ejemplo de Respuesta:
+#### Example Response:
 ```json
 {
   "success": true,
@@ -52,15 +52,15 @@ Obtiene una lista paginada de todas las devil fruits con filtros opcionales.
 }
 ```
 
-### 2. Obtener Devil Fruit por ID
+### 2. Get Devil Fruit by ID
 **GET** `/api/devil-fruits/:id`
 
-Obtiene una devil fruit específica por su ID.
+Gets a specific devil fruit by its ID.
 
-#### Parámetros:
-- `id`: ID de la devil fruit
+#### Parameters:
+- `id`: Devil fruit ID
 
-#### Ejemplo de Respuesta:
+#### Example Response:
 ```json
 {
   "success": true,
@@ -86,10 +86,10 @@ Obtiene una devil fruit específica por su ID.
 }
 ```
 
-### 3. Crear Nueva Devil Fruit
+### 3. Create New Devil Fruit
 **POST** `/api/devil-fruits`
 
-Crea una nueva devil fruit. Requiere autenticación.
+Creates a new devil fruit. Requires authentication.
 
 #### Headers:
 - `Authorization: Bearer <token>`
@@ -109,20 +109,20 @@ Crea una nueva devil fruit. Requiere autenticación.
 }
 ```
 
-#### Campos Requeridos:
-- `name`: Nombre de la devil fruit (máximo 100 caracteres)
-- `type_id`: ID del tipo de devil fruit (debe existir)
+#### Required Fields:
+- `name`: Devil fruit name (max 100 characters)
+- `type_id`: Devil fruit type ID (must exist)
 
-#### Campos Opcionales:
-- `description`: Descripción de la devil fruit
-- `abilities`: Habilidades especiales
-- `current_user`: Usuario actual de la devil fruit
-- `previous_users`: Usuarios anteriores (JSON string)
+#### Optional Fields:
+- `description`: Devil fruit description
+- `abilities`: Special abilities
+- `current_user`: Current devil fruit user
+- `previous_users`: Previous users (JSON string)
 - `rarity`: Rarity (common, rare, legendary, mythical) - default: common
-- `power_level`: Nivel de poder (1-100)
-- `is_awakened`: Si está despertada (boolean) - default: false
+- `power_level`: Power level (1-100)
+- `is_awakened`: If awakened (boolean) - default: false
 
-#### Ejemplo de Respuesta:
+#### Example Response:
 ```json
 {
   "success": true,
@@ -148,16 +148,16 @@ Crea una nueva devil fruit. Requiere autenticación.
 }
 ```
 
-### 4. Actualizar Devil Fruit
+### 4. Update Devil Fruit
 **PUT** `/api/devil-fruits/:id`
 
-Actualiza una devil fruit existente. Requiere autenticación.
+Updates an existing devil fruit. Requires authentication.
 
 #### Headers:
 - `Authorization: Bearer <token>`
 
-#### Parámetros:
-- `id`: ID de la devil fruit a actualizar
+#### Parameters:
+- `id`: Devil fruit ID to update
 
 #### Body (JSON):
 ```json
@@ -168,9 +168,9 @@ Actualiza una devil fruit existente. Requiere autenticación.
 }
 ```
 
-Todos los campos son opcionales. Solo se actualizarán los campos proporcionados.
+All fields are optional. Only provided fields will be updated.
 
-#### Ejemplo de Respuesta:
+#### Example Response:
 ```json
 {
   "success": true,
@@ -189,18 +189,18 @@ Todos los campos son opcionales. Solo se actualizarán los campos proporcionados
 }
 ```
 
-### 5. Eliminar Devil Fruit
+### 5. Delete Devil Fruit
 **DELETE** `/api/devil-fruits/:id`
 
-Elimina una devil fruit. Requiere autenticación.
+Deletes a devil fruit. Requires authentication.
 
 #### Headers:
 - `Authorization: Bearer <token>`
 
-#### Parámetros:
-- `id`: ID de la devil fruit a eliminar
+#### Parameters:
+- `id`: Devil fruit ID to delete
 
-#### Ejemplo de Respuesta:
+#### Example Response:
 ```json
 {
   "success": true,
@@ -208,21 +208,21 @@ Elimina una devil fruit. Requiere autenticación.
 }
 ```
 
-### 6. Obtener Devil Fruits por Tipo
+### 6. Get Devil Fruits by Type
 **GET** `/api/devil-fruits/type/:typeId`
 
-Obtiene todas las devil fruits de un tipo específico.
+Gets all devil fruits of a specific type.
 
-#### Parámetros:
-- `typeId`: ID del tipo de devil fruit
+#### Parameters:
+- `typeId`: Devil fruit type ID
 
-#### Parámetros de Query:
-- `page` (opcional): Número de página (default: 1)
-- `limit` (opcional): Elementos por página (default: 10, max: 100)
-- `sortBy` (opcional): Campo para ordenar (id, name, rarity, power_level, created_at)
-- `sortOrder` (opcional): Orden (ASC, DESC)
+#### Query Parameters:
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 10, max: 100)
+- `sortBy` (optional): Sort field (id, name, rarity, power_level, created_at)
+- `sortOrder` (optional): Sort order (ASC, DESC)
 
-#### Ejemplo de Respuesta:
+#### Example Response:
 ```json
 {
   "success": true,
@@ -248,55 +248,55 @@ Obtiene todas las devil fruits de un tipo específico.
 }
 ```
 
-## Códigos de Error
+## Error Codes
 
 ### 400 Bad Request
-- Parámetros de validación incorrectos
-- Campos requeridos faltantes
-- Valores fuera de rango
+- Invalid validation parameters
+- Missing required fields
+- Values out of range
 
 ### 401 Unauthorized
-- Token de autenticación faltante o inválido
+- Missing or invalid authentication token
 
 ### 404 Not Found
-- Devil fruit no encontrada
-- Tipo de devil fruit no encontrado
+- Devil fruit not found
+- Devil fruit type not found
 
 ### 409 Conflict
-- Nombre de devil fruit ya existe
-- Tipo de devil fruit tiene devil fruits asociadas
+- Devil fruit name already exists
+- Devil fruit type has associated devil fruits
 
 ### 500 Internal Server Error
-- Error interno del servidor
+- Internal server error
 
-## Relaciones
+## Relationships
 
 ### Devil Fruit ↔ Devil Fruit Type
-- Una Devil Fruit pertenece a un Devil Fruit Type
-- Un Devil Fruit Type puede tener muchas Devil Fruits
-- Relación: `belongsTo` / `hasMany`
+- A Devil Fruit belongs to a Devil Fruit Type
+- A Devil Fruit Type can have many Devil Fruits
+- Relationship: `belongsTo` / `hasMany`
 
-## Validaciones
+## Validations
 
-### Campos de Devil Fruit:
-- `name`: Requerido, único, máximo 100 caracteres
-- `type_id`: Requerido, debe existir en devil_fruit_types
-- `description`: Opcional, texto libre
-- `abilities`: Opcional, texto libre
-- `current_user`: Opcional, máximo 100 caracteres
-- `previous_users`: Opcional, JSON string válido
+### Devil Fruit Fields:
+- `name`: Required, unique, max 100 characters
+- `type_id`: Required, must exist in devil_fruit_types
+- `description`: Optional, free text
+- `abilities`: Optional, free text
+- `current_user`: Optional, max 100 characters
+- `previous_users`: Optional, valid JSON string
 - `rarity`: Enum (common, rare, legendary, mythical)
-- `power_level`: Entero entre 1 y 100
+- `power_level`: Integer between 1 and 100
 - `is_awakened`: Boolean
 
-### Filtros Disponibles:
-- Búsqueda por nombre (case-insensitive)
-- Filtro por tipo de devil fruit
-- Filtro por rarity
-- Ordenamiento por múltiples campos
-- Paginación
+### Available Filters:
+- Search by name (case-insensitive)
+- Filter by devil fruit type
+- Filter by rarity
+- Sort by multiple fields
+- Pagination
 
 ## Rate Limiting
 
-- **GET endpoints**: 100 requests por 15 minutos
-- **POST/PUT/DELETE endpoints**: 50 requests por 15 minutos (requieren autenticación)
+- **GET endpoints**: 100 requests per 15 minutes
+- **POST/PUT/DELETE endpoints**: 50 requests per 15 minutes (requires authentication)
