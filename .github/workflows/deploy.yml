@@ -36,7 +36,7 @@ jobs:
       run: npm install -g serverless@3
       
     - name: Deploy to AWS
-      run: serverless deploy
+      run: serverless deploy --stage prod
       env:
         NODE_ENV: production
         # Environment Variables
