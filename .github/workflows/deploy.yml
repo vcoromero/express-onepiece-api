@@ -33,7 +33,7 @@ jobs:
         aws-region: us-east-1
         
     - name: Install Serverless Framework
-      run: npm install -g serverless
+      run: npm install -g serverless@3
       
     - name: Deploy to AWS
       run: serverless deploy
