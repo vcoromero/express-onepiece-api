@@ -99,18 +99,21 @@ const sensitiveOperationsLimiter = rateLimit({
 /**
  * Create custom rate limiter with specific configuration
  */
-const createRateLimiter = (options) => {
+const createRateLimiter = (options = {}) => {
+  // Handle null, undefined, or invalid options
+  const safeOptions = options && typeof options === 'object' ? options : {};
+  
   return rateLimit({
-    windowMs: options.windowMs || 15 * 60 * 1000,
-    max: options.max || 100,
-    message: options.message || {
+    windowMs: safeOptions.windowMs || 15 * 60 * 1000,
+    max: safeOptions.max || 100,
+    message: safeOptions.message || {
       success: false,
       message: 'Rate limit exceeded',
       error: 'Too many requests'
     },
     standardHeaders: true,
     legacyHeaders: false,
-    ...options
+    ...safeOptions
   });
 };
 
