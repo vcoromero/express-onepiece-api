@@ -3,7 +3,7 @@
 A RESTful API inspired by One Piece, built with Express.js, MySQL, and Sequelize ORM.
 
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com)
-[![Coverage](https://img.shields.io/badge/coverage-93.75%25-brightgreen)](https://github.com)
+[![Coverage](https://img.shields.io/badge/coverage-94.21%25-brightgreen)](https://github.com)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
@@ -15,7 +15,7 @@ A RESTful API inspired by One Piece, built with Express.js, MySQL, and Sequelize
 - ✅ **JWT Authentication** - Secure token-based auth
 - ✅ **Rate Limiting** - Protection against abuse
 - ✅ **Winston Logger** - CloudWatch ready
-- ✅ **Jest Tests** - 451 tests, 93.75% coverage
+- ✅ **Jest Tests** - 778 tests, 94.21% coverage
 - ✅ **Docker Ready** - Containerization included
 - ✅ **AWS Optimized** - Deployment guides included
 
@@ -210,6 +210,28 @@ GET    /api/organization-types/:id # Get one (public)
 PUT    /api/organization-types/:id # Update (requires auth)
 ```
 
+### Organizations
+
+```bash
+GET    /api/organizations                    # Get all with pagination & filters (public)
+GET    /api/organizations/:id               # Get one by ID (public)
+GET    /api/organizations/:id/members       # Get organization members (public)
+POST   /api/organizations                    # Create (requires auth)
+PUT    /api/organizations/:id               # Update (requires auth)
+DELETE /api/organizations/:id               # Delete (requires auth)
+```
+
+#### Organizations Query Parameters
+
+**GET /api/organizations** supports:
+- `page` - Page number (default: 1)
+- `limit` - Items per page (default: 10, max: 100)
+- `search` - Search term for name
+- `status` - Filter by status (active, disbanded, destroyed)
+- `organizationTypeId` - Filter by organization type ID
+- `sortBy` - Sort field (name, totalBounty, status, createdAt)
+- `sortOrder` - Sort order (ASC, DESC)
+
 ### Ships
 
 ```bash
@@ -286,7 +308,7 @@ npm test -- --coverage
 npm run test:watch
 ```
 
-**Current coverage:** 93.75% (451/451 tests passing ✅)
+**Current coverage:** 94.21% (778/778 tests passing ✅)
 
 ---
 
@@ -383,9 +405,9 @@ MIT License - See [LICENSE](LICENSE) for details.
 ## 🎯 Roadmap
 
 - [x] Implement Ships model with full CRUD operations
-- [ ] Implement Characters model
-- [ ] Implement Organizations model
-- [ ] Add relationships between models
+- [x] Implement Characters model with full CRUD operations
+- [x] Implement Organizations model with full CRUD operations
+- [x] Add relationships between models
 - [ ] Refresh tokens
 - [ ] GraphQL endpoint
 - [ ] OpenAPI/Swagger documentation
