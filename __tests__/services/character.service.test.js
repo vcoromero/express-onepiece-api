@@ -24,23 +24,55 @@ jest.mock('../../src/models', () => ({
   CharacterOrganization: {}
 }));
 
+// Mock Sequelize operators
 jest.mock('sequelize', () => ({
   Op: {
     or: Symbol('or'),
     like: Symbol('like'),
     gte: Symbol('gte'),
-    lte: Symbol('lte')
+    lte: Symbol('lte'),
+    ne: Symbol('ne'),
+    iLike: Symbol('iLike'),
+    and: Symbol('and')
   }
 }));
 
+// Mock database configuration to avoid real connections
 jest.mock('../../src/config/sequelize.config', () => ({
   sequelize: {
+    authenticate: jest.fn().mockResolvedValue(true),
+    sync: jest.fn().mockResolvedValue(true),
     query: jest.fn()
   }
 }));
 
-// Mock console to avoid noise in tests
-jest.spyOn(console, 'error').mockImplementation(() => {});
+// Mock database configuration
+jest.mock('../../src/config/db.config', () => ({
+  development: {
+    username: 'test',
+    password: 'test',
+    database: 'test',
+    host: 'localhost',
+    dialect: 'sqlite'
+  }
+}));
+
+// Mock console to avoid logs in tests
+const originalConsole = global.console;
+beforeAll(() => {
+  global.console = {
+    ...originalConsole,
+    log: jest.fn(),
+    debug: jest.fn(),
+    info: jest.fn(),
+    warn: jest.fn(),
+    error: jest.fn()
+  };
+});
+
+afterAll(() => {
+  global.console = originalConsole;
+});
 
 const { Character, Race, CharacterDevilFruit } = require('../../src/models');
 const { sequelize } = require('../../src/config/sequelize.config');
