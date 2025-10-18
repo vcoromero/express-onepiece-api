@@ -1,17 +1,17 @@
 // HakiType Controller Unit Tests
-// Tests unitarios para el controlador de tipos de Haki
+// Unit tests for Haki Type controller
 
 const request = require('supertest');
 const app = require('../../src/app');
 
-// Mock del servicio
+// Mock the service
 jest.mock('../../src/services/haki-type.service', () => ({
   getAllHakiTypes: jest.fn(),
   getHakiTypeById: jest.fn(),
   updateHakiType: jest.fn()
 }));
 
-// Mock de JWTUtil para autenticación
+// Mock JWTUtil for authentication
 jest.mock('../../src/utils/jwt.util', () => ({
   generateToken: jest.fn(),
   verifyToken: jest.fn((token) => {
@@ -23,7 +23,7 @@ jest.mock('../../src/utils/jwt.util', () => ({
   decodeToken: jest.fn()
 }));
 
-// Mock de configuración de base de datos para evitar conexiones reales
+// Mock database configuration to avoid real connections
 jest.mock('../../src/config/sequelize.config', () => ({
   sequelize: {
     authenticate: jest.fn().mockResolvedValue(true),
@@ -31,7 +31,7 @@ jest.mock('../../src/config/sequelize.config', () => ({
   }
 }));
 
-// Mock de configuración de base de datos
+// Mock database configuration
 jest.mock('../../src/config/db.config', () => ({
   development: {
     username: 'test',
@@ -42,7 +42,7 @@ jest.mock('../../src/config/db.config', () => ({
   }
 }));
 
-// Mock de modelos para evitar conexiones a DB
+// Mock models to avoid DB connections
 jest.mock('../../src/models', () => ({
   HakiType: {
     findAll: jest.fn(),
@@ -78,7 +78,7 @@ jest.mock('../../src/models', () => ({
   }
 }));
 
-// Mock de modelos individuales
+// Mock individual models
 jest.mock('../../src/models/haki-type.model', () => ({
   init: jest.fn(),
   findAll: jest.fn(),
@@ -109,7 +109,7 @@ jest.mock('../../src/models/fruit-type.model', () => ({
   destroy: jest.fn()
 }));
 
-// Mock de Sequelize para evitar inicialización
+// Mock Sequelize to avoid initialization
 jest.mock('sequelize', () => {
   const Sequelize = jest.fn(() => ({
     define: jest.fn(),
@@ -128,7 +128,7 @@ jest.mock('sequelize', () => {
   return Sequelize;
 });
 
-// Mock de console para evitar logs en tests
+// Mock console to avoid logs in tests
 const originalConsole = global.console;
 beforeAll(() => {
   global.console = {
