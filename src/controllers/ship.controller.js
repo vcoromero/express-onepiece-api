@@ -1,5 +1,5 @@
 const shipService = require('../services/ship.service');
-const { createPaginatedResponse, createItemResponse, createListResponse, createErrorResponse } = require('../utils/response.helper');
+const { createPaginatedResponse, createItemResponse, createListResponse } = require('../utils/response.helper');
 
 /**
  * Ship Controller
@@ -27,19 +27,19 @@ class ShipController {
       const limitNum = parseInt(limit);
 
       if (isNaN(pageNum) || pageNum < 1) {
-        return res.status(400).json(createErrorResponse(
-          'Page must be a positive integer',
-          'INVALID_PAGE',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Page must be a positive integer',
+          error: 'Invalid page parameter'
+        });
       }
 
       if (isNaN(limitNum) || limitNum < 1 || limitNum > 100) {
-        return res.status(400).json(createErrorResponse(
-          'Limit must be between 1 and 100',
-          'INVALID_LIMIT',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Limit must be between 1 and 100',
+          error: 'Invalid limit parameter'
+        });
       }
 
       const result = await shipService.getAllShips({
@@ -49,8 +49,12 @@ class ShipController {
         search
       });
 
+      if (!result.success) {
+        return res.status(500).json(result);
+      }
+
       res.status(200).json(createPaginatedResponse(
-        result.ships,
+        result.data,
         result.pagination,
         'Ships retrieved successfully'
       ));
@@ -58,18 +62,18 @@ class ShipController {
       console.error('Get all ships error:', error);
             
       if (error.message === 'SHIP_INVALID_STATUS') {
-        return res.status(400).json(createErrorResponse(
-          'Invalid status filter. Must be active, destroyed, or retired',
-          'INVALID_STATUS',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid status filter. Must be active, destroyed, or retired',
+          error: 'Invalid status parameter'
+        });
       }
 
-      res.status(500).json(createErrorResponse(
-        'Failed to retrieve ships',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve ships',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
     }
   }
 
@@ -86,43 +90,33 @@ class ShipController {
 
       // Validate ID parameter
       if (!id || isNaN(id) || parseInt(id) <= 0) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid ship ID',
-          'INVALID_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid ship ID',
+          error: 'ID must be a positive integer'
+        });
       }
 
-      const ship = await shipService.getShipById(parseInt(id));
+      const result = await shipService.getShipById(parseInt(id));
+
+      if (!result.success) {
+        if (result.error === 'NOT_FOUND') {
+          return res.status(404).json(result);
+        }
+        return res.status(500).json(result);
+      }
 
       res.status(200).json(createItemResponse(
-        ship,
+        result.data,
         'Ship retrieved successfully'
       ));
     } catch (error) {
       console.error('Get ship by ID error:', error);
-            
-      if (error.message === 'SHIP_INVALID_ID') {
-        return res.status(400).json(createErrorResponse(
-          'Invalid ship ID',
-          'INVALID_ID',
-          400
-        ));
-      }
-
-      if (error.message === 'SHIP_NOT_FOUND') {
-        return res.status(404).json(createErrorResponse(
-          'Ship not found',
-          'NOT_FOUND',
-          404
-        ));
-      }
-
-      res.status(500).json(createErrorResponse(
-        'Failed to retrieve ship',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 
@@ -178,10 +172,11 @@ class ShipController {
         image_url
       });
 
-      res.status(201).json(createItemResponse(
-        ship,
-        'Ship created successfully'
-      ));
+      res.status(201).json({
+        success: true,
+        data: ship,
+        message: 'Ship created successfully'
+      });
     } catch (error) {
       console.error('Create ship error:', error);
             
@@ -202,18 +197,18 @@ class ShipController {
       }
 
       if (error.message === 'SHIP_NAME_EXISTS') {
-        return res.status(409).json(createErrorResponse(
-          'A ship with this name already exists',
-          'DUPLICATE_NAME',
-          409
-        ));
+        return res.status(409).json({
+          success: false,
+          message: 'A ship with this name already exists',
+          error: 'Ship name must be unique'
+        });
       }
 
-      res.status(500).json(createErrorResponse(
-        'Failed to create ship',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create ship',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
     }
   }
 
@@ -231,11 +226,11 @@ class ShipController {
 
       // Validate ID parameter
       if (!id || isNaN(id) || parseInt(id) <= 0) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid ship ID',
-          'INVALID_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid ship ID',
+          error: 'ID must be a positive integer'
+        });
       }
 
       // Validate request body
@@ -280,34 +275,41 @@ class ShipController {
         });
       }
 
-      const ship = await shipService.updateShip(parseInt(id), {
+      const result = await shipService.updateShip(parseInt(id), {
         name,
         description,
         status,
         image_url
       });
 
+      if (!result.success) {
+        if (result.error === 'NOT_FOUND') {
+          return res.status(404).json(result);
+        }
+        return res.status(500).json(result);
+      }
+
       res.status(200).json(createItemResponse(
-        ship,
+        result.data,
         'Ship updated successfully'
       ));
     } catch (error) {
       console.error('Update ship error:', error);
             
       if (error.message === 'SHIP_INVALID_ID') {
-        return res.status(400).json(createErrorResponse(
-          'Invalid ship ID',
-          'INVALID_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid ship ID',
+          error: 'ID must be a positive integer'
+        });
       }
 
       if (error.message === 'SHIP_NOT_FOUND') {
-        return res.status(404).json(createErrorResponse(
-          'Ship not found',
-          'NOT_FOUND',
-          404
-        ));
+        return res.status(404).json({
+          success: false,
+          message: 'Ship not found',
+          error: 'No ship exists with the provided ID'
+        });
       }
 
       if (error.message === 'SHIP_INVALID_STATUS') {
@@ -319,18 +321,18 @@ class ShipController {
       }
 
       if (error.message === 'SHIP_NAME_EXISTS') {
-        return res.status(409).json(createErrorResponse(
-          'A ship with this name already exists',
-          'DUPLICATE_NAME',
-          409
-        ));
+        return res.status(409).json({
+          success: false,
+          message: 'A ship with this name already exists',
+          error: 'Ship name must be unique'
+        });
       }
 
-      res.status(500).json(createErrorResponse(
-        'Failed to update ship',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Failed to update ship',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
     }
   }
 
@@ -347,51 +349,58 @@ class ShipController {
 
       // Validate ID parameter
       if (!id || isNaN(id) || parseInt(id) <= 0) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid ship ID',
-          'INVALID_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid ship ID',
+          error: 'ID must be a positive integer'
+        });
       }
 
       const result = await shipService.deleteShip(parseInt(id));
 
+      if (!result.success) {
+        if (result.error === 'NOT_FOUND') {
+          return res.status(404).json(result);
+        }
+        return res.status(500).json(result);
+      }
+
       res.status(200).json(createItemResponse(
         result,
-        'Ship deleted successfully'
+        result.message
       ));
     } catch (error) {
       console.error('Delete ship error:', error);
             
       if (error.message === 'SHIP_INVALID_ID') {
-        return res.status(400).json(createErrorResponse(
-          'Invalid ship ID',
-          'INVALID_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid ship ID',
+          error: 'ID must be a positive integer'
+        });
       }
 
       if (error.message === 'SHIP_NOT_FOUND') {
-        return res.status(404).json(createErrorResponse(
-          'Ship not found',
-          'NOT_FOUND',
-          404
-        ));
+        return res.status(404).json({
+          success: false,
+          message: 'Ship not found',
+          error: 'No ship exists with the provided ID'
+        });
       }
 
       if (error.message === 'SHIP_IN_USE') {
-        return res.status(409).json(createErrorResponse(
-          'Cannot delete ship that is currently in use by an organization',
-          'SHIP_IN_USE',
-          409
-        ));
+        return res.status(409).json({
+          success: false,
+          message: 'Cannot delete ship that is currently in use by an organization',
+          error: 'Ship is associated with one or more organizations'
+        });
       }
 
-      res.status(500).json(createErrorResponse(
-        'Failed to delete ship',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Failed to delete ship',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
     }
   }
 
@@ -432,11 +441,11 @@ class ShipController {
         });
       }
 
-      res.status(500).json(createErrorResponse(
-        'Failed to retrieve ships by status',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Failed to retrieve ships by status',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+      });
     }
   }
 }

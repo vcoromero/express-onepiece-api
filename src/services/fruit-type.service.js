@@ -14,10 +14,25 @@ class FruitTypeService {
    * @returns {Promise<Array>} Array of fruit types
    */
   async getAllTypes() {
-    return await FruitType.findAll({
-      order: [['id', 'ASC']],
-      attributes: ['id', 'name', 'description', 'created_at', 'updated_at']
-    });
+    try {
+      const fruitTypes = await FruitType.findAll({
+        order: [['id', 'ASC']],
+        attributes: ['id', 'name', 'description', 'created_at', 'updated_at']
+      });
+
+      return {
+        success: true,
+        data: fruitTypes,
+        count: fruitTypes.length
+      };
+    } catch (error) {
+      console.error('Error in getAllTypes:', error);
+      return {
+        success: false,
+        message: 'Failed to fetch fruit types',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      };
+    }
   }
 
   /**
@@ -26,10 +41,40 @@ class FruitTypeService {
    * @returns {Promise<Object|null>} Fruit type or null if not found
    */
   async getTypeById(id) {
-    return await FruitType.findOne({
-      where: { id },
-      attributes: ['id', 'name', 'description', 'created_at', 'updated_at']
-    });
+    try {
+      if (!id || isNaN(id) || parseInt(id) <= 0) {
+        return {
+          success: false,
+          message: 'Invalid fruit type ID',
+          error: 'INVALID_ID'
+        };
+      }
+
+      const fruitType = await FruitType.findOne({
+        where: { id },
+        attributes: ['id', 'name', 'description', 'created_at', 'updated_at']
+      });
+
+      if (!fruitType) {
+        return {
+          success: false,
+          message: `Fruit type with ID ${id} not found`,
+          error: 'NOT_FOUND'
+        };
+      }
+
+      return {
+        success: true,
+        data: fruitType
+      };
+    } catch (error) {
+      console.error('Error in getTypeById:', error);
+      return {
+        success: false,
+        message: 'Failed to fetch fruit type',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      };
+    }
   }
 
   /**

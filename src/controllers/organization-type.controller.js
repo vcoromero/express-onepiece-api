@@ -1,5 +1,5 @@
 const organizationTypeService = require('../services/organization-type.service');
-const { createListResponse, createItemResponse, createErrorResponse } = require('../utils/response.helper');
+const { createListResponse, createItemResponse } = require('../utils/response.helper');
 
 /**
  * @class OrganizationTypeController
@@ -29,11 +29,11 @@ class OrganizationTypeController {
       ));
     } catch (error) {
       console.error('Error in getAllOrganizationTypes controller:', error);
-      res.status(500).json(createErrorResponse(
-        'Internal server error',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 
@@ -50,11 +50,11 @@ class OrganizationTypeController {
 
       // Validate ID is a valid number
       if (!id || isNaN(id) || parseInt(id) <= 0) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid organization type ID',
-          'INVALID_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid organization type ID',
+          error: 'INVALID_ID'
+        });
       }
 
       const result = await organizationTypeService.getOrganizationTypeById(parseInt(id));
@@ -67,16 +67,16 @@ class OrganizationTypeController {
       }
 
       res.status(200).json(createItemResponse(
-        result.data,
+        result.organizationType,
         'Organization type retrieved successfully'
       ));
     } catch (error) {
       console.error('Error in getOrganizationTypeById controller:', error);
-      res.status(500).json(createErrorResponse(
-        'Internal server error',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 
@@ -94,20 +94,20 @@ class OrganizationTypeController {
 
       // Validate ID is a valid number
       if (!id || isNaN(id) || parseInt(id) <= 0) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid organization type ID',
-          'INVALID_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid organization type ID',
+          error: 'INVALID_ID'
+        });
       }
 
       // Validate request body
       if (!updateData || typeof updateData !== 'object') {
-        return res.status(400).json(createErrorResponse(
-          'Request body must be a valid JSON object',
-          'INVALID_BODY',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Request body must be a valid JSON object',
+          error: 'INVALID_BODY'
+        });
       }
 
       const result = await organizationTypeService.updateOrganizationType(parseInt(id), updateData);
@@ -128,16 +128,16 @@ class OrganizationTypeController {
       }
 
       res.status(200).json(createItemResponse(
-        result.data,
+        result.organizationType,
         'Organization type updated successfully'
       ));
     } catch (error) {
       console.error('Error in updateOrganizationType controller:', error);
-      res.status(500).json(createErrorResponse(
-        'Internal server error',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 }

@@ -1,5 +1,5 @@
 const characterService = require('../services/character.service');
-const { createPaginatedResponse, createItemResponse, createListResponse, createErrorResponse } = require('../utils/response.helper');
+const { createPaginatedResponse, createItemResponse } = require('../utils/response.helper');
 
 /**
  * @class CharacterController
@@ -33,52 +33,52 @@ class CharacterController {
       const limitNum = parseInt(limit);
 
       if (pageNum < 1 || limitNum < 1 || limitNum > 100) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid pagination parameters. Page must be >= 1, limit must be between 1 and 100',
-          'INVALID_PAGINATION',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid pagination parameters. Page must be >= 1, limit must be between 1 and 100',
+          error: 'INVALID_PAGINATION'
+        });
       }
 
       // Validate numeric filters
       if (race_id && (isNaN(race_id) || parseInt(race_id) <= 0)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid race_id parameter',
-          'INVALID_RACE_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid race_id parameter',
+          error: 'INVALID_RACE_ID'
+        });
       }
 
       if (character_type_id && (isNaN(character_type_id) || parseInt(character_type_id) <= 0)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid character_type_id parameter',
-          'INVALID_CHARACTER_TYPE_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid character_type_id parameter',
+          error: 'INVALID_CHARACTER_TYPE_ID'
+        });
       }
 
       if (min_bounty && (isNaN(min_bounty) || parseInt(min_bounty) < 0)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid min_bounty parameter',
-          'INVALID_MIN_BOUNTY',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid min_bounty parameter',
+          error: 'INVALID_MIN_BOUNTY'
+        });
       }
 
       if (max_bounty && (isNaN(max_bounty) || parseInt(max_bounty) < 0)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid max_bounty parameter',
-          'INVALID_MAX_BOUNTY',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid max_bounty parameter',
+          error: 'INVALID_MAX_BOUNTY'
+        });
       }
 
       if (min_bounty && max_bounty && parseInt(min_bounty) > parseInt(max_bounty)) {
-        return res.status(400).json(createErrorResponse(
-          'min_bounty cannot be greater than max_bounty',
-          'INVALID_BOUNTY_RANGE',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'min_bounty cannot be greater than max_bounty',
+          error: 'INVALID_BOUNTY_RANGE'
+        });
       }
 
       const result = await characterService.getAllCharacters({
@@ -105,11 +105,11 @@ class CharacterController {
       ));
     } catch (error) {
       console.error('Error in getAllCharacters controller:', error);
-      res.status(500).json(createErrorResponse(
-        'Internal server error',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 
@@ -126,11 +126,11 @@ class CharacterController {
 
       // Validate ID is a valid number
       if (!id || isNaN(id) || parseInt(id) <= 0) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid character ID',
-          'INVALID_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid character ID',
+          error: 'INVALID_ID'
+        });
       }
 
       const result = await characterService.getCharacterById(parseInt(id));
@@ -143,16 +143,16 @@ class CharacterController {
       }
 
       res.status(200).json(createItemResponse(
-        result.data,
+        result.character,
         'Character retrieved successfully'
       ));
     } catch (error) {
       console.error('Error in getCharacterById controller:', error);
-      res.status(500).json(createErrorResponse(
-        'Internal server error',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 
@@ -182,52 +182,52 @@ class CharacterController {
 
       // Validate required fields
       if (!name || name.trim() === '') {
-        return res.status(400).json(createErrorResponse(
-          'Name is required',
-          'MISSING_NAME',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Name is required',
+          error: 'MISSING_NAME'
+        });
       }
 
       // Validate numeric fields
       if (race_id && (isNaN(race_id) || parseInt(race_id) <= 0)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid race_id',
-          'INVALID_RACE_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid race_id',
+          error: 'INVALID_RACE_ID'
+        });
       }
 
       if (character_type_id && (isNaN(character_type_id) || parseInt(character_type_id) <= 0)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid character_type_id',
-          'INVALID_CHARACTER_TYPE_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid character_type_id',
+          error: 'INVALID_CHARACTER_TYPE_ID'
+        });
       }
 
       if (bounty && (isNaN(bounty) || parseInt(bounty) < 0)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid bounty value',
-          'INVALID_BOUNTY',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid bounty value',
+          error: 'INVALID_BOUNTY'
+        });
       }
 
       if (age && (isNaN(age) || parseInt(age) < 0 || parseInt(age) > 1000)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid age value (must be between 0 and 1000)',
-          'INVALID_AGE',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid age value (must be between 0 and 1000)',
+          error: 'INVALID_AGE'
+        });
       }
 
       if (height && (isNaN(height) || parseFloat(height) < 0 || parseFloat(height) > 1000)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid height value (must be between 0 and 1000 cm)',
-          'INVALID_HEIGHT',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid height value (must be between 0 and 1000 cm)',
+          error: 'INVALID_HEIGHT'
+        });
       }
 
       const result = await characterService.createCharacter({
@@ -259,17 +259,14 @@ class CharacterController {
         }
       }
 
-      res.status(201).json(createItemResponse(
-        result.data,
-        'Character created successfully'
-      ));
+      res.status(201).json(result);
     } catch (error) {
       console.error('Error in createCharacter controller:', error);
-      res.status(500).json(createErrorResponse(
-        'Internal server error',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 
@@ -287,61 +284,61 @@ class CharacterController {
 
       // Validate ID is a valid number
       if (!id || isNaN(id) || parseInt(id) <= 0) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid character ID',
-          'INVALID_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid character ID',
+          error: 'INVALID_ID'
+        });
       }
 
       // Validate request body
       if (!updateData || typeof updateData !== 'object') {
-        return res.status(400).json(createErrorResponse(
-          'Request body must be a valid JSON object',
-          'INVALID_BODY',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Request body must be a valid JSON object',
+          error: 'INVALID_BODY'
+        });
       }
 
       // Validate numeric fields if provided
       if (updateData.race_id && (isNaN(updateData.race_id) || parseInt(updateData.race_id) <= 0)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid race_id',
-          'INVALID_RACE_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid race_id',
+          error: 'INVALID_RACE_ID'
+        });
       }
 
       if (updateData.character_type_id && (isNaN(updateData.character_type_id) || parseInt(updateData.character_type_id) <= 0)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid character_type_id',
-          'INVALID_CHARACTER_TYPE_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid character_type_id',
+          error: 'INVALID_CHARACTER_TYPE_ID'
+        });
       }
 
       if (updateData.bounty && (isNaN(updateData.bounty) || parseInt(updateData.bounty) < 0)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid bounty value',
-          'INVALID_BOUNTY',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid bounty value',
+          error: 'INVALID_BOUNTY'
+        });
       }
 
       if (updateData.age && (isNaN(updateData.age) || parseInt(updateData.age) < 0 || parseInt(updateData.age) > 1000)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid age value (must be between 0 and 1000)',
-          'INVALID_AGE',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid age value (must be between 0 and 1000)',
+          error: 'INVALID_AGE'
+        });
       }
 
       if (updateData.height && (isNaN(updateData.height) || parseFloat(updateData.height) < 0 || parseFloat(updateData.height) > 1000)) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid height value (must be between 0 and 1000 cm)',
-          'INVALID_HEIGHT',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid height value (must be between 0 and 1000 cm)',
+          error: 'INVALID_HEIGHT'
+        });
       }
 
       // Convert numeric fields
@@ -381,16 +378,16 @@ class CharacterController {
       }
 
       res.status(200).json(createItemResponse(
-        result.data,
+        result.character,
         'Character updated successfully'
       ));
     } catch (error) {
       console.error('Error in updateCharacter controller:', error);
-      res.status(500).json(createErrorResponse(
-        'Internal server error',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 
@@ -407,11 +404,11 @@ class CharacterController {
 
       // Validate ID is a valid number
       if (!id || isNaN(id) || parseInt(id) <= 0) {
-        return res.status(400).json(createErrorResponse(
-          'Invalid character ID',
-          'INVALID_ID',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid character ID',
+          error: 'INVALID_ID'
+        });
       }
 
       const result = await characterService.deleteCharacter(parseInt(id));
@@ -430,16 +427,16 @@ class CharacterController {
       }
 
       res.status(200).json(createItemResponse(
-        result.data,
-        'Character deleted successfully'
+        result,
+        result.message
       ));
     } catch (error) {
       console.error('Error in deleteCharacter controller:', error);
-      res.status(500).json(createErrorResponse(
-        'Internal server error',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 
@@ -455,11 +452,11 @@ class CharacterController {
       const { q, ...otherParams } = req.query;
 
       if (!q || q.trim() === '') {
-        return res.status(400).json(createErrorResponse(
-          'Search query parameter "q" is required',
-          'MISSING_SEARCH_QUERY',
-          400
-        ));
+        return res.status(400).json({
+          success: false,
+          message: 'Search query parameter "q" is required',
+          error: 'MISSING_SEARCH_QUERY'
+        });
       }
 
       const result = await characterService.searchCharacters(q.trim(), otherParams);
@@ -471,17 +468,18 @@ class CharacterController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(createListResponse(
-        result.data,
-        'Characters search completed successfully'
+      res.status(200).json(createPaginatedResponse(
+        result.characters,
+        result.pagination,
+        'Search results retrieved successfully'
       ));
     } catch (error) {
       console.error('Error in searchCharacters controller:', error);
-      res.status(500).json(createErrorResponse(
-        'Internal server error',
-        'INTERNAL_SERVER_ERROR',
-        500
-      ));
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      });
     }
   }
 }

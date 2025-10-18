@@ -84,7 +84,7 @@ class HakiTypeService {
 
       return {
         success: true,
-        data: { hakiType }
+        data: hakiType
       };
     } catch (error) {
       console.error('Error in getHakiTypeById:', error);
