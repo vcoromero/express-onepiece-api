@@ -37,4 +37,12 @@ router.get('/available-sql-files', authMiddleware, dbController.getAvailableSqlF
  */
 router.post('/execute-sql', rateLimiter.sensitiveOperationsLimiter, authMiddleware, dbController.executeSqlFiles);
 
+/**
+ * @route GET /api/db/diagnose
+ * @desc Diagnose database issues and provide recommendations
+ * @access Private (Admin only)
+ * @middleware authMiddleware
+ */
+router.get('/diagnose', authMiddleware, dbController.diagnoseDatabase);
+
 module.exports = router;
