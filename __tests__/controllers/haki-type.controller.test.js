@@ -155,18 +155,15 @@ describe('HakiTypeController', () => {
 
   describe('GET /api/haki-types', () => {
     it('should return all Haki types with default parameters', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: {
-          hakiTypes: [
-            { id: 1, name: 'Observation Haki', color: 'Red' },
-            { id: 2, name: 'Armament Haki', color: 'Black' }
-          ],
-          total: 2
-        }
+        hakiTypes: [
+          { id: 1, name: 'Observation Haki', color: 'Red' },
+          { id: 2, name: 'Armament Haki', color: 'Black' }
+        ]
       };
 
-      hakiTypeService.getAllHakiTypes.mockResolvedValue(mockResult);
+      hakiTypeService.getAllHakiTypes.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .get('/api/haki-types')
@@ -177,18 +174,23 @@ describe('HakiTypeController', () => {
         sortBy: 'name',
         sortOrder: 'asc'
       });
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.hakiTypes,
+        count: 2,
+        message: 'Haki types retrieved successfully'
+      });
     });
 
     it('should handle query parameters correctly', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: { hakiTypes: [], total: 0 }
+        hakiTypes: []
       };
 
-      hakiTypeService.getAllHakiTypes.mockResolvedValue(mockResult);
+      hakiTypeService.getAllHakiTypes.mockResolvedValue(mockServiceResult);
 
-      await request(app)
+      const response = await request(app)
         .get('/api/haki-types?search=observation&sortBy=color&sortOrder=desc')
         .expect(200);
 
@@ -196,6 +198,12 @@ describe('HakiTypeController', () => {
         search: 'observation',
         sortBy: 'color',
         sortOrder: 'desc'
+      });
+      expect(response.body).toEqual({
+        success: true,
+        data: [],
+        count: 0,
+        message: 'Haki types retrieved successfully'
       });
     });
 
@@ -253,19 +261,23 @@ describe('HakiTypeController', () => {
 
   describe('GET /api/haki-types/:id', () => {
     it('should return Haki type when found', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
         data: { hakiType: { id: 1, name: 'Observation Haki' } }
       };
 
-      hakiTypeService.getHakiTypeById.mockResolvedValue(mockResult);
+      hakiTypeService.getHakiTypeById.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .get('/api/haki-types/1')
         .expect(200);
 
       expect(hakiTypeService.getHakiTypeById).toHaveBeenCalledWith('1');
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.data,
+        message: 'Haki type retrieved successfully'
+      });
     });
 
     it('should return 400 for invalid ID', async () => {
@@ -349,13 +361,12 @@ describe('HakiTypeController', () => {
         color: 'Dark Red'
       };
 
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: { hakiType: { id: 1, name: 'Advanced Observation Haki' } },
-        message: 'Haki type updated successfully'
+        data: { hakiType: { id: 1, name: 'Advanced Observation Haki' } }
       };
 
-      hakiTypeService.updateHakiType.mockResolvedValue(mockResult);
+      hakiTypeService.updateHakiType.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .put('/api/haki-types/1')
@@ -364,7 +375,10 @@ describe('HakiTypeController', () => {
         .expect(200);
 
       expect(hakiTypeService.updateHakiType).toHaveBeenCalledWith('1', updateData);
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        message: 'Haki type updated successfully'
+      });
     });
 
     it('should return 400 for invalid ID', async () => {
@@ -582,13 +596,12 @@ describe('HakiTypeController', () => {
     });
 
     it('should handle partial updates correctly', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: { hakiType: { id: 1, color: 'Blue' } },
-        message: 'Haki type updated successfully'
+        data: { hakiType: { id: 1, color: 'Blue' } }
       };
 
-      hakiTypeService.updateHakiType.mockResolvedValue(mockResult);
+      hakiTypeService.updateHakiType.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .put('/api/haki-types/1')
@@ -599,17 +612,19 @@ describe('HakiTypeController', () => {
       expect(hakiTypeService.updateHakiType).toHaveBeenCalledWith('1', {
         color: 'Blue'
       });
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        message: 'Haki type updated successfully'
+      });
     });
 
     it('should handle null and undefined values correctly', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: { hakiType: { id: 1 } },
-        message: 'Haki type updated successfully'
+        data: { hakiType: { id: 1 } }
       };
 
-      hakiTypeService.updateHakiType.mockResolvedValue(mockResult);
+      hakiTypeService.updateHakiType.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .put('/api/haki-types/1')
@@ -626,7 +641,10 @@ describe('HakiTypeController', () => {
         description: 'Valid description',
         color: 'Valid color'
       });
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        message: 'Haki type updated successfully'
+      });
     });
 
     it('should require authentication', async () => {

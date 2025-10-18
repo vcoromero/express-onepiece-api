@@ -53,7 +53,11 @@ describe('Fruit Types API Endpoints', () => {
         { id: 1, name: 'Paramecia', description: 'Test description', created_at: new Date(), updated_at: new Date() },
         { id: 2, name: 'Zoan', description: 'Test description 2', created_at: new Date(), updated_at: new Date() }
       ];
-      fruitTypeService.getAllTypes.mockResolvedValueOnce(mockFruitTypes);
+      fruitTypeService.getAllTypes.mockResolvedValueOnce({
+        success: true,
+        data: mockFruitTypes,
+        count: 2
+      });
 
       const response = await request(app).get('/api/fruit-types');
 
@@ -70,7 +74,11 @@ describe('Fruit Types API Endpoints', () => {
       const mockFruitTypes = [
         { id: 1, name: 'Paramecia', description: 'Test description', created_at: new Date(), updated_at: new Date() }
       ];
-      fruitTypeService.getAllTypes.mockResolvedValueOnce(mockFruitTypes);
+      fruitTypeService.getAllTypes.mockResolvedValueOnce({
+        success: true,
+        data: mockFruitTypes,
+        count: 1
+      });
 
       const response = await request(app).get('/api/fruit-types');
 
@@ -89,7 +97,10 @@ describe('Fruit Types API Endpoints', () => {
     it('should return 200 and an existing fruit type', async () => {
       // Mock service response for existing fruit type
       const mockFruitType = { id: 1, name: 'Paramecia', description: 'Test', created_at: new Date(), updated_at: new Date() };
-      fruitTypeService.getTypeById.mockResolvedValueOnce(mockFruitType);
+      fruitTypeService.getTypeById.mockResolvedValueOnce({
+        success: true,
+        data: mockFruitType
+      });
 
       const response = await request(app).get('/api/fruit-types/1');
 
@@ -101,7 +112,11 @@ describe('Fruit Types API Endpoints', () => {
 
     it('should return 404 for a non-existent ID', async () => {
       // Mock service response for non-existent fruit type
-      fruitTypeService.getTypeById.mockResolvedValueOnce(null);
+      fruitTypeService.getTypeById.mockResolvedValueOnce({
+        success: false,
+        message: 'Fruit type not found',
+        error: 'NOT_FOUND'
+      });
 
       const response = await request(app).get('/api/fruit-types/99999');
 

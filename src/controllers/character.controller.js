@@ -1,4 +1,5 @@
 const characterService = require('../services/character.service');
+const { createPaginatedResponse, createItemResponse } = require('../utils/response.helper');
 
 /**
  * @class CharacterController
@@ -97,7 +98,11 @@ class CharacterController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createPaginatedResponse(
+        result.characters,
+        result.pagination,
+        'Characters retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getAllCharacters controller:', error);
       res.status(500).json({
@@ -137,7 +142,10 @@ class CharacterController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.character,
+        'Character retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getCharacterById controller:', error);
       res.status(500).json({
@@ -369,7 +377,10 @@ class CharacterController {
         }
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.character,
+        'Character updated successfully'
+      ));
     } catch (error) {
       console.error('Error in updateCharacter controller:', error);
       res.status(500).json({
@@ -415,7 +426,10 @@ class CharacterController {
         }
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result,
+        result.message
+      ));
     } catch (error) {
       console.error('Error in deleteCharacter controller:', error);
       res.status(500).json({
@@ -454,7 +468,11 @@ class CharacterController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createPaginatedResponse(
+        result.characters,
+        result.pagination,
+        'Search results retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in searchCharacters controller:', error);
       res.status(500).json({

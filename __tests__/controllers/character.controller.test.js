@@ -143,12 +143,12 @@ describe('CharacterController', () => {
         { id: 1, name: 'Monkey D. Luffy', bounty: 1500000000 },
         { id: 2, name: 'Roronoa Zoro', bounty: 1111000000 }
       ];
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: mockCharacters,
+        characters: mockCharacters,
         pagination: { page: 1, limit: 10, total: 2, totalPages: 1 }
       };
-      CharacterService.getAllCharacters.mockResolvedValue(mockResult);
+      CharacterService.getAllCharacters.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -156,7 +156,12 @@ describe('CharacterController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockCharacters,
+        pagination: { page: 1, limit: 10, total: 2, totalPages: 1, hasNext: false, hasPrev: false },
+        message: 'Characters retrieved successfully'
+      });
       expect(CharacterService.getAllCharacters).toHaveBeenCalledWith({
         page: 1,
         limit: 10,
@@ -301,11 +306,11 @@ describe('CharacterController', () => {
         race: { name: 'Human' },
         characterType: { name: 'Pirate' }
       };
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: mockCharacter
+        character: mockCharacter
       };
-      CharacterService.getCharacterById.mockResolvedValue(mockResult);
+      CharacterService.getCharacterById.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -313,7 +318,11 @@ describe('CharacterController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockCharacter,
+        message: 'Character retrieved successfully'
+      });
       expect(CharacterService.getCharacterById).toHaveBeenCalledWith(1);
     });
 
@@ -614,11 +623,11 @@ describe('CharacterController', () => {
     it('should return 200 with updated character', async () => {
       // Arrange
       const updateData = { name: 'Updated Name', bounty: 2000000000 };
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: { id: 1, ...updateData }
+        character: { id: 1, ...updateData }
       };
-      CharacterService.updateCharacter.mockResolvedValue(mockResult);
+      CharacterService.updateCharacter.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -628,7 +637,11 @@ describe('CharacterController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: { id: 1, ...updateData },
+        message: 'Character updated successfully'
+      });
       expect(CharacterService.updateCharacter).toHaveBeenCalledWith(1, updateData);
     });
 
@@ -649,6 +662,13 @@ describe('CharacterController', () => {
     });
 
     it('should return 200 for invalid request body (Express handles JSON parsing)', async () => {
+      // Arrange
+      const mockServiceResult = {
+        success: true,
+        character: { id: 1, name: 'Updated Name', bounty: 2000000000 }
+      };
+      CharacterService.updateCharacter.mockResolvedValue(mockServiceResult);
+
       // Act
       const response = await request(app)
         .put('/api/characters/1')
@@ -659,7 +679,8 @@ describe('CharacterController', () => {
       // Assert
       expect(response.body).toEqual({
         success: true,
-        data: { id: 1, name: 'Updated Name', bounty: 2000000000 }
+        data: { id: 1, name: 'Updated Name', bounty: 2000000000 },
+        message: 'Character updated successfully'
       });
     });
 
@@ -839,11 +860,11 @@ describe('CharacterController', () => {
   describe('DELETE /api/characters/:id', () => {
     it('should return 200 with deletion confirmation', async () => {
       // Arrange
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
         message: 'Character deleted successfully'
       };
-      CharacterService.deleteCharacter.mockResolvedValue(mockResult);
+      CharacterService.deleteCharacter.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -852,7 +873,14 @@ describe('CharacterController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: {
+          success: true,
+          message: 'Character deleted successfully'
+        },
+        message: 'Character deleted successfully'
+      });
       expect(CharacterService.deleteCharacter).toHaveBeenCalledWith(1);
     });
 
@@ -945,11 +973,12 @@ describe('CharacterController', () => {
         { id: 1, name: 'Monkey D. Luffy' },
         { id: 2, name: 'Monkey D. Dragon' }
       ];
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: mockResults
+        characters: mockResults,
+        pagination: { page: 1, limit: 10, total: 2, totalPages: 1 }
       };
-      CharacterService.searchCharacters.mockResolvedValue(mockResult);
+      CharacterService.searchCharacters.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -957,7 +986,12 @@ describe('CharacterController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockResults,
+        pagination: { page: 1, limit: 10, total: 2, totalPages: 1, hasNext: false, hasPrev: false },
+        message: 'Search results retrieved successfully'
+      });
       expect(CharacterService.searchCharacters).toHaveBeenCalledWith('Monkey', {});
     });
 

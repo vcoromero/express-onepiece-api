@@ -165,18 +165,15 @@ describe('RaceController', () => {
 
   describe('GET /api/races', () => {
     it('should return all races with default parameters', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: {
-          races: [
-            { id: 1, name: 'Human', description: 'Standard human race' },
-            { id: 2, name: 'Fishman', description: 'Aquatic humanoid race' }
-          ],
-          total: 2
-        }
+        races: [
+          { id: 1, name: 'Human', description: 'Standard human race' },
+          { id: 2, name: 'Fishman', description: 'Aquatic humanoid race' }
+        ]
       };
 
-      raceService.getAllRaces.mockResolvedValue(mockResult);
+      raceService.getAllRaces.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .get('/api/races')
@@ -187,18 +184,23 @@ describe('RaceController', () => {
         sortBy: 'name',
         sortOrder: 'asc'
       });
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.races,
+        count: 2,
+        message: 'Races retrieved successfully'
+      });
     });
 
     it('should handle query parameters correctly', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: { races: [], total: 0 }
+        races: []
       };
 
-      raceService.getAllRaces.mockResolvedValue(mockResult);
+      raceService.getAllRaces.mockResolvedValue(mockServiceResult);
 
-      await request(app)
+      const response = await request(app)
         .get('/api/races?search=human&sortBy=created_at&sortOrder=desc')
         .expect(200);
 
@@ -206,6 +208,12 @@ describe('RaceController', () => {
         search: 'human',
         sortBy: 'created_at',
         sortOrder: 'desc'
+      });
+      expect(response.body).toEqual({
+        success: true,
+        data: [],
+        count: 0,
+        message: 'Races retrieved successfully'
       });
     });
 
@@ -263,19 +271,23 @@ describe('RaceController', () => {
 
   describe('GET /api/races/:id', () => {
     it('should return race when found', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
         data: { id: 1, name: 'Human', description: 'Standard human race' }
       };
 
-      raceService.getRaceById.mockResolvedValue(mockResult);
+      raceService.getRaceById.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .get('/api/races/1')
         .expect(200);
 
       expect(raceService.getRaceById).toHaveBeenCalledWith(1);
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.data,
+        message: 'Race retrieved successfully'
+      });
     });
 
     it('should return 400 for invalid ID', async () => {
@@ -370,13 +382,12 @@ describe('RaceController', () => {
         description: 'Enhanced human race'
       };
 
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: { id: 1, name: 'Advanced Human' },
-        message: 'Race updated successfully'
+        data: { id: 1, name: 'Advanced Human' }
       };
 
-      raceService.updateRace.mockResolvedValue(mockResult);
+      raceService.updateRace.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .put('/api/races/1')
@@ -385,7 +396,10 @@ describe('RaceController', () => {
         .expect(200);
 
       expect(raceService.updateRace).toHaveBeenCalledWith(1, updateData);
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        message: 'Race updated successfully'
+      });
     });
 
     it('should return 400 for invalid ID', async () => {
@@ -529,13 +543,12 @@ describe('RaceController', () => {
     });
 
     it('should handle partial updates correctly', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: { id: 1, description: 'Updated description' },
-        message: 'Race updated successfully'
+        data: { id: 1, description: 'Updated description' }
       };
 
-      raceService.updateRace.mockResolvedValue(mockResult);
+      raceService.updateRace.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .put('/api/races/1')
@@ -546,7 +559,10 @@ describe('RaceController', () => {
       expect(raceService.updateRace).toHaveBeenCalledWith(1, {
         description: 'Updated description'
       });
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        message: 'Race updated successfully'
+      });
     });
   });
 });

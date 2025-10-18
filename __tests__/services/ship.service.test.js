@@ -90,16 +90,15 @@ describe('ShipService', () => {
       const result = await shipService.getAllShips();
 
       // Assert
-      expect(result).toEqual({
-        ships: mockShips,
-        pagination: {
-          currentPage: 1,
-          totalPages: 1,
-          totalItems: 2,
-          itemsPerPage: 10,
-          hasNextPage: false,
-          hasPrevPage: false
-        }
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockShips);
+      expect(result.pagination).toEqual({
+        page: 1,
+        limit: 10,
+        total: 2,
+        totalPages: 1,
+        hasNext: false,
+        hasPrev: false
       });
       expect(Ship.findAndCountAll).toHaveBeenCalledWith({
         where: {},
@@ -127,7 +126,8 @@ describe('ShipService', () => {
       const result = await shipService.getAllShips({ status: 'active' });
 
       // Assert
-      expect(result.ships).toEqual(mockShips);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockShips);
       expect(Ship.findAndCountAll).toHaveBeenCalledWith({
         where: { status: 'active' },
         include: expect.any(Array),
@@ -147,7 +147,8 @@ describe('ShipService', () => {
       const result = await shipService.getAllShips({ search: 'Sunny' });
 
       // Assert
-      expect(result.ships).toEqual(mockShips);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockShips);
       expect(Ship.findAndCountAll).toHaveBeenCalledWith({
         where: { name: { [Op.like]: '%Sunny%' } },
         include: expect.any(Array),
@@ -167,13 +168,15 @@ describe('ShipService', () => {
       const result = await shipService.getAllShips({ page: 2, limit: 5 });
 
       // Assert
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockShips);
       expect(result.pagination).toEqual({
-        currentPage: 2,
+        page: 2,
+        limit: 5,
+        total: 25,
         totalPages: 5,
-        totalItems: 25,
-        itemsPerPage: 5,
-        hasNextPage: true,
-        hasPrevPage: true
+        hasNext: true,
+        hasPrev: true
       });
       expect(Ship.findAndCountAll).toHaveBeenCalledWith({
         where: {},
@@ -185,9 +188,12 @@ describe('ShipService', () => {
     });
 
     it('should handle invalid status filter', async () => {
-      // Act & Assert
-      await expect(shipService.getAllShips({ status: 'invalid' }))
-        .rejects.toThrow('SHIP_INVALID_STATUS');
+      // Act
+      const result = await shipService.getAllShips({ status: 'invalid' });
+      
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.message).toBeDefined();
     });
 
     it('should handle database errors', async () => {
@@ -195,9 +201,12 @@ describe('ShipService', () => {
       const error = new Error('Database connection failed');
       Ship.findAndCountAll.mockRejectedValue(error);
 
-      // Act & Assert
-      await expect(shipService.getAllShips())
-        .rejects.toThrow('SHIP_GET_ALL_ERROR: Database connection failed');
+      // Act
+      const result = await shipService.getAllShips();
+      
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.message).toBeDefined();
     });
 
     it('should limit maximum items per page to 100', async () => {
@@ -239,7 +248,8 @@ describe('ShipService', () => {
       const result = await shipService.getShipById(1);
 
       // Assert
-      expect(result).toEqual(mockShip);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockShip);
       expect(Ship.findByPk).toHaveBeenCalledWith(1, {
         include: [
           {
@@ -253,42 +263,60 @@ describe('ShipService', () => {
     });
 
     it('should throw error for invalid ID (string)', async () => {
-      // Act & Assert
-      await expect(shipService.getShipById('invalid'))
-        .rejects.toThrow('SHIP_INVALID_ID');
+      // Act
+      const result = await shipService.getShipById('invalid');
+      
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
     });
 
     it('should throw error for invalid ID (negative)', async () => {
-      // Act & Assert
-      await expect(shipService.getShipById(-1))
-        .rejects.toThrow('SHIP_INVALID_ID');
+      // Act
+      const result = await shipService.getShipById(-1);
+      
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
     });
 
     it('should throw error for invalid ID (zero)', async () => {
-      // Act & Assert
-      await expect(shipService.getShipById(0))
-        .rejects.toThrow('SHIP_INVALID_ID');
+      // Act
+      const result = await shipService.getShipById(0);
+      
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
     });
 
     it('should throw error for invalid ID (null)', async () => {
-      // Act & Assert
-      await expect(shipService.getShipById(null))
-        .rejects.toThrow('SHIP_INVALID_ID');
+      // Act
+      const result = await shipService.getShipById(null);
+      
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
     });
 
     it('should throw error for invalid ID (undefined)', async () => {
-      // Act & Assert
-      await expect(shipService.getShipById(undefined))
-        .rejects.toThrow('SHIP_INVALID_ID');
+      // Act
+      const result = await shipService.getShipById(undefined);
+      
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
     });
 
     it('should throw error when ship not found', async () => {
       // Arrange
       Ship.findByPk.mockResolvedValue(null);
 
-      // Act & Assert
-      await expect(shipService.getShipById(999))
-        .rejects.toThrow('SHIP_NOT_FOUND');
+      // Act
+      const result = await shipService.getShipById(999);
+      
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NOT_FOUND');
     });
 
     it('should handle database errors', async () => {
@@ -296,9 +324,12 @@ describe('ShipService', () => {
       const error = new Error('Database connection failed');
       Ship.findByPk.mockRejectedValue(error);
 
-      // Act & Assert
-      await expect(shipService.getShipById(1))
-        .rejects.toThrow('SHIP_GET_BY_ID_ERROR: Database connection failed');
+      // Act
+      const result = await shipService.getShipById(1);
+      
+      // Assert
+      expect(result.success).toBe(false);
+      expect(result.message).toBeDefined();
     });
   });
 
@@ -317,7 +348,8 @@ describe('ShipService', () => {
       const result = await shipService.createShip(shipData);
 
       // Assert
-      expect(result).toEqual(mockShipWithRelations);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockShipWithRelations);
       expect(Ship.create).toHaveBeenCalledWith({
         name: 'Thousand Sunny',
         description: null,
@@ -345,7 +377,8 @@ describe('ShipService', () => {
       const result = await shipService.createShip(shipData);
 
       // Assert
-      expect(result).toEqual(mockShipWithRelations);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockShipWithRelations);
       expect(Ship.create).toHaveBeenCalledWith({
         name: 'Going Merry',
         description: 'Straw Hat Pirates first ship',
@@ -416,7 +449,8 @@ describe('ShipService', () => {
       const result = await shipService.updateShip(1, updateData);
 
       // Assert
-      expect(result).toEqual(updatedShip);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(updatedShip);
       expect(Ship.update).toHaveBeenCalledWith({
         name: 'New Name',
         status: 'destroyed'
@@ -473,7 +507,8 @@ describe('ShipService', () => {
       const result = await shipService.updateShip(1, { status: 'destroyed' });
 
       // Assert
-      expect(result).toEqual(updatedShip);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(updatedShip);
       expect(Ship.findOne).not.toHaveBeenCalled(); // Should not check for duplicates
     });
 
@@ -490,7 +525,8 @@ describe('ShipService', () => {
       const result = await shipService.updateShip(1, { status: 'destroyed' });
 
       // Assert
-      expect(result).toEqual(updatedShip);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(updatedShip);
       expect(Ship.update).toHaveBeenCalledWith({
         status: 'destroyed'
       }, { where: { id: 1 } });
@@ -512,7 +548,8 @@ describe('ShipService', () => {
       });
 
       // Assert
-      expect(result).toEqual(updatedShip);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(updatedShip);
       expect(Ship.update).toHaveBeenCalledWith({
         description: null
       }, { where: { id: 1 } });
@@ -534,7 +571,8 @@ describe('ShipService', () => {
       });
 
       // Assert
-      expect(result).toEqual(updatedShip);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(updatedShip);
       expect(Ship.update).toHaveBeenCalledWith({
         description: null,
         image_url: null
@@ -568,11 +606,8 @@ describe('ShipService', () => {
 
       // Assert
       expect(result).toEqual({
-        message: 'Ship deleted successfully',
-        deletedShip: {
-          id: 1,
-          name: 'Thousand Sunny'
-        }
+        success: true,
+        message: 'Ship deleted successfully'
       });
       expect(Ship.destroy).toHaveBeenCalledWith({ where: { id: 1 } });
     });

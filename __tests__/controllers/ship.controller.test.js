@@ -131,21 +131,22 @@ describe('ShipController', () => {
   describe('GET /api/ships', () => {
     it('should return ships with default parameters', async () => {
       // Arrange
-      const mockResult = {
-        ships: [
+      const mockServiceResult = {
+        success: true,
+        data: [
           { id: 1, name: 'Thousand Sunny', status: 'active' },
           { id: 2, name: 'Going Merry', status: 'destroyed' }
         ],
         pagination: {
-          currentPage: 1,
+          page: 1,
+          limit: 10,
+          total: 2,
           totalPages: 1,
-          totalItems: 2,
-          itemsPerPage: 10,
-          hasNextPage: false,
-          hasPrevPage: false
+          hasNext: false,
+          hasPrev: false
         }
       };
-      shipService.getAllShips.mockResolvedValue(mockResult);
+      shipService.getAllShips.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -155,8 +156,8 @@ describe('ShipController', () => {
       // Assert
       expect(response.body).toEqual({
         success: true,
-        data: mockResult.ships,
-        pagination: mockResult.pagination,
+        data: mockServiceResult.data,
+        pagination: mockServiceResult.pagination,
         message: 'Ships retrieved successfully'
       });
       expect(shipService.getAllShips).toHaveBeenCalledWith({
@@ -169,18 +170,19 @@ describe('ShipController', () => {
 
     it('should handle query parameters correctly', async () => {
       // Arrange
-      const mockResult = {
-        ships: [{ id: 1, name: 'Thousand Sunny', status: 'active' }],
+      const mockServiceResult = {
+        success: true,
+        data: [{ id: 1, name: 'Thousand Sunny', status: 'active' }],
         pagination: {
-          currentPage: 2,
+          page: 2,
+          limit: 10,
+          total: 25,
           totalPages: 3,
-          totalItems: 25,
-          itemsPerPage: 10,
-          hasNextPage: true,
-          hasPrevPage: true
+          hasNext: true,
+          hasPrev: true
         }
       };
-      shipService.getAllShips.mockResolvedValue(mockResult);
+      shipService.getAllShips.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -188,7 +190,12 @@ describe('ShipController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body.success).toBe(true);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.data,
+        pagination: mockServiceResult.pagination,
+        message: 'Ships retrieved successfully'
+      });
       expect(shipService.getAllShips).toHaveBeenCalledWith({
         page: 2,
         limit: 10,
@@ -313,8 +320,11 @@ describe('ShipController', () => {
   describe('GET /api/ships/:id', () => {
     it('should return ship when found', async () => {
       // Arrange
-      const mockShip = { id: 1, name: 'Thousand Sunny', status: 'active' };
-      shipService.getShipById.mockResolvedValue(mockShip);
+      const mockServiceResult = {
+        success: true,
+        data: { id: 1, name: 'Thousand Sunny', status: 'active' }
+      };
+      shipService.getShipById.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -324,7 +334,7 @@ describe('ShipController', () => {
       // Assert
       expect(response.body).toEqual({
         success: true,
-        data: mockShip,
+        data: mockServiceResult.data,
         message: 'Ship retrieved successfully'
       });
       expect(shipService.getShipById).toHaveBeenCalledWith(1);
@@ -374,7 +384,11 @@ describe('ShipController', () => {
 
     it('should return 404 when ship not found', async () => {
       // Arrange
-      shipService.getShipById.mockRejectedValue(new Error('SHIP_NOT_FOUND'));
+      shipService.getShipById.mockResolvedValue({
+        success: false,
+        message: 'Ship not found',
+        error: 'NOT_FOUND'
+      });
 
       // Act
       const response = await request(app)
@@ -385,7 +399,7 @@ describe('ShipController', () => {
       expect(response.body).toEqual({
         success: false,
         message: 'Ship not found',
-        error: 'No ship exists with the provided ID'
+        error: 'NOT_FOUND'
       });
     });
 
@@ -401,7 +415,7 @@ describe('ShipController', () => {
       // Assert
       expect(response.body).toEqual({
         success: false,
-        message: 'Failed to retrieve ship',
+        message: 'Internal server error',
         error: 'Database connection failed'
       });
     });
@@ -620,7 +634,10 @@ describe('ShipController', () => {
         status: 'destroyed'
       };
       const mockUpdatedShip = { id: 1, ...updateData };
-      shipService.updateShip.mockResolvedValue(mockUpdatedShip);
+      shipService.updateShip.mockResolvedValue({
+        success: true,
+        data: mockUpdatedShip
+      });
 
       // Act
       const response = await request(app)
@@ -747,7 +764,11 @@ describe('ShipController', () => {
 
     it('should return 404 when ship not found', async () => {
       // Arrange
-      shipService.updateShip.mockRejectedValue(new Error('SHIP_NOT_FOUND'));
+      shipService.updateShip.mockResolvedValue({
+        success: false,
+        message: 'Ship not found',
+        error: 'NOT_FOUND'
+      });
 
       // Act
       const response = await request(app)
@@ -760,7 +781,7 @@ describe('ShipController', () => {
       expect(response.body).toEqual({
         success: false,
         message: 'Ship not found',
-        error: 'No ship exists with the provided ID'
+        error: 'NOT_FOUND'
       });
     });
 
@@ -787,7 +808,10 @@ describe('ShipController', () => {
       // Arrange
       const updateData = { status: 'destroyed' };
       const mockUpdatedShip = { id: 1, name: 'Original Name', status: 'destroyed' };
-      shipService.updateShip.mockResolvedValue(mockUpdatedShip);
+      shipService.updateShip.mockResolvedValue({
+        success: true,
+        data: mockUpdatedShip
+      });
 
       // Act
       const response = await request(app)
@@ -805,7 +829,10 @@ describe('ShipController', () => {
       // Arrange
       const updateData = { name: 'Updated Name', description: 'Valid description', image_url: 'https://example.com/image.jpg' };
       const mockUpdatedShip = { id: 1, name: 'Updated Name', description: null, image_url: 'https://example.com/image.jpg' };
-      shipService.updateShip.mockResolvedValue(mockUpdatedShip);
+      shipService.updateShip.mockResolvedValue({
+        success: true,
+        data: mockUpdatedShip
+      });
 
       // Act
       const response = await request(app)
@@ -842,11 +869,11 @@ describe('ShipController', () => {
   describe('DELETE /api/ships/:id', () => {
     it('should delete ship successfully', async () => {
       // Arrange
-      const mockResult = {
-        message: 'Ship deleted successfully',
-        deletedShip: { id: 1, name: 'Thousand Sunny' }
+      const mockServiceResult = {
+        success: true,
+        message: 'Ship deleted successfully'
       };
-      shipService.deleteShip.mockResolvedValue(mockResult);
+      shipService.deleteShip.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -857,8 +884,8 @@ describe('ShipController', () => {
       // Assert
       expect(response.body).toEqual({
         success: true,
-        data: mockResult,
-        message: 'Ship deleted successfully'
+        data: mockServiceResult,
+        message: mockServiceResult.message
       });
       expect(shipService.deleteShip).toHaveBeenCalledWith(1);
     });
@@ -890,7 +917,11 @@ describe('ShipController', () => {
 
     it('should return 404 when ship not found', async () => {
       // Arrange
-      shipService.deleteShip.mockRejectedValue(new Error('SHIP_NOT_FOUND'));
+      shipService.deleteShip.mockResolvedValue({
+        success: false,
+        message: 'Ship not found',
+        error: 'NOT_FOUND'
+      });
 
       // Act
       const response = await request(app)
@@ -902,7 +933,7 @@ describe('ShipController', () => {
       expect(response.body).toEqual({
         success: false,
         message: 'Ship not found',
-        error: 'No ship exists with the provided ID'
+        error: 'NOT_FOUND'
       });
     });
 
@@ -946,11 +977,11 @@ describe('ShipController', () => {
   describe('GET /api/ships/status/:status', () => {
     it('should return ships with valid status', async () => {
       // Arrange
-      const mockShips = [
+      const mockServiceResult = [
         { id: 1, name: 'Thousand Sunny', status: 'active' },
         { id: 2, name: 'Going Merry', status: 'active' }
       ];
-      shipService.getShipsByStatus.mockResolvedValue(mockShips);
+      shipService.getShipsByStatus.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -960,7 +991,8 @@ describe('ShipController', () => {
       // Assert
       expect(response.body).toEqual({
         success: true,
-        data: mockShips,
+        data: mockServiceResult,
+        count: 2,
         message: 'Ships with status \'active\' retrieved successfully'
       });
       expect(shipService.getShipsByStatus).toHaveBeenCalledWith('active');

@@ -118,10 +118,8 @@ describe('HakiTypeService', () => {
       });
       expect(result).toEqual({
         success: true,
-        data: {
-          hakiTypes: mockHakiTypes,
-          total: 2
-        }
+        hakiTypes: mockHakiTypes,
+        total: 2
       });
     });
 
@@ -229,7 +227,7 @@ describe('HakiTypeService', () => {
       expect(HakiType.findByPk).toHaveBeenCalledWith(1);
       expect(result).toEqual({
         success: true,
-        data: { hakiType: mockHakiType }
+        data: mockHakiType
       });
     });
 

@@ -43,10 +43,8 @@ class HakiTypeService {
 
       return {
         success: true,
-        data: {
-          hakiTypes,
-          total: hakiTypes.length
-        }
+        hakiTypes,
+        total: hakiTypes.length
       };
     } catch (error) {
       console.error('Error in getAllHakiTypes:', error);
@@ -86,7 +84,7 @@ class HakiTypeService {
 
       return {
         success: true,
-        data: { hakiType }
+        data: hakiType
       };
     } catch (error) {
       console.error('Error in getHakiTypeById:', error);

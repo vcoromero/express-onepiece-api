@@ -118,10 +118,8 @@ describe('RaceService', () => {
       });
       expect(result).toEqual({
         success: true,
-        data: {
-          races: mockRaces,
-          total: 2
-        }
+        races: mockRaces,
+        total: 2
       });
     });
 

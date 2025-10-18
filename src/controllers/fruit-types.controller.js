@@ -1,4 +1,5 @@
 const fruitTypeService = require('../services/fruit-type.service');
+const { createListResponse, createItemResponse } = require('../utils/response.helper');
 
 /**
  * Get all fruit types
@@ -6,13 +7,16 @@ const fruitTypeService = require('../services/fruit-type.service');
  */
 const getAllFruitTypes = async (req, res) => {
   try {
-    const fruitTypes = await fruitTypeService.getAllTypes();
+    const result = await fruitTypeService.getAllTypes();
 
-    res.status(200).json({
-      success: true,
-      count: fruitTypes.length,
-      data: fruitTypes
-    });
+    if (!result.success) {
+      return res.status(500).json(result);
+    }
+
+    res.status(200).json(createListResponse(
+      result.data,
+      'Fruit types retrieved successfully'
+    ));
   } catch (error) {
     console.error('Error fetching fruit types:', error);
     res.status(500).json({
@@ -39,19 +43,19 @@ const getFruitTypeById = async (req, res) => {
       });
     }
 
-    const fruitType = await fruitTypeService.getTypeById(id);
+    const result = await fruitTypeService.getTypeById(id);
 
-    if (!fruitType) {
-      return res.status(404).json({
-        success: false,
-        message: `Fruit type with ID ${id} not found`
-      });
+    if (!result.success) {
+      if (result.error === 'NOT_FOUND') {
+        return res.status(404).json(result);
+      }
+      return res.status(500).json(result);
     }
 
-    res.status(200).json({
-      success: true,
-      data: fruitType
-    });
+    res.status(200).json(createItemResponse(
+      result.data,
+      'Fruit type retrieved successfully'
+    ));
   } catch (error) {
     console.error('Error fetching fruit type:', error);
     res.status(500).json({
@@ -107,11 +111,10 @@ const updateFruitType = async (req, res) => {
     // Update via service
     const updatedFruitType = await fruitTypeService.updateType(id, { name, description });
 
-    res.status(200).json({
-      success: true,
-      message: 'Fruit type updated successfully',
-      data: updatedFruitType
-    });
+    res.status(200).json(createItemResponse(
+      updatedFruitType,
+      'Fruit type updated successfully'
+    ));
   } catch (error) {
     console.error('Error updating fruit type:', error);
 

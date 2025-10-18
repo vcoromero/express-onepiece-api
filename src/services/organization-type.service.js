@@ -34,10 +34,8 @@ class OrganizationTypeService {
 
       return {
         success: true,
-        data: {
-          organizationTypes,
-          total: organizationTypes.length
-        }
+        organizationTypes,
+        total: organizationTypes.length
       };
     } catch (error) {
       console.error('Error in getAllOrganizationTypes:', error);

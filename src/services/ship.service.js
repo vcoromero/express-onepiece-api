@@ -64,21 +64,24 @@ class ShipService {
       const totalPages = Math.ceil(count / limitNum);
 
       return {
-        ships: rows,
+        success: true,
+        data: rows,
         pagination: {
-          currentPage: pageNum,
+          page: pageNum,
+          limit: limitNum,
+          total: count,
           totalPages,
-          totalItems: count,
-          itemsPerPage: limitNum,
-          hasNextPage: pageNum < totalPages,
-          hasPrevPage: pageNum > 1
+          hasNext: pageNum < totalPages,
+          hasPrev: pageNum > 1
         }
       };
     } catch (error) {
-      if (error.message === 'SHIP_INVALID_STATUS') {
-        throw new Error('SHIP_INVALID_STATUS');
-      }
-      throw new Error(`SHIP_GET_ALL_ERROR: ${error.message}`);
+      console.error('Error in getAllShips:', error);
+      return {
+        success: false,
+        message: 'Failed to fetch ships',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      };
     }
   }
 
@@ -89,11 +92,15 @@ class ShipService {
      */
   async getShipById(id) {
     try {
-      if (!id || isNaN(id) || id <= 0) {
-        throw new Error('SHIP_INVALID_ID');
+      if (!id || isNaN(id) || parseInt(id) <= 0) {
+        return {
+          success: false,
+          message: 'Invalid ship ID',
+          error: 'INVALID_ID'
+        };
       }
 
-      const ship = await Ship.findByPk(id, {
+      const ship = await Ship.findByPk(parseInt(id), {
         include: [
           {
             model: Organization,
@@ -105,18 +112,24 @@ class ShipService {
       });
 
       if (!ship) {
-        throw new Error('SHIP_NOT_FOUND');
+        return {
+          success: false,
+          message: `Ship with ID ${id} not found`,
+          error: 'NOT_FOUND'
+        };
       }
 
-      return ship;
+      return {
+        success: true,
+        data: ship
+      };
     } catch (error) {
-      if (error.message === 'SHIP_INVALID_ID') {
-        throw new Error('SHIP_INVALID_ID');
-      }
-      if (error.message === 'SHIP_NOT_FOUND') {
-        throw new Error('SHIP_NOT_FOUND');
-      }
-      throw new Error(`SHIP_GET_BY_ID_ERROR: ${error.message}`);
+      console.error('Error in getShipById:', error);
+      return {
+        success: false,
+        message: 'Failed to fetch ship',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      };
     }
   }
 
@@ -262,11 +275,8 @@ class ShipService {
       });
 
       return {
-        message: 'Ship deleted successfully',
-        deletedShip: {
-          id: ship.id,
-          name: ship.name
-        }
+        success: true,
+        message: 'Ship deleted successfully'
       };
     } catch (error) {
       if (['SHIP_INVALID_ID', 'SHIP_NOT_FOUND', 'SHIP_IN_USE'].includes(error.message)) {

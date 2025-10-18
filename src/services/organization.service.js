@@ -95,18 +95,15 @@ class OrganizationService {
 
       return {
         success: true,
-        data: {
-          organizations: rows,
-          pagination: {
-            currentPage: pageNum,
-            totalPages,
-            totalItems: count,
-            itemsPerPage: limitNum,
-            hasNextPage,
-            hasPrevPage
-          }
-        },
-        message: `Found ${count} organizations`
+        organizations: rows,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: count,
+          totalPages,
+          hasNext: hasNextPage,
+          hasPrev: hasPrevPage
+        }
       };
     } catch (error) {
       throw new Error(`Error retrieving organizations: ${error.message}`);
