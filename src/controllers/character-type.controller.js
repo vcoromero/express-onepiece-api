@@ -1,4 +1,5 @@
 const characterTypeService = require('../services/character-type.service');
+const { createListResponse, createItemResponse } = require('../utils/response.helper');
 
 /**
  * @class CharacterTypeController
@@ -22,7 +23,10 @@ class CharacterTypeController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createListResponse(
+        result.characterTypes,
+        'Character types retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getAllCharacterTypes controller:', error);
       res.status(500).json({
@@ -62,7 +66,10 @@ class CharacterTypeController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Character type retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getCharacterTypeById controller:', error);
       res.status(500).json({
@@ -120,7 +127,10 @@ class CharacterTypeController {
         }
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Character type updated successfully'
+      ));
     } catch (error) {
       console.error('Error in updateCharacterType controller:', error);
       res.status(500).json({

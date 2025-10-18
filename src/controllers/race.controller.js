@@ -1,4 +1,5 @@
 const raceService = require('../services/race.service');
+const { createListResponse, createItemResponse, createErrorResponse } = require('../utils/response.helper');
 
 /**
  * @class RaceController
@@ -22,14 +23,17 @@ class RaceController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createListResponse(
+        result.races,
+        'Races retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getAllRaces controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      res.status(500).json(createErrorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        500
+      ));
     }
   }
 
@@ -46,11 +50,11 @@ class RaceController {
 
       // Validate ID is a valid number
       if (!id || isNaN(id) || parseInt(id) <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid race ID',
-          error: 'INVALID_ID'
-        });
+        return res.status(400).json(createErrorResponse(
+          'Invalid race ID',
+          'INVALID_ID',
+          400
+        ));
       }
 
       const result = await raceService.getRaceById(parseInt(id));
@@ -62,14 +66,17 @@ class RaceController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Race retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getRaceById controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      res.status(500).json(createErrorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        500
+      ));
     }
   }
 
@@ -87,20 +94,20 @@ class RaceController {
 
       // Validate ID is a valid number
       if (!id || isNaN(id) || parseInt(id) <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid race ID',
-          error: 'INVALID_ID'
-        });
+        return res.status(400).json(createErrorResponse(
+          'Invalid race ID',
+          'INVALID_ID',
+          400
+        ));
       }
 
       // Validate request body
       if (!updateData || typeof updateData !== 'object') {
-        return res.status(400).json({
-          success: false,
-          message: 'Request body must be a valid JSON object',
-          error: 'INVALID_BODY'
-        });
+        return res.status(400).json(createErrorResponse(
+          'Request body must be a valid JSON object',
+          'INVALID_BODY',
+          400
+        ));
       }
 
       const result = await raceService.updateRace(parseInt(id), updateData);
@@ -120,14 +127,17 @@ class RaceController {
         }
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Race updated successfully'
+      ));
     } catch (error) {
       console.error('Error in updateRace controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      res.status(500).json(createErrorResponse(
+        'Internal server error',
+        'INTERNAL_SERVER_ERROR',
+        500
+      ));
     }
   }
 }

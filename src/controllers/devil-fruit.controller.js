@@ -1,4 +1,5 @@
 const devilFruitService = require('../services/devil-fruit.service');
+const { createPaginatedResponse, createItemResponse, createErrorResponse } = require('../utils/response.helper');
 
 /**
  * Get all devil fruits with optional filtering and pagination
@@ -20,33 +21,37 @@ const getAllDevilFruits = async (req, res) => {
     const limitNum = parseInt(limit);
 
     if (pageNum < 1) {
-      return res.status(400).json({
-        success: false,
-        message: 'Page must be greater than 0'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Page must be greater than 0',
+        'INVALID_PAGE',
+        400
+      ));
     }
 
     if (limitNum < 1 || limitNum > 100) {
-      return res.status(400).json({
-        success: false,
-        message: 'Limit must be between 1 and 100'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Limit must be between 1 and 100',
+        'INVALID_LIMIT',
+        400
+      ));
     }
 
     // Validate sort parameters
     const allowedSortFields = ['id', 'name', 'rarity', 'power_level', 'created_at'];
     if (!allowedSortFields.includes(sortBy)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid sort field'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Invalid sort field',
+        'INVALID_SORT_FIELD',
+        400
+      ));
     }
 
     if (!['ASC', 'DESC'].includes(sortOrder.toUpperCase())) {
-      return res.status(400).json({
-        success: false,
-        message: 'Sort order must be ASC or DESC'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Sort order must be ASC or DESC',
+        'INVALID_SORT_ORDER',
+        400
+      ));
     }
 
     const result = await devilFruitService.getAllFruits({
@@ -58,19 +63,18 @@ const getAllDevilFruits = async (req, res) => {
       sortOrder: sortOrder.toUpperCase()
     });
 
-    res.status(200).json({
-      success: true,
-      count: result.pagination.totalItems,
-      pagination: result.pagination,
-      data: result.fruits
-    });
+    res.status(200).json(createPaginatedResponse(
+      result.fruits,
+      result.pagination,
+      'Devil fruits retrieved successfully'
+    ));
   } catch (error) {
     console.error('Error fetching devil fruits:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching devil fruits',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json(createErrorResponse(
+      'Error fetching devil fruits',
+      'INTERNAL_SERVER_ERROR',
+      500
+    ));
   }
 };
 
@@ -84,32 +88,34 @@ const getDevilFruitById = async (req, res) => {
 
     // Validate ID is a valid number
     if (!id || isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid ID'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Invalid ID',
+        'INVALID_ID',
+        400
+      ));
     }
 
     const fruit = await devilFruitService.getFruitById(id);
 
     if (!fruit) {
-      return res.status(404).json({
-        success: false,
-        message: `Devil fruit with ID ${id} not found`
-      });
+      return res.status(404).json(createErrorResponse(
+        `Devil fruit with ID ${id} not found`,
+        'NOT_FOUND',
+        404
+      ));
     }
 
-    res.status(200).json({
-      success: true,
-      data: fruit
-    });
+    res.status(200).json(createItemResponse(
+      fruit,
+      'Devil fruit retrieved successfully'
+    ));
   } catch (error) {
     console.error('Error fetching devil fruit:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching devil fruit',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json(createErrorResponse(
+      'Error fetching devil fruit',
+      'INTERNAL_SERVER_ERROR',
+      500
+    ));
   }
 };
 
@@ -134,24 +140,27 @@ const createDevilFruit = async (req, res) => {
 
     // Validations
     if (!name || name.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        message: 'Name is required'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Name is required',
+        'MISSING_NAME',
+        400
+      ));
     }
 
     if (name.length > 100) {
-      return res.status(400).json({
-        success: false,
-        message: 'Name cannot exceed 100 characters'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Name cannot exceed 100 characters',
+        'NAME_TOO_LONG',
+        400
+      ));
     }
 
     if (!type_id || isNaN(type_id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid type_id is required'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Valid type_id is required',
+        'INVALID_TYPE_ID',
+        400
+      ));
     }
 
     // Create via service
@@ -168,41 +177,43 @@ const createDevilFruit = async (req, res) => {
       image_url
     });
 
-    res.status(201).json({
-      success: true,
-      message: 'Devil fruit created successfully',
-      data: newFruit
-    });
+    res.status(201).json(createItemResponse(
+      newFruit,
+      'Devil fruit created successfully'
+    ));
   } catch (error) {
     console.error('Error creating devil fruit:', error);
 
     // Handle known service errors
     if (error.code === 'DUPLICATE_NAME') {
-      return res.status(409).json({
-        success: false,
-        message: error.message
-      });
+      return res.status(409).json(createErrorResponse(
+        error.message,
+        'DUPLICATE_NAME',
+        409
+      ));
     }
 
     if (error.code === 'INVALID_TYPE') {
-      return res.status(400).json({
-        success: false,
-        message: error.message
-      });
+      return res.status(400).json(createErrorResponse(
+        error.message,
+        'INVALID_TYPE',
+        400
+      ));
     }
 
     if (error.code === 'INVALID_JSON') {
-      return res.status(400).json({
-        success: false,
-        message: error.message
-      });
+      return res.status(400).json(createErrorResponse(
+        error.message,
+        'INVALID_TYPE',
+        400
+      ));
     }
 
-    res.status(500).json({
-      success: false,
-      message: 'Error creating devil fruit',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json(createErrorResponse(
+      'Error creating devil fruit',
+      'INTERNAL_SERVER_ERROR',
+      500
+    ));
   }
 };
 
@@ -228,35 +239,39 @@ const updateDevilFruit = async (req, res) => {
 
     // Validate ID
     if (!id || isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid ID'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Invalid ID',
+        'INVALID_ID',
+        400
+      ));
     }
 
     // Validate name if provided
     if (name !== undefined) {
       if (name.trim() === '') {
-        return res.status(400).json({
-          success: false,
-          message: 'Name cannot be empty'
-        });
+      return res.status(400).json(createErrorResponse(
+        'Name cannot be empty',
+        'EMPTY_NAME',
+        400
+      ));
       }
 
       if (name.length > 100) {
-        return res.status(400).json({
-          success: false,
-          message: 'Name cannot exceed 100 characters'
-        });
+      return res.status(400).json(createErrorResponse(
+        'Name cannot exceed 100 characters',
+        'NAME_TOO_LONG',
+        400
+      ));
       }
     }
 
     // Validate type_id if provided
     if (type_id !== undefined && (isNaN(type_id) || type_id < 1)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Valid type_id is required'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Valid type_id is required',
+        'INVALID_TYPE_ID',
+        400
+      ));
     }
 
     // Check if any fields are provided
@@ -266,10 +281,11 @@ const updateDevilFruit = async (req, res) => {
     ].some(field => field !== undefined);
 
     if (!hasFields) {
-      return res.status(400).json({
-        success: false,
-        message: 'No fields provided to update'
-      });
+      return res.status(400).json(createErrorResponse(
+        'No fields provided to update',
+        'NO_FIELDS_PROVIDED',
+        400
+      ));
     }
 
     // Update via service
@@ -286,48 +302,51 @@ const updateDevilFruit = async (req, res) => {
       image_url
     });
 
-    res.status(200).json({
-      success: true,
-      message: 'Devil fruit updated successfully',
-      data: updatedFruit
-    });
+    res.status(200).json(createItemResponse(
+      updatedFruit,
+      'Devil fruit updated successfully'
+    ));
   } catch (error) {
     console.error('Error updating devil fruit:', error);
 
     // Handle known service errors
     if (error.code === 'NOT_FOUND') {
-      return res.status(404).json({
-        success: false,
-        message: error.message
-      });
+      return res.status(404).json(createErrorResponse(
+        error.message,
+        'NOT_FOUND',
+        404
+      ));
     }
 
     if (error.code === 'DUPLICATE_NAME') {
-      return res.status(409).json({
-        success: false,
-        message: error.message
-      });
+      return res.status(409).json(createErrorResponse(
+        error.message,
+        'DUPLICATE_NAME',
+        409
+      ));
     }
 
     if (error.code === 'INVALID_TYPE') {
-      return res.status(400).json({
-        success: false,
-        message: error.message
-      });
+      return res.status(400).json(createErrorResponse(
+        error.message,
+        'INVALID_TYPE',
+        400
+      ));
     }
 
     if (error.code === 'INVALID_JSON') {
-      return res.status(400).json({
-        success: false,
-        message: error.message
-      });
+      return res.status(400).json(createErrorResponse(
+        error.message,
+        'INVALID_TYPE',
+        400
+      ));
     }
 
-    res.status(500).json({
-      success: false,
-      message: 'Error updating devil fruit',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json(createErrorResponse(
+      'Error updating devil fruit',
+      'INTERNAL_SERVER_ERROR',
+      500
+    ));
   }
 };
 
@@ -341,35 +360,37 @@ const deleteDevilFruit = async (req, res) => {
 
     // Validate ID
     if (!id || isNaN(id)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid ID'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Invalid ID',
+        'INVALID_ID',
+        400
+      ));
     }
 
     // Delete via service
     const deleted = await devilFruitService.deleteFruit(id);
 
-    res.status(200).json({
-      success: true,
-      message: `Devil fruit "${deleted.name}" deleted successfully`
-    });
+    res.status(200).json(createItemResponse(
+      { deletedFruit: deleted.name },
+      `Devil fruit "${deleted.name}" deleted successfully`
+    ));
   } catch (error) {
     console.error('Error deleting devil fruit:', error);
 
     // Handle known service errors
     if (error.code === 'NOT_FOUND') {
-      return res.status(404).json({
-        success: false,
-        message: error.message
-      });
+      return res.status(404).json(createErrorResponse(
+        error.message,
+        'NOT_FOUND',
+        404
+      ));
     }
 
-    res.status(500).json({
-      success: false,
-      message: 'Error deleting devil fruit',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json(createErrorResponse(
+      'Error deleting devil fruit',
+      'INTERNAL_SERVER_ERROR',
+      500
+    ));
   }
 };
 
@@ -389,10 +410,11 @@ const getDevilFruitsByType = async (req, res) => {
 
     // Validate typeId
     if (!typeId || isNaN(typeId)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid type ID'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Invalid type ID',
+        'INVALID_TYPE_ID',
+        400
+      ));
     }
 
     // Validate pagination parameters
@@ -400,33 +422,37 @@ const getDevilFruitsByType = async (req, res) => {
     const limitNum = parseInt(limit);
 
     if (pageNum < 1) {
-      return res.status(400).json({
-        success: false,
-        message: 'Page must be greater than 0'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Page must be greater than 0',
+        'INVALID_PAGE',
+        400
+      ));
     }
 
     if (limitNum < 1 || limitNum > 100) {
-      return res.status(400).json({
-        success: false,
-        message: 'Limit must be between 1 and 100'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Limit must be between 1 and 100',
+        'INVALID_LIMIT',
+        400
+      ));
     }
 
     // Validate sort parameters
     const allowedSortFields = ['id', 'name', 'rarity', 'power_level', 'created_at'];
     if (!allowedSortFields.includes(sortBy)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid sort field'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Invalid sort field',
+        'INVALID_SORT_FIELD',
+        400
+      ));
     }
 
     if (!['ASC', 'DESC'].includes(sortOrder.toUpperCase())) {
-      return res.status(400).json({
-        success: false,
-        message: 'Sort order must be ASC or DESC'
-      });
+      return res.status(400).json(createErrorResponse(
+        'Sort order must be ASC or DESC',
+        'INVALID_SORT_ORDER',
+        400
+      ));
     }
 
     const result = await devilFruitService.getFruitsByType(parseInt(typeId), {
@@ -436,19 +462,18 @@ const getDevilFruitsByType = async (req, res) => {
       sortOrder: sortOrder.toUpperCase()
     });
 
-    res.status(200).json({
-      success: true,
-      count: result.pagination.totalItems,
-      pagination: result.pagination,
-      data: result.fruits
-    });
+    res.status(200).json(createPaginatedResponse(
+      result.fruits,
+      result.pagination,
+      'Devil fruits by type retrieved successfully'
+    ));
   } catch (error) {
     console.error('Error fetching devil fruits by type:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Error fetching devil fruits by type',
-      error: process.env.NODE_ENV === 'development' ? error.message : undefined
-    });
+    res.status(500).json(createErrorResponse(
+      'Error fetching devil fruits by type',
+      'INTERNAL_SERVER_ERROR',
+      500
+    ));
   }
 };
 

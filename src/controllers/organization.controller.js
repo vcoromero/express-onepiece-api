@@ -1,4 +1,5 @@
 const OrganizationService = require('../services/organization.service');
+const { createPaginatedResponse, createItemResponse, createListResponse, createErrorResponse } = require('../utils/response.helper');
 
 /**
  * Organization Controller
@@ -35,20 +36,20 @@ class OrganizationController {
 
       // Validate status if provided
       if (status && !['active', 'disbanded', 'destroyed'].includes(status)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid status. Must be active, disbanded, or destroyed',
-          error: 'VALIDATION_ERROR'
-        });
+        return res.status(400).json(createErrorResponse(
+          'Invalid status. Must be active, disbanded, or destroyed',
+          'INVALID_STATUS',
+          400
+        ));
       }
 
       // Validate organization type ID if provided
       if (organizationTypeId && isNaN(parseInt(organizationTypeId))) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid organization type ID',
-          error: 'VALIDATION_ERROR'
-        });
+        return res.status(400).json(createErrorResponse(
+          'Invalid organization type ID',
+          'INVALID_ORGANIZATION_TYPE_ID',
+          400
+        ));
       }
 
       // Validate sort parameters
@@ -67,14 +68,18 @@ class OrganizationController {
         sortOrder: sortDirection
       });
 
-      res.status(200).json(result);
+      res.status(200).json(createPaginatedResponse(
+        result.organizations,
+        result.pagination,
+        'Organizations retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getAllOrganizations:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while retrieving organizations',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      res.status(500).json(createErrorResponse(
+        'Internal server error while retrieving organizations',
+        'INTERNAL_SERVER_ERROR',
+        500
+      ));
     }
   }
 
@@ -91,33 +96,36 @@ class OrganizationController {
 
       // Validate ID parameter
       if (!id || isNaN(parseInt(id))) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid organization ID is required',
-          error: 'VALIDATION_ERROR'
-        });
+        return res.status(400).json(createErrorResponse(
+          'Valid organization ID is required',
+          'INVALID_ID',
+          400
+        ));
       }
 
       // Call service
       const result = await OrganizationService.getOrganizationById(parseInt(id));
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Organization retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getOrganizationById:', error);
             
       if (error.message.includes('not found')) {
-        return res.status(404).json({
-          success: false,
-          message: 'Organization not found',
-          error: 'NOT_FOUND'
-        });
+        return res.status(404).json(createErrorResponse(
+          'Organization not found',
+          'NOT_FOUND',
+          404
+        ));
       }
 
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while retrieving organization',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      res.status(500).json(createErrorResponse(
+        'Internal server error while retrieving organization',
+        'INTERNAL_SERVER_ERROR',
+        500
+      ));
     }
   }
 
@@ -179,11 +187,11 @@ class OrganizationController {
 
       // Validate status if provided
       if (organizationData.status && !['active', 'disbanded', 'destroyed'].includes(organizationData.status)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid status. Must be active, disbanded, or destroyed',
-          error: 'VALIDATION_ERROR'
-        });
+        return res.status(400).json(createErrorResponse(
+          'Invalid status. Must be active, disbanded, or destroyed',
+          'INVALID_STATUS',
+          400
+        ));
       }
 
       // Validate total bounty if provided
@@ -214,16 +222,19 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.createOrganization(organizationData);
 
-      res.status(201).json(result);
+      res.status(201).json(createItemResponse(
+        result.data,
+        'Organization created successfully'
+      ));
     } catch (error) {
       console.error('Error in createOrganization:', error);
             
       if (error.message.includes('already exists')) {
-        return res.status(409).json({
-          success: false,
-          message: error.message,
-          error: 'DUPLICATE_ERROR'
-        });
+        return res.status(409).json(createErrorResponse(
+          error.message,
+          'DUPLICATE_ERROR',
+          409
+        ));
       }
 
       if (error.message.includes('Invalid') || error.message.includes('required')) {
@@ -234,11 +245,11 @@ class OrganizationController {
         });
       }
 
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while creating organization',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      res.status(500).json(createErrorResponse(
+        'Internal server error while creating organization',
+        'INTERNAL_SERVER_ERROR',
+        500
+      ));
     }
   }
 
@@ -256,11 +267,11 @@ class OrganizationController {
 
       // Validate ID parameter
       if (!id || isNaN(parseInt(id))) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid organization ID is required',
-          error: 'VALIDATION_ERROR'
-        });
+        return res.status(400).json(createErrorResponse(
+          'Valid organization ID is required',
+          'INVALID_ID',
+          400
+        ));
       }
 
       // Validate name length if provided
@@ -301,11 +312,11 @@ class OrganizationController {
 
       // Validate status if provided
       if (updateData.status && !['active', 'disbanded', 'destroyed'].includes(updateData.status)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid status. Must be active, disbanded, or destroyed',
-          error: 'VALIDATION_ERROR'
-        });
+        return res.status(400).json(createErrorResponse(
+          'Invalid status. Must be active, disbanded, or destroyed',
+          'INVALID_STATUS',
+          400
+        ));
       }
 
       // Validate total bounty if provided
@@ -336,24 +347,27 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.updateOrganization(parseInt(id), updateData);
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Organization updated successfully'
+      ));
     } catch (error) {
       console.error('Error in updateOrganization:', error);
             
       if (error.message.includes('not found')) {
-        return res.status(404).json({
-          success: false,
-          message: 'Organization not found',
-          error: 'NOT_FOUND'
-        });
+        return res.status(404).json(createErrorResponse(
+          'Organization not found',
+          'NOT_FOUND',
+          404
+        ));
       }
 
       if (error.message.includes('already exists')) {
-        return res.status(409).json({
-          success: false,
-          message: error.message,
-          error: 'DUPLICATE_ERROR'
-        });
+        return res.status(409).json(createErrorResponse(
+          error.message,
+          'DUPLICATE_ERROR',
+          409
+        ));
       }
 
       if (error.message.includes('Invalid') || error.message.includes('required')) {
@@ -364,11 +378,11 @@ class OrganizationController {
         });
       }
 
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while updating organization',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      res.status(500).json(createErrorResponse(
+        'Internal server error while updating organization',
+        'INTERNAL_SERVER_ERROR',
+        500
+      ));
     }
   }
 
@@ -385,41 +399,44 @@ class OrganizationController {
 
       // Validate ID parameter
       if (!id || isNaN(parseInt(id))) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid organization ID is required',
-          error: 'VALIDATION_ERROR'
-        });
+        return res.status(400).json(createErrorResponse(
+          'Valid organization ID is required',
+          'INVALID_ID',
+          400
+        ));
       }
 
       // Call service
       const result = await OrganizationService.deleteOrganization(parseInt(id));
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Organization deleted successfully'
+      ));
     } catch (error) {
       console.error('Error in deleteOrganization:', error);
             
       if (error.message.includes('not found')) {
-        return res.status(404).json({
-          success: false,
-          message: 'Organization not found',
-          error: 'NOT_FOUND'
-        });
+        return res.status(404).json(createErrorResponse(
+          'Organization not found',
+          'NOT_FOUND',
+          404
+        ));
       }
 
       if (error.message.includes('active members')) {
-        return res.status(409).json({
-          success: false,
-          message: error.message,
-          error: 'CONFLICT_ERROR'
-        });
+        return res.status(409).json(createErrorResponse(
+          error.message,
+          'CONFLICT_ERROR',
+          409
+        ));
       }
 
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while deleting organization',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      res.status(500).json(createErrorResponse(
+        'Internal server error while deleting organization',
+        'INTERNAL_SERVER_ERROR',
+        500
+      ));
     }
   }
 
@@ -446,23 +463,26 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.getOrganizationsByType(parseInt(organizationTypeId));
 
-      res.status(200).json(result);
+      res.status(200).json(createListResponse(
+        result.data,
+        'Organizations by type retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getOrganizationsByType:', error);
             
       if (error.message.includes('not found')) {
-        return res.status(404).json({
-          success: false,
-          message: 'Organization type not found',
-          error: 'NOT_FOUND'
-        });
+        return res.status(404).json(createErrorResponse(
+          'Organization type not found',
+          'NOT_FOUND',
+          404
+        ));
       }
 
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while retrieving organizations by type',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      res.status(500).json(createErrorResponse(
+        'Internal server error while retrieving organizations by type',
+        'INTERNAL_SERVER_ERROR',
+        500
+      ));
     }
   }
 
@@ -479,33 +499,36 @@ class OrganizationController {
 
       // Validate ID parameter
       if (!id || isNaN(parseInt(id))) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid organization ID is required',
-          error: 'VALIDATION_ERROR'
-        });
+        return res.status(400).json(createErrorResponse(
+          'Valid organization ID is required',
+          'INVALID_ID',
+          400
+        ));
       }
 
       // Call service
       const result = await OrganizationService.getOrganizationMembers(parseInt(id));
 
-      res.status(200).json(result);
+      res.status(200).json(createListResponse(
+        result.data,
+        'Organization members retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getOrganizationMembers:', error);
             
       if (error.message.includes('not found')) {
-        return res.status(404).json({
-          success: false,
-          message: 'Organization not found',
-          error: 'NOT_FOUND'
-        });
+        return res.status(404).json(createErrorResponse(
+          'Organization not found',
+          'NOT_FOUND',
+          404
+        ));
       }
 
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while retrieving organization members',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      res.status(500).json(createErrorResponse(
+        'Internal server error while retrieving organization members',
+        'INTERNAL_SERVER_ERROR',
+        500
+      ));
     }
   }
 }
