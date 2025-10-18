@@ -34,10 +34,8 @@ class CharacterTypeService {
 
       return {
         success: true,
-        data: {
-          characterTypes,
-          total: characterTypes.length
-        }
+        characterTypes,
+        total: characterTypes.length
       };
     } catch (error) {
       console.error('Error in getAllCharacterTypes:', error);

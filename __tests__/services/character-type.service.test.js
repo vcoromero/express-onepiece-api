@@ -118,10 +118,8 @@ describe('CharacterTypeService', () => {
       });
       expect(result).toEqual({
         success: true,
-        data: {
-          characterTypes: mockCharacterTypes,
-          total: 2
-        }
+        characterTypes: mockCharacterTypes,
+        total: 2
       });
     });
 

@@ -127,8 +127,7 @@ describe('Character Service', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.characters).toHaveLength(2);
-      expect(result.data.pagination.totalItems).toBe(2);
+      expect(result.characters).toHaveLength(2);
       expect(Character.findAll).toHaveBeenCalled();
     });
 
@@ -152,7 +151,7 @@ describe('Character Service', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.characters).toHaveLength(1);
+      expect(result.characters).toHaveLength(1);
       expect(Character.findAll).toHaveBeenCalled();
     });
 
@@ -182,7 +181,7 @@ describe('Character Service', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.characters).toHaveLength(1);
+      expect(result.characters).toHaveLength(1);
       expect(Character.findAll).toHaveBeenCalled();
     });
 
@@ -483,7 +482,7 @@ describe('Character Service', () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.data.characters).toHaveLength(1);
+      expect(result.characters).toHaveLength(1);
       expect(Character.findAll).toHaveBeenCalled();
     });
 

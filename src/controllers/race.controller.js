@@ -1,4 +1,5 @@
 const raceService = require('../services/race.service');
+const { createListResponse, createItemResponse } = require('../utils/response.helper');
 
 /**
  * @class RaceController
@@ -22,7 +23,10 @@ class RaceController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createListResponse(
+        result.races,
+        'Races retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getAllRaces controller:', error);
       res.status(500).json({
@@ -62,7 +66,10 @@ class RaceController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Race retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getRaceById controller:', error);
       res.status(500).json({
@@ -120,7 +127,10 @@ class RaceController {
         }
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.race,
+        'Race updated successfully'
+      ));
     } catch (error) {
       console.error('Error in updateRace controller:', error);
       res.status(500).json({

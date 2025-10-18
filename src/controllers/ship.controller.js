@@ -1,4 +1,5 @@
 const shipService = require('../services/ship.service');
+const { createPaginatedResponse, createItemResponse, createListResponse } = require('../utils/response.helper');
 
 /**
  * Ship Controller
@@ -48,12 +49,15 @@ class ShipController {
         search
       });
 
-      res.status(200).json({
-        success: true,
-        data: result.ships,
-        pagination: result.pagination,
-        message: 'Ships retrieved successfully'
-      });
+      if (!result.success) {
+        return res.status(500).json(result);
+      }
+
+      res.status(200).json(createPaginatedResponse(
+        result.data,
+        result.pagination,
+        'Ships retrieved successfully'
+      ));
     } catch (error) {
       console.error('Get all ships error:', error);
             
@@ -93,36 +97,25 @@ class ShipController {
         });
       }
 
-      const ship = await shipService.getShipById(parseInt(id));
+      const result = await shipService.getShipById(parseInt(id));
 
-      res.status(200).json({
-        success: true,
-        data: ship,
-        message: 'Ship retrieved successfully'
-      });
+      if (!result.success) {
+        if (result.error === 'NOT_FOUND') {
+          return res.status(404).json(result);
+        }
+        return res.status(500).json(result);
+      }
+
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Ship retrieved successfully'
+      ));
     } catch (error) {
       console.error('Get ship by ID error:', error);
-            
-      if (error.message === 'SHIP_INVALID_ID') {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid ship ID',
-          error: 'ID must be a positive integer'
-        });
-      }
-
-      if (error.message === 'SHIP_NOT_FOUND') {
-        return res.status(404).json({
-          success: false,
-          message: 'Ship not found',
-          error: 'No ship exists with the provided ID'
-        });
-      }
-
       res.status(500).json({
         success: false,
-        message: 'Failed to retrieve ship',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
+        message: 'Internal server error',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
       });
     }
   }
@@ -282,18 +275,24 @@ class ShipController {
         });
       }
 
-      const ship = await shipService.updateShip(parseInt(id), {
+      const result = await shipService.updateShip(parseInt(id), {
         name,
         description,
         status,
         image_url
       });
 
-      res.status(200).json({
-        success: true,
-        data: ship,
-        message: 'Ship updated successfully'
-      });
+      if (!result.success) {
+        if (result.error === 'NOT_FOUND') {
+          return res.status(404).json(result);
+        }
+        return res.status(500).json(result);
+      }
+
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Ship updated successfully'
+      ));
     } catch (error) {
       console.error('Update ship error:', error);
             
@@ -359,11 +358,17 @@ class ShipController {
 
       const result = await shipService.deleteShip(parseInt(id));
 
-      res.status(200).json({
-        success: true,
-        data: result,
-        message: 'Ship deleted successfully'
-      });
+      if (!result.success) {
+        if (result.error === 'NOT_FOUND') {
+          return res.status(404).json(result);
+        }
+        return res.status(500).json(result);
+      }
+
+      res.status(200).json(createItemResponse(
+        result,
+        result.message
+      ));
     } catch (error) {
       console.error('Delete ship error:', error);
             
@@ -421,11 +426,10 @@ class ShipController {
 
       const ships = await shipService.getShipsByStatus(status);
 
-      res.status(200).json({
-        success: true,
-        data: ships,
-        message: `Ships with status '${status}' retrieved successfully`
-      });
+      res.status(200).json(createListResponse(
+        ships,
+        `Ships with status '${status}' retrieved successfully`
+      ));
     } catch (error) {
       console.error('Get ships by status error:', error);
             

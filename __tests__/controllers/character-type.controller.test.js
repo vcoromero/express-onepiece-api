@@ -183,18 +183,15 @@ describe('CharacterTypeController', () => {
 
   describe('GET /api/character-types', () => {
     it('should return all character types with default parameters', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: {
-          characterTypes: [
-            { id: 1, name: 'Pirate', description: 'Sea-faring adventurers' },
-            { id: 2, name: 'Marine', description: 'Military force of the World Government' }
-          ],
-          total: 2
-        }
+        characterTypes: [
+          { id: 1, name: 'Pirate', description: 'Sea-faring adventurers' },
+          { id: 2, name: 'Marine', description: 'Military force of the World Government' }
+        ]
       };
 
-      characterTypeService.getAllCharacterTypes.mockResolvedValue(mockResult);
+      characterTypeService.getAllCharacterTypes.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .get('/api/character-types')
@@ -205,18 +202,23 @@ describe('CharacterTypeController', () => {
         sortBy: 'name',
         sortOrder: 'asc'
       });
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.characterTypes,
+        count: 2,
+        message: 'Character types retrieved successfully'
+      });
     });
 
     it('should handle query parameters correctly', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: { characterTypes: [], total: 0 }
+        characterTypes: []
       };
 
-      characterTypeService.getAllCharacterTypes.mockResolvedValue(mockResult);
+      characterTypeService.getAllCharacterTypes.mockResolvedValue(mockServiceResult);
 
-      await request(app)
+      const response = await request(app)
         .get('/api/character-types?search=pirate&sortBy=created_at&sortOrder=desc')
         .expect(200);
 
@@ -224,6 +226,12 @@ describe('CharacterTypeController', () => {
         search: 'pirate',
         sortBy: 'created_at',
         sortOrder: 'desc'
+      });
+      expect(response.body).toEqual({
+        success: true,
+        data: [],
+        count: 0,
+        message: 'Character types retrieved successfully'
       });
     });
 
@@ -281,19 +289,23 @@ describe('CharacterTypeController', () => {
 
   describe('GET /api/character-types/:id', () => {
     it('should return character type when found', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
         data: { id: 1, name: 'Pirate', description: 'Sea-faring adventurers' }
       };
 
-      characterTypeService.getCharacterTypeById.mockResolvedValue(mockResult);
+      characterTypeService.getCharacterTypeById.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .get('/api/character-types/1')
         .expect(200);
 
       expect(characterTypeService.getCharacterTypeById).toHaveBeenCalledWith(1);
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.data,
+        message: 'Character type retrieved successfully'
+      });
     });
 
     it('should return 400 for invalid ID', async () => {

@@ -1,4 +1,5 @@
 const hakiTypeService = require('../services/haki-type.service');
+const { createListResponse, createItemResponse } = require('../utils/response.helper');
 
 /**
  * HakiType Controller
@@ -30,7 +31,10 @@ class HakiTypeController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createListResponse(
+        result.hakiTypes,
+        'Haki types retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getAllHakiTypes controller:', error);
       res.status(500).json({
@@ -69,7 +73,10 @@ class HakiTypeController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Haki type retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getHakiTypeById controller:', error);
       res.status(500).json({
@@ -153,7 +160,10 @@ class HakiTypeController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.hakiType,
+        'Haki type updated successfully'
+      ));
     } catch (error) {
       console.error('Error in updateHakiType controller:', error);
       res.status(500).json({

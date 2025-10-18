@@ -1,4 +1,5 @@
 const devilFruitService = require('../services/devil-fruit.service');
+const { createPaginatedResponse, createItemResponse } = require('../utils/response.helper');
 
 /**
  * Get all devil fruits with optional filtering and pagination
@@ -58,12 +59,11 @@ const getAllDevilFruits = async (req, res) => {
       sortOrder: sortOrder.toUpperCase()
     });
 
-    res.status(200).json({
-      success: true,
-      count: result.pagination.totalItems,
-      pagination: result.pagination,
-      data: result.fruits
-    });
+    res.status(200).json(createPaginatedResponse(
+      result.fruits,
+      result.pagination,
+      'Devil fruits retrieved successfully'
+    ));
   } catch (error) {
     console.error('Error fetching devil fruits:', error);
     res.status(500).json({
@@ -99,10 +99,10 @@ const getDevilFruitById = async (req, res) => {
       });
     }
 
-    res.status(200).json({
-      success: true,
-      data: fruit
-    });
+    res.status(200).json(createItemResponse(
+      fruit,
+      'Devil fruit retrieved successfully'
+    ));
   } catch (error) {
     console.error('Error fetching devil fruit:', error);
     res.status(500).json({
@@ -168,11 +168,10 @@ const createDevilFruit = async (req, res) => {
       image_url
     });
 
-    res.status(201).json({
-      success: true,
-      message: 'Devil fruit created successfully',
-      data: newFruit
-    });
+    res.status(201).json(createItemResponse(
+      newFruit,
+      'Devil fruit created successfully'
+    ));
   } catch (error) {
     console.error('Error creating devil fruit:', error);
 
@@ -286,11 +285,10 @@ const updateDevilFruit = async (req, res) => {
       image_url
     });
 
-    res.status(200).json({
-      success: true,
-      message: 'Devil fruit updated successfully',
-      data: updatedFruit
-    });
+    res.status(200).json(createItemResponse(
+      updatedFruit,
+      'Devil fruit updated successfully'
+    ));
   } catch (error) {
     console.error('Error updating devil fruit:', error);
 
@@ -350,10 +348,10 @@ const deleteDevilFruit = async (req, res) => {
     // Delete via service
     const deleted = await devilFruitService.deleteFruit(id);
 
-    res.status(200).json({
-      success: true,
-      message: `Devil fruit "${deleted.name}" deleted successfully`
-    });
+    res.status(200).json(createItemResponse(
+      { deletedFruit: deleted.name },
+      `Devil fruit "${deleted.name}" deleted successfully`
+    ));
   } catch (error) {
     console.error('Error deleting devil fruit:', error);
 
@@ -436,12 +434,11 @@ const getDevilFruitsByType = async (req, res) => {
       sortOrder: sortOrder.toUpperCase()
     });
 
-    res.status(200).json({
-      success: true,
-      count: result.pagination.totalItems,
-      pagination: result.pagination,
-      data: result.fruits
-    });
+    res.status(200).json(createPaginatedResponse(
+      result.fruits,
+      result.pagination,
+      'Devil fruits by type retrieved successfully'
+    ));
   } catch (error) {
     console.error('Error fetching devil fruits by type:', error);
     res.status(500).json({

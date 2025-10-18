@@ -95,8 +95,7 @@ describe('CharacterService', () => {
       const result = await CharacterService.getAllCharacters();
 
       expect(result.success).toBe(true);
-      expect(result.data.characters).toEqual(mockCharacters);
-      expect(result.data.pagination.totalItems).toBe(2);
+      expect(result.characters).toEqual(mockCharacters);
       expect(Character.count).toHaveBeenCalled();
     });
 

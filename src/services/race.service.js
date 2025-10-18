@@ -34,10 +34,8 @@ class RaceService {
 
       return {
         success: true,
-        data: {
-          races,
-          total: races.length
-        }
+        races,
+        total: races.length
       };
     } catch (error) {
       console.error('Error in getAllRaces:', error);

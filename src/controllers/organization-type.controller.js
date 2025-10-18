@@ -1,4 +1,5 @@
 const organizationTypeService = require('../services/organization-type.service');
+const { createListResponse, createItemResponse } = require('../utils/response.helper');
 
 /**
  * @class OrganizationTypeController
@@ -22,7 +23,10 @@ class OrganizationTypeController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createListResponse(
+        result.organizationTypes,
+        'Organization types retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getAllOrganizationTypes controller:', error);
       res.status(500).json({
@@ -62,7 +66,10 @@ class OrganizationTypeController {
         return res.status(500).json(result);
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.organizationType,
+        'Organization type retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getOrganizationTypeById controller:', error);
       res.status(500).json({
@@ -120,7 +127,10 @@ class OrganizationTypeController {
         }
       }
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.organizationType,
+        'Organization type updated successfully'
+      ));
     } catch (error) {
       console.error('Error in updateOrganizationType controller:', error);
       res.status(500).json({

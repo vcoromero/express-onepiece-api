@@ -186,16 +186,14 @@ class CharacterService {
 
       return {
         success: true,
-        data: {
-          characters,
-          pagination: {
-            currentPage: pageNum,
-            totalPages,
-            totalItems: total,
-            itemsPerPage: limitNum,
-            hasNextPage: pageNum < totalPages,
-            hasPrevPage: pageNum > 1
-          }
+        characters,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: total,
+          totalPages,
+          hasNext: pageNum < totalPages,
+          hasPrev: pageNum > 1
         }
       };
     } catch (error) {

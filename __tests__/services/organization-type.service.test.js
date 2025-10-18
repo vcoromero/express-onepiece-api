@@ -79,10 +79,8 @@ describe('OrganizationTypeService', () => {
 
       expect(result).toEqual({
         success: true,
-        data: {
-          organizationTypes: mockOrganizationTypes,
-          total: 2
-        }
+        organizationTypes: mockOrganizationTypes,
+        total: 2
       });
       expect(OrganizationType.findAll).toHaveBeenCalledWith({
         where: {},

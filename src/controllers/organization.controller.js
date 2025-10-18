@@ -1,4 +1,5 @@
 const OrganizationService = require('../services/organization.service');
+const { createPaginatedResponse, createItemResponse, createListResponse } = require('../utils/response.helper');
 
 /**
  * Organization Controller
@@ -67,7 +68,11 @@ class OrganizationController {
         sortOrder: sortDirection
       });
 
-      res.status(200).json(result);
+      res.status(200).json(createPaginatedResponse(
+        result.organizations,
+        result.pagination,
+        'Organizations retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getAllOrganizations:', error);
       res.status(500).json({
@@ -101,7 +106,10 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.getOrganizationById(parseInt(id));
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Organization retrieved successfully'
+      ));
     } catch (error) {
       console.error('Error in getOrganizationById:', error);
             
@@ -336,7 +344,10 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.updateOrganization(parseInt(id), updateData);
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Organization updated successfully'
+      ));
     } catch (error) {
       console.error('Error in updateOrganization:', error);
             
@@ -395,7 +406,10 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.deleteOrganization(parseInt(id));
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        'Organization deleted successfully'
+      ));
     } catch (error) {
       console.error('Error in deleteOrganization:', error);
             
@@ -446,7 +460,10 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.getOrganizationsByType(parseInt(organizationTypeId));
 
-      res.status(200).json(result);
+      res.status(200).json(createListResponse(
+        result.data,
+        result.message
+      ));
     } catch (error) {
       console.error('Error in getOrganizationsByType:', error);
             
@@ -489,7 +506,10 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.getOrganizationMembers(parseInt(id));
 
-      res.status(200).json(result);
+      res.status(200).json(createItemResponse(
+        result.data,
+        result.message
+      ));
     } catch (error) {
       console.error('Error in getOrganizationMembers:', error);
             
