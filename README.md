@@ -18,6 +18,8 @@ A RESTful API inspired by One Piece, built with Express.js, MySQL, and Sequelize
 - ✅ **Jest Tests** - 778 tests, 94.21% coverage
 - ✅ **Docker Ready** - Containerization included
 - ✅ **Complete CRUD** - Characters, Ships, Organizations, Devil Fruits
+- ✅ **Modular Database Seeding** - Granular control over data initialization
+- ✅ **Database Diagnostics** - Automated issue detection and recommendations
 
 ---
 
@@ -33,8 +35,15 @@ cd express-onepiece-api
 # Install dependencies
 npm install
 
-# Create database
+# Create database and seed data
 mysql -u root -p < database/schema.sql
+
+# Optional: Use modular seeding (recommended)
+# This allows granular control over database seeding
+curl -X POST http://localhost:3000/api/db/execute-sql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"files": ["01-clean-database.sql", "02-seed-races.sql", "03-seed-character-types.sql"]}'
 ```
 
 ### 2. Configuration
@@ -78,7 +87,27 @@ curl -X POST http://localhost:3000/api/auth/generate-hash \
 # ADMIN_PASSWORD_HASH=$2a$10$...
 ```
 
-### 4. Ready!
+### 4. Database Seeding (Optional)
+
+The API now supports modular database seeding for better control:
+
+```bash
+# Check available SQL files
+curl -X GET http://localhost:3000/api/db/available-sql-files \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Execute specific seed files
+curl -X POST http://localhost:3000/api/db/execute-sql \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -d '{"files": ["01-clean-database.sql", "02-seed-races.sql", "03-seed-character-types.sql"]}'
+
+# Diagnose database issues
+curl -X GET http://localhost:3000/api/db/diagnose \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+```
+
+### 5. Ready!
 
 ```bash
 # Start in development mode
@@ -159,6 +188,14 @@ GET  /api/health                # Health check (public)
 POST /api/auth/login            # Login (get JWT)
 GET  /api/auth/verify           # Verify token (requires auth)
 POST /api/auth/generate-hash    # Generate password hash (dev only)
+```
+
+#### Database Management
+```bash
+GET  /api/db/status             # Database status and table info
+GET  /api/db/available-sql-files # List available SQL seed files
+POST /api/db/execute-sql       # Execute SQL files (requires auth)
+GET  /api/db/diagnose           # Diagnose database issues (requires auth)
 ```
 
 #### Main Entities
