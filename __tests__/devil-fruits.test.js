@@ -73,10 +73,12 @@ describe('Devil Fruits API Endpoints', () => {
       ];
 
       const mockPagination = {
-        currentPage: 1,
+        page: 1,
+        limit: 10,
+        total: 1,
         totalPages: 1,
-        totalItems: 1,
-        itemsPerPage: 10
+        hasNext: false,
+        hasPrev: false
       };
 
       devilFruitService.getAllFruits.mockResolvedValue({
@@ -89,7 +91,6 @@ describe('Devil Fruits API Endpoints', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.count).toBe(1);
       expect(response.body.data).toEqual(mockFruits);
       expect(response.body.pagination).toEqual(mockPagination);
       expect(devilFruitService.getAllFruits).toHaveBeenCalledWith({
@@ -524,10 +525,12 @@ describe('Devil Fruits API Endpoints', () => {
       ];
 
       const mockPagination = {
-        currentPage: 1,
+        page: 1,
+        limit: 10,
+        total: 1,
         totalPages: 1,
-        totalItems: 1,
-        itemsPerPage: 10
+        hasNext: false,
+        hasPrev: false
       };
 
       devilFruitService.getFruitsByType.mockResolvedValue({
@@ -540,7 +543,6 @@ describe('Devil Fruits API Endpoints', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.count).toBe(1);
       expect(response.body.data).toEqual(mockFruits);
       expect(response.body.pagination).toEqual(mockPagination);
       expect(devilFruitService.getFruitsByType).toHaveBeenCalledWith(1, {

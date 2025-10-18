@@ -147,12 +147,15 @@ describe('OrganizationController', () => {
         { id: 1, name: 'Straw Hat Pirates', status: 'active' },
         { id: 2, name: 'Marine', status: 'active' }
       ];
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: mockOrganizations,
-        pagination: { page: 1, limit: 10, total: 2, totalPages: 1 }
+        organizations: [
+          { id: 1, name: 'Straw Hat Pirates', status: 'active' },
+          { id: 2, name: 'Marine', status: 'active' }
+        ],
+        pagination: { page: 1, limit: 10, total: 2, totalPages: 1, hasNext: false, hasPrev: false }
       };
-      OrganizationService.getAllOrganizations.mockResolvedValue(mockResult);
+      OrganizationService.getAllOrganizations.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -160,7 +163,12 @@ describe('OrganizationController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.organizations,
+        pagination: mockServiceResult.pagination,
+        message: 'Organizations retrieved successfully'
+      });
       expect(OrganizationService.getAllOrganizations).toHaveBeenCalledWith({
         page: 1,
         limit: 10,
@@ -202,11 +210,12 @@ describe('OrganizationController', () => {
 
     it('should handle valid status parameter', async () => {
       // Arrange
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: [{ id: 1, name: 'Straw Hat Pirates', status: 'active' }]
+        organizations: [{ id: 1, name: 'Straw Hat Pirates', status: 'active' }],
+        pagination: { page: 1, limit: 10, total: 1, totalPages: 1, hasNext: false, hasPrev: false }
       };
-      OrganizationService.getAllOrganizations.mockResolvedValue(mockResult);
+      OrganizationService.getAllOrganizations.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -214,7 +223,12 @@ describe('OrganizationController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.organizations,
+        pagination: mockServiceResult.pagination,
+        message: 'Organizations retrieved successfully'
+      });
       expect(OrganizationService.getAllOrganizations).toHaveBeenCalledWith({
         page: 1,
         limit: 10,
@@ -228,11 +242,12 @@ describe('OrganizationController', () => {
 
     it('should handle valid organizationTypeId parameter', async () => {
       // Arrange
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: [{ id: 1, name: 'Straw Hat Pirates' }]
+        organizations: [{ id: 1, name: 'Straw Hat Pirates' }],
+        pagination: { page: 1, limit: 10, total: 1, totalPages: 1, hasNext: false, hasPrev: false }
       };
-      OrganizationService.getAllOrganizations.mockResolvedValue(mockResult);
+      OrganizationService.getAllOrganizations.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -240,7 +255,12 @@ describe('OrganizationController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.organizations,
+        pagination: mockServiceResult.pagination,
+        message: 'Organizations retrieved successfully'
+      });
       expect(OrganizationService.getAllOrganizations).toHaveBeenCalledWith({
         page: 1,
         limit: 10,
@@ -254,11 +274,12 @@ describe('OrganizationController', () => {
 
     it('should handle search parameter', async () => {
       // Arrange
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: [{ id: 1, name: 'Straw Hat Pirates' }]
+        organizations: [{ id: 1, name: 'Straw Hat Pirates' }],
+        pagination: { page: 1, limit: 10, total: 1, totalPages: 1, hasNext: false, hasPrev: false }
       };
-      OrganizationService.getAllOrganizations.mockResolvedValue(mockResult);
+      OrganizationService.getAllOrganizations.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -266,7 +287,12 @@ describe('OrganizationController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.organizations,
+        pagination: mockServiceResult.pagination,
+        message: 'Organizations retrieved successfully'
+      });
       expect(OrganizationService.getAllOrganizations).toHaveBeenCalledWith({
         page: 1,
         limit: 10,
@@ -280,11 +306,12 @@ describe('OrganizationController', () => {
 
     it('should handle pagination parameters', async () => {
       // Arrange
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: [{ id: 1, name: 'Straw Hat Pirates' }]
+        organizations: [{ id: 1, name: 'Straw Hat Pirates' }],
+        pagination: { page: 2, limit: 5, total: 1, totalPages: 1, hasNext: false, hasPrev: false }
       };
-      OrganizationService.getAllOrganizations.mockResolvedValue(mockResult);
+      OrganizationService.getAllOrganizations.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -292,7 +319,12 @@ describe('OrganizationController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.organizations,
+        pagination: mockServiceResult.pagination,
+        message: 'Organizations retrieved successfully'
+      });
       expect(OrganizationService.getAllOrganizations).toHaveBeenCalledWith({
         page: 2,
         limit: 5,
@@ -306,11 +338,12 @@ describe('OrganizationController', () => {
 
     it('should handle sort parameters', async () => {
       // Arrange
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: [{ id: 1, name: 'Straw Hat Pirates' }]
+        organizations: [{ id: 1, name: 'Straw Hat Pirates' }],
+        pagination: { page: 1, limit: 10, total: 1, totalPages: 1, hasNext: false, hasPrev: false }
       };
-      OrganizationService.getAllOrganizations.mockResolvedValue(mockResult);
+      OrganizationService.getAllOrganizations.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -318,7 +351,12 @@ describe('OrganizationController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.organizations,
+        pagination: mockServiceResult.pagination,
+        message: 'Organizations retrieved successfully'
+      });
       expect(OrganizationService.getAllOrganizations).toHaveBeenCalledWith({
         page: 1,
         limit: 10,
@@ -341,11 +379,11 @@ describe('OrganizationController', () => {
         organizationType: { name: 'Pirate Crew' },
         leader: { name: 'Monkey D. Luffy' }
       };
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
         data: mockOrganization
       };
-      OrganizationService.getOrganizationById.mockResolvedValue(mockResult);
+      OrganizationService.getOrganizationById.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -353,7 +391,11 @@ describe('OrganizationController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.data,
+        message: 'Organization retrieved successfully'
+      });
       expect(OrganizationService.getOrganizationById).toHaveBeenCalledWith(1);
     });
 
@@ -685,11 +727,11 @@ describe('OrganizationController', () => {
     it('should return 200 with updated organization', async () => {
       // Arrange
       const updateData = { name: 'Updated Organization', status: 'disbanded' };
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
         data: { id: 1, ...updateData }
       };
-      OrganizationService.updateOrganization.mockResolvedValue(mockResult);
+      OrganizationService.updateOrganization.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -699,7 +741,11 @@ describe('OrganizationController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.data,
+        message: 'Organization updated successfully'
+      });
       expect(OrganizationService.updateOrganization).toHaveBeenCalledWith(1, updateData);
     });
 
@@ -1012,11 +1058,11 @@ describe('OrganizationController', () => {
         { id: 1, name: 'Straw Hat Pirates', organizationType: { name: 'Pirate Crew' } },
         { id: 2, name: 'Heart Pirates', organizationType: { name: 'Pirate Crew' } }
       ];
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
         data: mockOrganizations
       };
-      OrganizationService.getOrganizationsByType.mockResolvedValue(mockResult);
+      OrganizationService.getOrganizationsByType.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -1024,7 +1070,12 @@ describe('OrganizationController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.data,
+        count: 2,
+        message: 'Data retrieved successfully'
+      });
       expect(OrganizationService.getOrganizationsByType).toHaveBeenCalledWith(1);
     });
 
@@ -1086,11 +1137,11 @@ describe('OrganizationController', () => {
         { id: 1, name: 'Monkey D. Luffy', role: 'Captain' },
         { id: 2, name: 'Roronoa Zoro', role: 'Swordsman' }
       ];
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
         data: mockMembers
       };
-      OrganizationService.getOrganizationMembers.mockResolvedValue(mockResult);
+      OrganizationService.getOrganizationMembers.mockResolvedValue(mockServiceResult);
 
       // Act
       const response = await request(app)
@@ -1098,7 +1149,11 @@ describe('OrganizationController', () => {
         .expect(200);
 
       // Assert
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.data,
+        message: 'Data retrieved successfully'
+      });
       expect(OrganizationService.getOrganizationMembers).toHaveBeenCalledWith(1);
     });
 

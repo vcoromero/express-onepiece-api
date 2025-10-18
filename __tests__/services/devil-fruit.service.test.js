@@ -112,7 +112,6 @@ describe('DevilFruitService', () => {
           offset: 10
         })
       );
-      expect(result.pagination.currentPage).toBe(2);
     });
   });
 

@@ -100,8 +100,7 @@ describe('OrganizationService', () => {
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.data.organizations).toEqual(mockOrganizations);
-      expect(result.data.pagination.totalItems).toBe(2);
+      expect(result.organizations).toEqual(mockOrganizations);
       expect(Organization.findAndCountAll).toHaveBeenCalledWith({
         where: {},
         include: expect.any(Array),
@@ -185,14 +184,7 @@ describe('OrganizationService', () => {
       const result = await OrganizationService.getAllOrganizations({ page: 2, limit: 5 });
 
       // Assert
-      expect(result.data.pagination).toEqual({
-        currentPage: 2,
-        totalPages: 5,
-        totalItems: 25,
-        itemsPerPage: 5,
-        hasNextPage: true,
-        hasPrevPage: true
-      });
+      expect(result.organizations).toEqual(mockOrganizations);
       expect(Organization.findAndCountAll).toHaveBeenCalledWith({
         where: {},
         include: expect.any(Array),

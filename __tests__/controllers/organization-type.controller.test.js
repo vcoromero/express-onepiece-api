@@ -144,24 +144,26 @@ describe('OrganizationTypeController', () => {
 
   describe('GET /api/organization-types', () => {
     it('should return all organization types with default parameters', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: {
-          organizationTypes: [
-            { id: 1, name: 'Pirate Crew', description: 'A group of pirates' },
-            { id: 2, name: 'Marine', description: 'Navy organization' }
-          ],
-          total: 2
-        }
+        organizationTypes: [
+          { id: 1, name: 'Pirate Crew', description: 'A group of pirates' },
+          { id: 2, name: 'Marine', description: 'Navy organization' }
+        ]
       };
 
-      organizationTypeService.getAllOrganizationTypes.mockResolvedValue(mockResult);
+      organizationTypeService.getAllOrganizationTypes.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .get('/api/organization-types')
         .expect(200);
 
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.organizationTypes,
+        count: 2,
+        message: 'Organization types retrieved successfully'
+      });
       expect(organizationTypeService.getAllOrganizationTypes).toHaveBeenCalledWith({
         search: undefined,
         sortBy: 'name',
@@ -170,23 +172,25 @@ describe('OrganizationTypeController', () => {
     });
 
     it('should handle query parameters correctly', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
-        data: {
-          organizationTypes: [
-            { id: 1, name: 'Pirate Crew', description: 'A group of pirates' }
-          ],
-          total: 1
-        }
+        organizationTypes: [
+          { id: 1, name: 'Pirate Crew', description: 'A group of pirates' }
+        ]
       };
 
-      organizationTypeService.getAllOrganizationTypes.mockResolvedValue(mockResult);
+      organizationTypeService.getAllOrganizationTypes.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .get('/api/organization-types?search=pirate&sortBy=created_at&sortOrder=desc')
         .expect(200);
 
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        data: mockServiceResult.organizationTypes,
+        count: 1,
+        message: 'Organization types retrieved successfully'
+      });
       expect(organizationTypeService.getAllOrganizationTypes).toHaveBeenCalledWith({
         search: 'pirate',
         sortBy: 'created_at',
@@ -244,7 +248,7 @@ describe('OrganizationTypeController', () => {
 
   describe('GET /api/organization-types/:id', () => {
     it('should return organization type when found', async () => {
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
         data: {
           id: 1,
@@ -253,13 +257,16 @@ describe('OrganizationTypeController', () => {
         }
       };
 
-      organizationTypeService.getOrganizationTypeById.mockResolvedValue(mockResult);
+      organizationTypeService.getOrganizationTypeById.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .get('/api/organization-types/1')
         .expect(200);
 
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        message: 'Organization type retrieved successfully'
+      });
       expect(organizationTypeService.getOrganizationTypeById).toHaveBeenCalledWith(1);
     });
 
@@ -353,17 +360,16 @@ describe('OrganizationTypeController', () => {
   describe('PUT /api/organization-types/:id', () => {
     it('should update organization type successfully', async () => {
       const updateData = { name: 'Updated Pirate Crew' };
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
         data: {
           id: 1,
           name: 'Updated Pirate Crew',
           description: 'A group of pirates'
-        },
-        message: 'Organization type updated successfully'
+        }
       };
 
-      organizationTypeService.updateOrganizationType.mockResolvedValue(mockResult);
+      organizationTypeService.updateOrganizationType.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .put('/api/organization-types/1')
@@ -371,7 +377,10 @@ describe('OrganizationTypeController', () => {
         .send(updateData)
         .expect(200);
 
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        message: 'Organization type updated successfully'
+      });
       expect(organizationTypeService.updateOrganizationType).toHaveBeenCalledWith(1, updateData);
     });
 
@@ -548,17 +557,16 @@ describe('OrganizationTypeController', () => {
 
     it('should handle partial updates', async () => {
       const updateData = { description: 'Updated description' };
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
         data: {
           id: 1,
           name: 'Pirate Crew',
           description: 'Updated description'
-        },
-        message: 'Organization type updated successfully'
+        }
       };
 
-      organizationTypeService.updateOrganizationType.mockResolvedValue(mockResult);
+      organizationTypeService.updateOrganizationType.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .put('/api/organization-types/1')
@@ -566,23 +574,25 @@ describe('OrganizationTypeController', () => {
         .send(updateData)
         .expect(200);
 
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        message: 'Organization type updated successfully'
+      });
       expect(organizationTypeService.updateOrganizationType).toHaveBeenCalledWith(1, updateData);
     });
 
     it('should handle null values in update data', async () => {
       const updateData = { description: null };
-      const mockResult = {
+      const mockServiceResult = {
         success: true,
         data: {
           id: 1,
           name: 'Pirate Crew',
           description: null
-        },
-        message: 'Organization type updated successfully'
+        }
       };
 
-      organizationTypeService.updateOrganizationType.mockResolvedValue(mockResult);
+      organizationTypeService.updateOrganizationType.mockResolvedValue(mockServiceResult);
 
       const response = await request(app)
         .put('/api/organization-types/1')
@@ -590,7 +600,10 @@ describe('OrganizationTypeController', () => {
         .send(updateData)
         .expect(200);
 
-      expect(response.body).toEqual(mockResult);
+      expect(response.body).toEqual({
+        success: true,
+        message: 'Organization type updated successfully'
+      });
     });
 
     it('should require authentication', async () => {
