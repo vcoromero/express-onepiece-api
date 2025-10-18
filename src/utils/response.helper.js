@@ -55,42 +55,8 @@ const createItemResponse = (data, message = 'Data retrieved successfully') => {
   };
 };
 
-/**
- * Creates a standardized error response
- * @param {string} message - Error message
- * @param {string} error - Error code
- * @param {number} statusCode - HTTP status code
- * @returns {Object} Standardized error response object
- */
-const createErrorResponse = (message, error = 'UNKNOWN_ERROR', statusCode = 500) => {
-  return {
-    success: false,
-    message,
-    error,
-    statusCode
-  };
-};
-
-/**
- * Creates a standardized validation error response
- * @param {string} message - Validation error message
- * @param {string} field - Field that failed validation
- * @returns {Object} Standardized validation error response object
- */
-const createValidationErrorResponse = (message, field = null) => {
-  return {
-    success: false,
-    message,
-    error: 'VALIDATION_ERROR',
-    field,
-    statusCode: 400
-  };
-};
-
 module.exports = {
   createPaginatedResponse,
   createListResponse,
-  createItemResponse,
-  createErrorResponse,
-  createValidationErrorResponse
+  createItemResponse
 };
