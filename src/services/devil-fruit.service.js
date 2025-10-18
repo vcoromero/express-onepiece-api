@@ -64,12 +64,15 @@ class DevilFruitService {
     });
 
     return {
+      success: true,
       fruits: rows,
       pagination: {
-        currentPage: parseInt(page),
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
         totalPages: Math.ceil(count / limit),
-        totalItems: count,
-        itemsPerPage: parseInt(limit)
+        hasNext: parseInt(page) < Math.ceil(count / limit),
+        hasPrev: parseInt(page) > 1
       }
     };
   }
@@ -337,12 +340,15 @@ class DevilFruitService {
     });
 
     return {
+      success: true,
       fruits: rows,
       pagination: {
-        currentPage: parseInt(page),
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
         totalPages: Math.ceil(count / limit),
-        totalItems: count,
-        itemsPerPage: parseInt(limit)
+        hasNext: parseInt(page) < Math.ceil(count / limit),
+        hasPrev: parseInt(page) > 1
       }
     };
   }
