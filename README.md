@@ -49,12 +49,12 @@ curl -X POST http://localhost:3000/api/db/execute-sql \
 
 ### 2. Configuration
 
-Configuration files are in the `configs/` directory:
+Environment variables are now in the project root:
 
 ```bash
-# The .env file is already created with defaults
+# The .env file is in the root directory
 # Edit it if you need to change anything
-nano configs/.env
+nano .env
 ```
 
 Main variables:
@@ -71,7 +71,7 @@ JWT_SECRET=dev-secret-key
 JWT_EXPIRES_IN=24h
 ```
 
-> 📖 **Full configuration guide:** See [configs/README.md](configs/README.md)
+> 📖 **Environment files:** `.env` (local), `.env.aws` (production), `.env.test` (testing)
 
 ### 3. Generate Password Hash
 
@@ -124,16 +124,17 @@ curl http://localhost:3000/api/health
 
 The API is currently deployed on **AWS** and available for testing:
 
-- **🌐 Production URL:** [https://d1lu4jq11jb97o.cloudfront.net/](https://d1lu4jq11jb97o.cloudfront.net/)
+- **🌐 Production URL:** [https://icurmzaeo0.execute-api.us-east-1.amazonaws.com/prod/](https://icurmzaeo0.execute-api.us-east-1.amazonaws.com/prod/)
 - **📊 Monitoring:** AWS CloudWatch integration
 - **🔒 Security:** HTTPS enabled with AWS security groups
 - **📈 Performance:** AWS CloudFront CDN with global edge locations
+- **🚀 CI/CD:** Automated deployment via GitHub Actions
 
 ### Quick Test (Live API)
 
 ```bash
 # Health check
-curl https://d1lu4jq11jb97o.cloudfront.net/api/health
+curl https://icurmzaeo0.execute-api.us-east-1.amazonaws.com/prod/api/health
 ```
 
 ---
@@ -241,34 +242,35 @@ This project follows the **Service Layer Pattern** for clean, maintainable code:
 
 ```
 express-onepiece-api/
-├── configs/              # Environment variables (.env)
+├── .env                 # Environment variables (local)
+├── .env.aws            # Environment variables (production)
+├── .env.test           # Environment variables (testing)
 ├── src/
-│   ├── config/          # Code configuration
-│   ├── models/          # Sequelize models (schema only)
-│   ├── services/        # Business logic layer ⭐ NEW
-│   ├── controllers/     # HTTP handling
-│   ├── routes/          # Route definitions
-│   ├── middlewares/     # Auth, rate limiting
-│   └── utils/           # JWT, logger
-├── __tests__/           # Unit tests (mocking services)
-├── database/            # SQL schema and docs
-└── docs/                # Technical documentation
+│   ├── config/         # Code configuration
+│   ├── models/         # Sequelize models (schema only)
+│   ├── services/       # Business logic layer ⭐ NEW
+│   ├── controllers/    # HTTP handling
+│   ├── routes/         # Route definitions
+│   ├── middlewares/    # Auth, rate limiting
+│   └── utils/          # JWT, logger
+├── __tests__/          # Unit tests (mocking services)
+├── database/           # SQL schema and docs
+└── docs/               # Technical documentation
 ```
 
 **Flow:** `Client → Controller → Service → Model → Database`
 
 > 📖 **Full details:** See [docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md)
 
-### ⚠️ `configs/` vs `src/config/` - What's the difference?
+### ⚠️ Environment Files - What's the difference?
 
-| `configs/` | `src/config/` |
-|------------|---------------|
-| `.env` files | `.js` files |
-| Secrets (DON'T commit) | Code (DO commit) |
-| Environment variables | Configuration logic |
-| Passwords, API keys | DB setup, Sequelize config |
+| `.env` | `.env.aws` | `.env.test` |
+|--------|------------|-------------|
+| Local development | AWS production | Testing |
+| MySQL local | RDS MySQL | Test database |
+| Development secrets | Production secrets | Test secrets |
 
-**Analogy:** `configs/` are the keys, `src/config/` is the lock.
+**Analogy:** `.env` files are the keys, `src/config/` is the lock.
 
 ---
 
@@ -341,7 +343,7 @@ MIT License - See [LICENSE](LICENSE) for details.
 mysql -u root -p
 
 # Check variables in .env
-cat configs/.env
+cat .env
 ```
 
 ### Tests failing
@@ -351,7 +353,7 @@ rm -rf node_modules package-lock.json
 npm install
 
 # Check that .env.test exists
-ls configs/.env.test
+ls .env.test
 ```
 
 ### Authentication error

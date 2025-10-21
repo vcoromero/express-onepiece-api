@@ -1,5 +1,5 @@
 const { Sequelize } = require('sequelize');
-require('dotenv').config({ path: `./configs/.env.${process.env.NODE_ENV || 'development'}` });
+require('dotenv').config();
 
 // Create Sequelize instance
 const sequelize = new Sequelize(
