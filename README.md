@@ -37,9 +37,16 @@ cd express-onepiece-api
 npm install
 
 # Create database and seed data
-mysql -u root -p < database/schema.sql
+# The database uses modular SQL files for better control
+# You can execute them individually or all at once
 
-# Optional: Use modular seeding (recommended)
+# Option 1: Execute all SQL files in order
+for file in database/schemas/*.sql; do
+  echo "Executing $file..."
+  mysql -u root -p onepiece_db < "$file"
+done
+
+# Option 2: Use the API's modular seeding (recommended)
 # This allows granular control over database seeding
 curl -X POST http://localhost:3000/api/db/execute-sql \
   -H "Content-Type: application/json" \
