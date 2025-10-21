@@ -65,6 +65,11 @@ class OrganizationService {
       // Execute query with eager loading
       const { count, rows } = await Organization.findAndCountAll({
         where: whereClause,
+        attributes: [
+          'id', 'name', 'organizationTypeId', 'leaderId', 'shipId', 
+          'baseLocation', 'totalBounty', 'status', 'description', 
+          'created_at', 'updated_at'
+        ],
         include: [
           {
             model: OrganizationType,
@@ -123,6 +128,11 @@ class OrganizationService {
       }
 
       const organization = await Organization.findByPk(parseInt(id), {
+        attributes: [
+          'id', 'name', 'organizationTypeId', 'leaderId', 'shipId', 
+          'baseLocation', 'totalBounty', 'status', 'description', 
+          'created_at', 'updated_at'
+        ],
         include: [
           {
             model: OrganizationType,
@@ -218,6 +228,11 @@ class OrganizationService {
 
       // Return with relationships
       const createdOrganization = await Organization.findByPk(organization.id, {
+        attributes: [
+          'id', 'name', 'organizationTypeId', 'leaderId', 'shipId', 
+          'baseLocation', 'totalBounty', 'status', 'description', 
+          'created_at', 'updated_at'
+        ],
         include: [
           {
             model: OrganizationType,
@@ -308,6 +323,11 @@ class OrganizationService {
 
       // Return updated organization with relationships
       const updatedOrganization = await Organization.findByPk(organization.id, {
+        attributes: [
+          'id', 'name', 'organizationTypeId', 'leaderId', 'shipId', 
+          'baseLocation', 'totalBounty', 'status', 'description', 
+          'created_at', 'updated_at'
+        ],
         include: [
           {
             model: OrganizationType,
@@ -400,6 +420,11 @@ class OrganizationService {
 
       const organizations = await Organization.findAll({
         where: { organizationTypeId: parseInt(organizationTypeId) },
+        attributes: [
+          'id', 'name', 'organizationTypeId', 'leaderId', 'shipId', 
+          'baseLocation', 'totalBounty', 'status', 'description', 
+          'created_at', 'updated_at'
+        ],
         include: [
           {
             model: OrganizationType,

@@ -54,19 +54,6 @@ const Ship = sequelize.define('Ship', {
         msg: 'Status must be active, destroyed, or retired'
       }
     }
-  },
-  image_url: {
-    type: DataTypes.STRING(255),
-    allowNull: true,
-    validate: {
-      isUrl: {
-        msg: 'Image URL must be a valid URL'
-      },
-      len: {
-        args: [0, 255],
-        msg: 'Image URL must not exceed 255 characters'
-      }
-    }
   }
 }, {
   tableName: 'ships',

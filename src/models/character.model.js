@@ -171,11 +171,6 @@ Character.init(
       allowNull: true,
       comment: 'Description of the character'
     },
-    image_url: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-      comment: 'URL of the character image'
-    },
     debut: {
       type: DataTypes.STRING(100),
       allowNull: true,

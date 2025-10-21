@@ -81,21 +81,6 @@ DevilFruit.init(
       allowNull: true,
       comment: 'Description of the devil fruit'
     },
-    abilities: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      comment: 'Special abilities of the devil fruit'
-    },
-    weaknesses: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      comment: 'Weaknesses of the devil fruit'
-    },
-    awakening_description: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      comment: 'Description of the awakened form'
-    },
     current_user_id: {
       type: DataTypes.INTEGER.UNSIGNED,
       allowNull: true,
@@ -104,16 +89,6 @@ DevilFruit.init(
         key: 'id'
       },
       comment: 'Foreign key to characters table - current user'
-    },
-    previous_users: {
-      type: DataTypes.JSON,
-      allowNull: true,
-      comment: 'Array of previous user IDs (JSON)'
-    },
-    image_url: {
-      type: DataTypes.STRING(255),
-      allowNull: true,
-      comment: 'URL of the devil fruit image'
     },
     created_at: {
       type: DataTypes.DATE,
