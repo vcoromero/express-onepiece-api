@@ -30,7 +30,7 @@ describe('JWTUtil', () => {
       expect(jwt.sign).toHaveBeenCalledWith(
         mockPayload,
         mockSecret,
-        { expiresIn: '1h' }
+        { expiresIn: '24h' }
       );
       expect(result).toBe(mockToken);
     });

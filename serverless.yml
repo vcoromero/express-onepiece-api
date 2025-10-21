@@ -2,7 +2,7 @@ service: onepiece-api
 
 provider:
   name: aws
-  runtime: nodejs18.x
+  runtime: nodejs20.x
   region: us-east-1
   stage: ${opt:stage, 'dev'}
   role: arn:aws:iam::317286500342:role/OnePieceAPIRole
@@ -35,13 +35,10 @@ functions:
           path: /{proxy+}
           method: ANY
           cors: true
-    timeout: 300  # 5 minutos
-    memorySize: 1024  # 1GB RAM
+    timeout: 30  # 30 seconds (sufficient for REST API)
+    memorySize: 512  # 512MB (more efficient)
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: error  # Only errors in production
 
-plugins:
-  - serverless-offline
-  - serverless-dotenv-plugin
-
-custom:
-  serverless-offline:
-    httpPort: 3000
+# No plugins needed for production deployment
