@@ -307,7 +307,6 @@ class CharacterService {
         origin,
         status = 'alive',
         description,
-        image_url,
         debut
       } = characterData;
 
@@ -353,7 +352,6 @@ class CharacterService {
         origin: origin ? origin.trim() : null,
         status: status,
         description: description ? description.trim() : null,
-        image_url: image_url ? image_url.trim() : null,
         debut: debut ? debut.trim() : null
       });
 
