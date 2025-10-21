@@ -29,3 +29,7 @@ AWS_DEPLOYMENT_GUIDE.md
 # Serverless Framework
 .serverless/
 .serverless-*
+
+# Postman Collections (keep local only)
+onepiece-api-local.postman_environment.json
+onepiece-api-production.postman_environment.json
