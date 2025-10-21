@@ -1,0 +1,597 @@
+{
+  "info": {
+    "name": "One Piece API - GET Requests Only",
+    "description": "Collection containing only GET requests for testing One Piece API endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "onepiece-api-get-only"
+  },
+  "item": [
+    {
+      "name": "Health Check",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/api/health",
+          "host": ["{{base_url}}"],
+          "path": ["api", "health"]
+        },
+        "description": "Check if the API is running and healthy"
+      }
+    },
+    {
+      "name": "Authentication",
+      "item": [
+        {
+          "name": "Verify Token",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/auth/verify",
+              "host": ["{{base_url}}"],
+              "path": ["api", "auth", "verify"]
+            },
+            "description": "Verify if a JWT token is valid"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Database Management",
+      "item": [
+        {
+          "name": "Get Database Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/db/status",
+              "host": ["{{base_url}}"],
+              "path": ["api", "db", "status"]
+            },
+            "description": "Get database status and structure (Admin only)"
+          }
+        },
+        {
+          "name": "Get Available SQL Files",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{jwt_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/db/available-sql-files",
+              "host": ["{{base_url}}"],
+              "path": ["api", "db", "available-sql-files"]
+            },
+            "description": "Get available SQL files in schemas directory (Admin only)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Devil Fruit Types",
+      "item": [
+        {
+          "name": "Get All Fruit Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/fruit-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "fruit-types"]
+            },
+            "description": "Retrieve all devil fruit types"
+          }
+        },
+        {
+          "name": "Get Fruit Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/fruit-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "fruit-types", "1"]
+            },
+            "description": "Retrieve a specific fruit type by ID"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Devil Fruits",
+      "item": [
+        {
+          "name": "Get All Devil Fruits",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits?page=1&limit=10&sortBy=id&sortOrder=ASC",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)"
+                },
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search term for name",
+                  "disabled": true
+                },
+                {
+                  "key": "type_id",
+                  "value": "",
+                  "description": "Filter by type ID",
+                  "disabled": true
+                },
+                {
+                  "key": "sortBy",
+                  "value": "id",
+                  "description": "Sort field (id, name, created_at)"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "ASC",
+                  "description": "Sort order (ASC, DESC)"
+                }
+              ]
+            },
+            "description": "Get all devil fruits with pagination and filtering"
+          }
+        },
+        {
+          "name": "Get Devil Fruit by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits", "1"]
+            },
+            "description": "Get a specific devil fruit by ID"
+          }
+        },
+        {
+          "name": "Get Devil Fruits by Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/devil-fruits/type/1?page=1&limit=10&sortBy=id&sortOrder=ASC",
+              "host": ["{{base_url}}"],
+              "path": ["api", "devil-fruits", "type", "1"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "id",
+                  "description": "Sort field (id, name, created_at)"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "ASC",
+                  "description": "Sort order (ASC, DESC)"
+                }
+              ]
+            },
+            "description": "Get devil fruits filtered by type ID"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Haki Types",
+      "item": [
+        {
+          "name": "Get All Haki Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/haki-types?search=&sortBy=name&sortOrder=asc",
+              "host": ["{{base_url}}"],
+              "path": ["api", "haki-types"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "",
+                  "description": "Search term for name/description (optional)"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "name",
+                  "description": "Field to sort by (name, color, created_at, updated_at)"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "asc",
+                  "description": "Sort order (asc/desc)"
+                }
+              ]
+            },
+            "description": "Get all Haki types with filtering and sorting"
+          }
+        },
+        {
+          "name": "Get Haki Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/haki-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "haki-types", "1"]
+            },
+            "description": "Get a specific Haki type by its ID"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Races",
+      "item": [
+        {
+          "name": "Get All Races",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/races",
+              "host": ["{{base_url}}"],
+              "path": ["api", "races"]
+            },
+            "description": "Get all races in the One Piece universe"
+          }
+        },
+        {
+          "name": "Get Race by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/races/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "races", "1"]
+            },
+            "description": "Get a specific race by ID"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Character Types",
+      "item": [
+        {
+          "name": "Get All Character Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/character-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "character-types"]
+            },
+            "description": "Get all character types in the One Piece universe"
+          }
+        },
+        {
+          "name": "Get Character Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/character-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "character-types", "1"]
+            },
+            "description": "Get a specific character type by ID"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organization Types",
+      "item": [
+        {
+          "name": "Get All Organization Types",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organization-types",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-types"]
+            },
+            "description": "Get all organization types in the One Piece universe"
+          }
+        },
+        {
+          "name": "Get Organization Type by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organization-types/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organization-types", "1"]
+            },
+            "description": "Get a specific organization type by ID"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Characters",
+      "item": [
+        {
+          "name": "Get All Characters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/characters?page=1&limit=10",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get all characters with pagination and filtering"
+          }
+        },
+        {
+          "name": "Get Character by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/characters/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters", "1"]
+            },
+            "description": "Get a specific character by ID"
+          }
+        },
+        {
+          "name": "Search Characters",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/characters/search?q=luffy",
+              "host": ["{{base_url}}"],
+              "path": ["api", "characters", "search"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "luffy"
+                }
+              ]
+            },
+            "description": "Search characters by name, japanese name, or description"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Ships",
+      "item": [
+        {
+          "name": "Get All Ships",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ships?page=1&limit=10&status=active&search=Thousand",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1",
+                  "description": "Page number (default: 1)"
+                },
+                {
+                  "key": "limit",
+                  "value": "10",
+                  "description": "Items per page (default: 10, max: 100)"
+                },
+                {
+                  "key": "status",
+                  "value": "active",
+                  "description": "Filter by status: active, destroyed, retired"
+                },
+                {
+                  "key": "search",
+                  "value": "Thousand",
+                  "description": "Search term for ship name"
+                }
+              ]
+            },
+            "description": "Get all ships with pagination and filtering options"
+          }
+        },
+        {
+          "name": "Get Ship by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ships/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships", "1"]
+            },
+            "description": "Get a specific ship by its ID"
+          }
+        },
+        {
+          "name": "Get Ships by Status",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/ships/status/active",
+              "host": ["{{base_url}}"],
+              "path": ["api", "ships", "status", "active"]
+            },
+            "description": "Get all ships with a specific status (active, destroyed, retired)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Organizations",
+      "item": [
+        {
+          "name": "Get All Organizations",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations?page=1&limit=10&sortBy=name&sortOrder=ASC",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "sortBy",
+                  "value": "name"
+                },
+                {
+                  "key": "sortOrder",
+                  "value": "ASC"
+                }
+              ]
+            },
+            "description": "Get all organizations with pagination and filtering"
+          }
+        },
+        {
+          "name": "Get Organization by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "1"]
+            },
+            "description": "Get organization by ID with full details"
+          }
+        },
+        {
+          "name": "Get Organizations by Type",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/type/1",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "type", "1"]
+            },
+            "description": "Get organizations by organization type ID"
+          }
+        },
+        {
+          "name": "Get Organization Members",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/api/organizations/1/members",
+              "host": ["{{base_url}}"],
+              "path": ["api", "organizations", "1", "members"]
+            },
+            "description": "Get all members of an organization"
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "admin_username",
+      "value": "admin",
+      "type": "string"
+    },
+    {
+      "key": "admin_password",
+      "value": "your_password_here",
+      "type": "string"
+    },
+    {
+      "key": "jwt_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
