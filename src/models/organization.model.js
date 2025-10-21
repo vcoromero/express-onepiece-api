@@ -60,23 +60,6 @@ const Organization = sequelize.define('Organization', {
     },
     comment: 'Foreign key to ships table (organization flagship)'
   },
-  flagDescription: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-    field: 'flag_description',
-    comment: 'Description of the organization flag'
-  },
-  jollyRogerUrl: {
-    type: DataTypes.STRING(255),
-    allowNull: true,
-    field: 'jolly_roger_url',
-    validate: {
-      isUrl: {
-        msg: 'Jolly Roger URL must be a valid URL'
-      }
-    },
-    comment: 'URL to organization jolly roger image'
-  },
   baseLocation: {
     type: DataTypes.STRING(100),
     allowNull: true,
@@ -118,18 +101,6 @@ const Organization = sequelize.define('Organization', {
     type: DataTypes.TEXT,
     allowNull: true,
     comment: 'Organization description'
-  },
-  foundedDate: {
-    type: DataTypes.STRING(50),
-    allowNull: true,
-    field: 'founded_date',
-    validate: {
-      len: {
-        args: [0, 50],
-        msg: 'Founded date must be 50 characters or less'
-      }
-    },
-    comment: 'Date when organization was founded'
   }
 }, {
   tableName: 'organizations',
