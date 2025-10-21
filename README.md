@@ -124,16 +124,17 @@ curl http://localhost:3000/api/health
 
 The API is currently deployed on **AWS** and available for testing:
 
-- **🌐 Production URL:** [https://d1lu4jq11jb97o.cloudfront.net/](https://d1lu4jq11jb97o.cloudfront.net/)
+- **🌐 Production URL:** [https://icurmzaeo0.execute-api.us-east-1.amazonaws.com/prod/](https://icurmzaeo0.execute-api.us-east-1.amazonaws.com/prod/)
 - **📊 Monitoring:** AWS CloudWatch integration
 - **🔒 Security:** HTTPS enabled with AWS security groups
 - **📈 Performance:** AWS CloudFront CDN with global edge locations
+- **🚀 CI/CD:** Automated deployment via GitHub Actions
 
 ### Quick Test (Live API)
 
 ```bash
 # Health check
-curl https://d1lu4jq11jb97o.cloudfront.net/api/health
+curl https://icurmzaeo0.execute-api.us-east-1.amazonaws.com/prod/api/health
 ```
 
 ---

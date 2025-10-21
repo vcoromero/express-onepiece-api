@@ -45,8 +45,6 @@ if (process.env.LOG_HTTP_REQUESTS === 'true') {
 app.use('/api', healthRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/db', dbRoutes);
-app.use('/api/test', testConnectionRoutes);
-app.use('/api/test-secrets', testConnectionSecretsRoutes);
 app.use('/api', fruitTypesRoutes);
 app.use('/api', devilFruitRoutes);
 app.use('/api', hakiTypeRoutes);
