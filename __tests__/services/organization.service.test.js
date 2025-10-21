@@ -103,6 +103,7 @@ describe('OrganizationService', () => {
       expect(result.organizations).toEqual(mockOrganizations);
       expect(Organization.findAndCountAll).toHaveBeenCalledWith({
         where: {},
+        attributes: expect.any(Array),
         include: expect.any(Array),
         order: [['name', 'ASC']],
         limit: 10,
@@ -124,6 +125,7 @@ describe('OrganizationService', () => {
       expect(result.success).toBe(true);
       expect(Organization.findAndCountAll).toHaveBeenCalledWith({
         where: { name: { [Op.like]: '%Straw%' } },
+        attributes: expect.any(Array),
         include: expect.any(Array),
         order: [['name', 'ASC']],
         limit: 10,
@@ -145,6 +147,7 @@ describe('OrganizationService', () => {
       expect(result.success).toBe(true);
       expect(Organization.findAndCountAll).toHaveBeenCalledWith({
         where: { status: 'active' },
+        attributes: expect.any(Array),
         include: expect.any(Array),
         order: [['name', 'ASC']],
         limit: 10,
@@ -166,6 +169,7 @@ describe('OrganizationService', () => {
       expect(result.success).toBe(true);
       expect(Organization.findAndCountAll).toHaveBeenCalledWith({
         where: { organizationTypeId: 1 },
+        attributes: expect.any(Array),
         include: expect.any(Array),
         order: [['name', 'ASC']],
         limit: 10,
@@ -187,6 +191,7 @@ describe('OrganizationService', () => {
       expect(result.organizations).toEqual(mockOrganizations);
       expect(Organization.findAndCountAll).toHaveBeenCalledWith({
         where: {},
+        attributes: expect.any(Array),
         include: expect.any(Array),
         order: [['name', 'ASC']],
         limit: 5,
@@ -211,6 +216,7 @@ describe('OrganizationService', () => {
       expect(result.success).toBe(true);
       expect(Organization.findAndCountAll).toHaveBeenCalledWith({
         where: {},
+        attributes: expect.any(Array),
         include: expect.any(Array),
         order: [['totalBounty', 'DESC']],
         limit: 10,
@@ -730,6 +736,7 @@ describe('OrganizationService', () => {
       expect(result.data).toEqual(mockOrganizations);
       expect(Organization.findAll).toHaveBeenCalledWith({
         where: { organizationTypeId: 1 },
+        attributes: expect.any(Array),
         include: expect.any(Array),
         order: [['totalBounty', 'DESC']]
       });
