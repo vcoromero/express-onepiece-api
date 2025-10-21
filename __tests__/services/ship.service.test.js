@@ -353,8 +353,7 @@ describe('ShipService', () => {
       expect(Ship.create).toHaveBeenCalledWith({
         name: 'Thousand Sunny',
         description: null,
-        status: 'active',
-        image_url: null
+        status: 'active'
       });
     });
 
@@ -363,8 +362,7 @@ describe('ShipService', () => {
       const shipData = {
         name: 'Going Merry',
         description: 'Straw Hat Pirates first ship',
-        status: 'destroyed',
-        image_url: 'https://example.com/going-merry.jpg'
+        status: 'destroyed'
       };
       const mockCreatedShip = { id: 2, ...shipData };
       const mockShipWithRelations = { id: 2, ...shipData, organizations: [] };
@@ -382,8 +380,7 @@ describe('ShipService', () => {
       expect(Ship.create).toHaveBeenCalledWith({
         name: 'Going Merry',
         description: 'Straw Hat Pirates first ship',
-        status: 'destroyed',
-        image_url: 'https://example.com/going-merry.jpg'
+        status: 'destroyed'
       });
     });
 
