@@ -1,9 +1,4 @@
-const path = require('path');
-
-const envFile = `.env.${process.env.NODE_ENV || 'development'}`;
-const envPath = path.resolve(process.cwd(), 'configs', envFile);
-
-require('dotenv').config({ path: envPath });
+require('dotenv').config();
 
 const app = require('./app');
 const { displayEndpoints } = require('./utils/endpoint-display');

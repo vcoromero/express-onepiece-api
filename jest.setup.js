@@ -1,8 +1,8 @@
 // Jest setup file
-// Load test environment variables from configs/.env.test
+// Load test environment variables from .env.test
 
 require('dotenv').config({
-  path: './configs/.env.test'
+  path: '.env.test'
 });
 
 // Mock console methods globally to suppress noise in test output
