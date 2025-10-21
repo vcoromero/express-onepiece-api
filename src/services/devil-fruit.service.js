@@ -54,9 +54,8 @@ class DevilFruitService {
         }
       ],
       attributes: [
-        'id', 'name', 'japanese_name', 'type_id', 'description', 'abilities',
-        'weaknesses', 'awakening_description', 'current_user_id', 'previous_users',
-        'image_url', 'created_at', 'updated_at'
+        'id', 'name', 'japanese_name', 'type_id', 'description', 'current_user_id',
+        'created_at', 'updated_at'
       ],
       order: [[sortBy, sortOrder]],
       limit: parseInt(limit),
@@ -93,9 +92,8 @@ class DevilFruitService {
         }
       ],
       attributes: [
-        'id', 'name', 'japanese_name', 'type_id', 'description', 'abilities',
-        'weaknesses', 'awakening_description', 'current_user_id', 'previous_users',
-        'image_url', 'created_at', 'updated_at'
+        'id', 'name', 'japanese_name', 'type_id', 'description', 'current_user_id',
+        'created_at', 'updated_at'
       ]
     });
   }
@@ -134,12 +132,7 @@ class DevilFruitService {
    * @param {number} data.type_id - Type ID
    * @param {string} [data.japanese_name] - Japanese name
    * @param {string} [data.description] - Description
-   * @param {string} [data.abilities] - Special abilities
-   * @param {string} [data.weaknesses] - Weaknesses
-   * @param {string} [data.awakening_description] - Awakening description
    * @param {number} [data.current_user_id] - Current user ID
-   * @param {Array} [data.previous_users] - Previous users (array of IDs)
-   * @param {string} [data.image_url] - Image URL
    * @returns {Promise<Object>} Created devil fruit
    * @throws {Error} If validation fails or name already exists
    */
@@ -149,12 +142,7 @@ class DevilFruitService {
       type_id,
       japanese_name,
       description,
-      abilities,
-      weaknesses,
-      awakening_description,
-      current_user_id,
-      previous_users,
-      image_url
+      current_user_id
     } = data;
 
     // Check if name already exists
@@ -179,12 +167,7 @@ class DevilFruitService {
       type_id,
       japanese_name: japanese_name ? japanese_name.trim() : null,
       description: description ? description.trim() : null,
-      abilities: abilities ? abilities.trim() : null,
-      weaknesses: weaknesses ? weaknesses.trim() : null,
-      awakening_description: awakening_description ? awakening_description.trim() : null,
-      current_user_id: current_user_id ? parseInt(current_user_id) : null,
-      previous_users: previous_users || null,
-      image_url: image_url ? image_url.trim() : null
+      current_user_id: current_user_id ? parseInt(current_user_id) : null
     });
 
     // Return with type information
@@ -204,12 +187,7 @@ class DevilFruitService {
       type_id,
       japanese_name,
       description,
-      abilities,
-      weaknesses,
-      awakening_description,
-      current_user_id,
-      previous_users,
-      image_url
+      current_user_id
     } = data;
 
     // Check if devil fruit exists
@@ -254,23 +232,8 @@ class DevilFruitService {
     if (description !== undefined) {
       updates.description = description ? description.trim() : null;
     }
-    if (abilities !== undefined) {
-      updates.abilities = abilities ? abilities.trim() : null;
-    }
-    if (weaknesses !== undefined) {
-      updates.weaknesses = weaknesses ? weaknesses.trim() : null;
-    }
-    if (awakening_description !== undefined) {
-      updates.awakening_description = awakening_description ? awakening_description.trim() : null;
-    }
     if (current_user_id !== undefined) {
       updates.current_user_id = current_user_id ? parseInt(current_user_id) : null;
-    }
-    if (previous_users !== undefined) {
-      updates.previous_users = previous_users;
-    }
-    if (image_url !== undefined) {
-      updates.image_url = image_url ? image_url.trim() : null;
     }
 
     // Update the record
@@ -330,9 +293,8 @@ class DevilFruitService {
         }
       ],
       attributes: [
-        'id', 'name', 'japanese_name', 'type_id', 'description', 'abilities',
-        'weaknesses', 'awakening_description', 'current_user_id', 'previous_users',
-        'image_url', 'created_at', 'updated_at'
+        'id', 'name', 'japanese_name', 'type_id', 'description', 'current_user_id',
+        'created_at', 'updated_at'
       ],
       order: [[sortBy, sortOrder]],
       limit: parseInt(limit),

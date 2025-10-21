@@ -139,12 +139,11 @@ class ShipService {
      * @param {string} shipData.name - Ship name
      * @param {string} shipData.description - Ship description
      * @param {string} shipData.status - Ship status
-     * @param {string} shipData.image_url - Ship image URL
      * @returns {Promise<Object>} Created ship
      */
   async createShip(shipData) {
     try {
-      const { name, description, status = 'active', image_url } = shipData;
+      const { name, description, status = 'active' } = shipData;
 
       // Validate required fields
       if (!name || name.trim().length === 0) {
@@ -170,7 +169,6 @@ class ShipService {
         name: name.trim(),
         description: description?.trim() || null,
         status: status,
-        image_url: image_url?.trim() || null
       });
 
       // Return ship with relationships
