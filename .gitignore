@@ -8,7 +8,8 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 .env
-.env.local
+.env.*
+!.env.example
 configs/.env*
 !configs/.env.example
 !configs/.env.test
