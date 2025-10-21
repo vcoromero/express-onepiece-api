@@ -10,9 +10,6 @@ yarn-error.log*
 .env
 .env.*
 !.env.example
-configs/.env*
-!configs/.env.example
-!configs/.env.test
 *.pid
 *.seed
 *.pid.lock
@@ -21,7 +18,6 @@ configs/.env*
 
 logs/*
 !logs/.gitkeep
-.cursor/*
 
 # Project tracking files (internal use only)
 PROJECT_STATUS.md
