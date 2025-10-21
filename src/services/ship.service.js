@@ -168,7 +168,7 @@ class ShipService {
       const ship = await Ship.create({
         name: name.trim(),
         description: description?.trim() || null,
-        status: status,
+        status: status
       });
 
       // Return ship with relationships
