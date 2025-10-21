@@ -3,8 +3,9 @@
 A RESTful API inspired by One Piece, built with Express.js, MySQL, and Sequelize ORM.
 
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com)
-[![Coverage](https://img.shields.io/badge/coverage-94.21%25-brightgreen)](https://github.com)
+[![Coverage](https://img.shields.io/badge/coverage-87.37%25-brightgreen)](https://github.com)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
+[![AWS](https://img.shields.io/badge/AWS-deployed-orange)](https://aws.amazon.com)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ---
@@ -15,11 +16,11 @@ A RESTful API inspired by One Piece, built with Express.js, MySQL, and Sequelize
 - ✅ **JWT Authentication** - Secure token-based auth
 - ✅ **Rate Limiting** - Protection against abuse
 - ✅ **Winston Logger** - Structured logging
-- ✅ **Jest Tests** - 778 tests, 94.21% coverage
-- ✅ **Docker Ready** - Containerization included
+- ✅ **Jest Tests** - 778 tests, 87.37% coverage
 - ✅ **Complete CRUD** - Characters, Ships, Organizations, Devil Fruits
 - ✅ **Modular Database Seeding** - Granular control over data initialization
 - ✅ **Database Diagnostics** - Automated issue detection and recommendations
+- ✅ **AWS Deployment** - Production-ready cloud deployment with monitoring
 
 ---
 
@@ -113,10 +114,26 @@ curl -X GET http://localhost:3000/api/db/diagnose \
 # Start in development mode
 npm run dev
 
-# Login
-curl -X POST http://localhost:3000/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin123"}'
+# Test the API
+curl http://localhost:3000/api/health
+```
+
+---
+
+## ☁️ Live Deployment
+
+The API is currently deployed on **AWS** and available for testing:
+
+- **🌐 Production URL:** [https://d1lu4jq11jb97o.cloudfront.net/](https://d1lu4jq11jb97o.cloudfront.net/)
+- **📊 Monitoring:** AWS CloudWatch integration
+- **🔒 Security:** HTTPS enabled with AWS security groups
+- **📈 Performance:** AWS CloudFront CDN with global edge locations
+
+### Quick Test (Live API)
+
+```bash
+# Health check
+curl https://d1lu4jq11jb97o.cloudfront.net/api/health
 ```
 
 ---
@@ -200,48 +217,6 @@ GET  /api/db/diagnose           # Diagnose database issues (requires auth)
 
 #### Main Entities
 ```bash
-# Characters (30 endpoints total)
-GET    /api/characters                    # Get all with pagination & filters
-GET    /api/characters/search             # Search characters
-GET    /api/characters/:id                # Get one by ID
-POST   /api/characters                    # Create (requires auth)
-PUT    /api/characters/:id                # Update (requires auth)
-DELETE /api/characters/:id                # Delete (requires auth)
-
-# Organizations
-GET    /api/organizations                    # Get all with pagination & filters
-GET    /api/organizations/:id               # Get one by ID
-GET    /api/organizations/type/:typeId     # Get by organization type
-GET    /api/organizations/:id/members       # Get organization members
-POST   /api/organizations                    # Create (requires auth)
-PUT    /api/organizations/:id               # Update (requires auth)
-DELETE /api/organizations/:id               # Delete (requires auth)
-
-# Ships
-GET    /api/ships                    # Get all with pagination & filters
-GET    /api/ships/:id                # Get one by ID
-GET    /api/ships/status/:status     # Get by status
-POST   /api/ships                    # Create (requires auth)
-PUT    /api/ships/:id                # Update (requires auth)
-DELETE /api/ships/:id                # Delete (requires auth)
-
-# Devil Fruits
-GET    /api/devil-fruits                    # Get all with pagination & filters
-GET    /api/devil-fruits/:id                # Get one by ID
-GET    /api/devil-fruits/type/:typeId       # Get by type with pagination
-POST   /api/devil-fruits                    # Create (requires auth)
-PUT    /api/devil-fruits/:id                # Update (requires auth)
-DELETE /api/devil-fruits/:id                # Delete (requires auth)
-```
-
-#### Catalog Data (Reference Tables)
-```bash
-# Devil Fruit Types, Haki Types, Races, Character Types, Organization Types
-GET    /api/fruit-types         # Get all devil fruit types
-GET    /api/haki-types          # Get all haki types
-GET    /api/races               # Get all races
-GET    /api/character-types     # Get all character types
-GET    /api/organization-types  # Get all organization types
 # + CRUD operations for each (see detailed docs)
 ```
 
@@ -310,56 +285,11 @@ npm test -- --coverage
 npm run test:watch
 ```
 
-**Current coverage:** 94.21% (778/778 tests passing ✅)
+**Current coverage:** 87.37% (778/778 tests passing ✅)
 
 ---
 
 ---
-
-## ☁️ Deployment
-
-This project can be deployed on any platform that supports Node.js:
-
-### Heroku, Railway, Render, Vercel
-
-```bash
-# Set environment variables
-heroku config:set JWT_SECRET=your_secret
-heroku config:set DB_HOST=your_db_host
-# ... etc
-
-# Deploy
-git push heroku main
-```
-
-### Docker
-
-```bash
-# Build
-docker build -t onepiece-api .
-
-# Run
-docker run -p 3000:3000 --env-file configs/.env onepiece-api
-```
-
----
-
-## 🔒 Security
-
-### Development ✅
-```env
-ADMIN_PASSWORD_HASH=simple_hash
-JWT_SECRET=dev-key
-JWT_EXPIRES_IN=24h
-```
-
-### Production ⚠️
-```env
-ADMIN_PASSWORD_HASH=$2a$10$secure_hash
-JWT_SECRET=64_char_random_string
-JWT_EXPIRES_IN=1h
-NODE_ENV=production
-```
 
 > 🔐 **Complete guide:** See [docs/AUTHENTICATION.md](docs/AUTHENTICATION.md)
 
