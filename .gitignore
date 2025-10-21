@@ -26,6 +26,9 @@ logs/*
 PROJECT_STATUS.md
 AWS_DEPLOYMENT_GUIDE.md
 
+# Personal development files
+.cursor/
+
 # Serverless Framework
 .serverless/
 .serverless-*
