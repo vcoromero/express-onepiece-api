@@ -20,12 +20,6 @@ yarn-error.log*
 logs/*
 !logs/.gitkeep
 
-# Project tracking files (internal use only)
-PROJECT_STATUS.md
-AWS_DEPLOYMENT_GUIDE.md
-
-# Personal development files
-.cursor/
 
 # Serverless Framework
 .serverless/
