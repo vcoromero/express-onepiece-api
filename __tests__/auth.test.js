@@ -61,10 +61,10 @@ const mockAdminPassword = 'testpassword123';
 
 describe('Authentication API Tests', () => {
   beforeAll(async () => {
-    // Environment variables are already loaded from configs/.env.test via jest.setup.js
+    // Environment variables are already loaded from .env.test via jest.setup.js
     // Just verify they exist
     if (!process.env.JWT_SECRET || !process.env.ADMIN_PASSWORD_HASH) {
-      throw new Error('Environment variables not loaded. Check jest.setup.js and configs/.env.test');
+      throw new Error('Environment variables not loaded. Check jest.setup.js and .env.test');
     }
   });
 
