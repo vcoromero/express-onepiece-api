@@ -1,0 +1,277 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum CharacterStatus {
+  alive
+  deceased
+  unknown
+}
+
+enum ShipStatus {
+  active
+  destroyed
+  retired
+}
+
+enum OrganizationStatus {
+  active
+  disbanded
+  unknown
+}
+
+// ============================================
+// REFERENCE TABLES
+// ============================================
+
+model Race {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(50)
+  description String?     @db.Text
+
+  characters  Character[]
+
+  createdAt   DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt   DateTime    @updatedAt @db.Timestamp(0)
+
+  @@index([name])
+}
+
+model CharacterType {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(50)
+  description String?     @db.Text
+
+  characters  CharacterCharacterType[]
+
+  createdAt   DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt   DateTime    @updatedAt @db.Timestamp(0)
+
+  @@index([name])
+}
+
+model FruitType {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(50)
+  description String?     @db.Text
+
+  devilFruits DevilFruit[]
+
+  createdAt   DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt   DateTime    @updatedAt @db.Timestamp(0)
+
+  @@index([name])
+}
+
+model OrganizationType {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(50)
+  description String?     @db.Text
+
+  organizations Organization[]
+
+  createdAt   DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt   DateTime    @updatedAt @db.Timestamp(0)
+
+  @@index([name])
+}
+
+model HakiType {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(50)
+  description String?     @db.Text
+  color       String?     @db.VarChar(20)
+
+  characterHakis CharacterHaki[]
+
+  createdAt   DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt   DateTime    @updatedAt @db.Timestamp(0)
+
+  @@index([name])
+}
+
+// ============================================
+// MAIN ENTITIES
+// ============================================
+
+model Character {
+  id          Int         @id @default(autoincrement())
+  name        String      @unique @db.VarChar(100)
+  alias       String?     @db.VarChar(100)
+  raceId      Int?
+  age         Int?
+  birthday    String?     @db.VarChar(20)
+  height      String?     @db.VarChar(20)
+  bounty      BigInt?     @default(0)
+  origin      String?     @db.VarChar(100)
+  status      CharacterStatus @default(alive)
+  description String?     @db.Text
+  debut       String?     @db.VarChar(100)
+
+  race        Race?       @relation(fields: [raceId], references: [id])
+  devilFruits CharacterDevilFruit[]
+  hakiTypes   CharacterHaki[]
+  characterTypes CharacterCharacterType[]
+  organizations CharacterOrganization[]
+
+  // Relations: Characters that lead organizations
+  ledOrganizations Organization[] @relation("OrganizationLeader")
+
+  createdAt   DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt   DateTime    @updatedAt @db.Timestamp(0)
+
+  @@index([name])
+  @@index([alias])
+  @@index([bounty])
+  @@index([status])
+  @@index([raceId])
+}
+
+model DevilFruit {
+  id              Int         @id @default(autoincrement())
+  name            String      @db.VarChar(100)
+  japaneseName    String?     @db.VarChar(100)
+  typeId          Int?
+  description     String?     @db.Text
+  abilities       String?     @db.Text
+  currentUserId   Int?
+
+  fruitType       FruitType?  @relation(fields: [typeId], references: [id])
+  characters      CharacterDevilFruit[]
+
+  createdAt       DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt       DateTime    @updatedAt @db.Timestamp(0)
+
+  @@index([name])
+  @@index([typeId])
+}
+
+model Organization {
+  id                  Int         @id @default(autoincrement())
+  name                String      @db.VarChar(100)
+  organizationTypeId  Int?
+  leaderId            Int?
+  shipId              Int?
+  baseLocation        String?     @db.VarChar(100)
+  totalBounty         BigInt?     @default(0)
+  status              OrganizationStatus @default(active)
+  description         String?     @db.Text
+
+  organizationType    OrganizationType? @relation(fields: [organizationTypeId], references: [id])
+  leader              Character?   @relation("OrganizationLeader", fields: [leaderId], references: [id])
+  ships               Ship[]
+  members             CharacterOrganization[]
+
+  createdAt           DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt           DateTime    @updatedAt @db.Timestamp(0)
+
+  @@index([name])
+  @@index([organizationTypeId])
+  @@index([status])
+}
+
+model Ship {
+  id          Int         @id @default(autoincrement())
+  name        String      @db.VarChar(100)
+  description String?     @db.Text
+  status      ShipStatus  @default(active)
+
+  organizationId Int?
+  organization  Organization? @relation(fields: [organizationId], references: [id])
+
+  createdAt   DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt   DateTime    @updatedAt @db.Timestamp(0)
+
+  @@index([name])
+  @@index([organizationId])
+  @@index([status])
+}
+
+// ============================================
+// JUNCTION TABLES (MANY-TO-MANY)
+// ============================================
+
+model CharacterDevilFruit {
+  id              Int         @id @default(autoincrement())
+  characterId     Int
+  devilFruitId   Int
+  acquiredDate    DateTime?  @db.Date
+  isCurrent       Boolean     @default(true)
+  notes           String?     @db.Text
+
+  character       Character   @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  devilFruit      DevilFruit  @relation(fields: [devilFruitId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt       DateTime    @updatedAt @db.Timestamp(0)
+
+  @@unique([characterId, devilFruitId, isCurrent])
+  @@index([characterId])
+  @@index([devilFruitId])
+}
+
+model CharacterHaki {
+  id            Int         @id @default(autoincrement())
+  characterId   Int
+  hakiTypeId    Int
+  masteryLevel  String?     @db.VarChar(20)
+  awakened      Boolean     @default(false)
+  notes         String?     @db.Text
+
+  character     Character   @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  hakiType      HakiType    @relation(fields: [hakiTypeId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt     DateTime    @updatedAt @db.Timestamp(0)
+
+  @@unique([characterId, hakiTypeId])
+  @@index([characterId])
+  @@index([hakiTypeId])
+}
+
+model CharacterCharacterType {
+  id              Int         @id @default(autoincrement())
+  characterId     Int
+  characterTypeId Int
+  acquiredDate    DateTime?  @db.Date
+  isCurrent       Boolean     @default(true)
+
+  character       Character   @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  characterType   CharacterType @relation(fields: [characterTypeId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt       DateTime    @updatedAt @db.Timestamp(0)
+
+  @@unique([characterId, characterTypeId, isCurrent])
+  @@index([characterId])
+  @@index([characterTypeId])
+}
+
+model CharacterOrganization {
+  id              Int         @id @default(autoincrement())
+  characterId     Int
+  organizationId  Int
+  role            String?     @db.VarChar(50)
+  joinedDate      DateTime?  @db.Date
+  leftDate        DateTime?  @db.Date
+  isCurrent       Boolean     @default(true)
+
+  character       Character   @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime    @default(now()) @db.Timestamp(0)
+  updatedAt       DateTime    @updatedAt @db.Timestamp(0)
+
+  @@unique([characterId, organizationId, isCurrent])
+  @@index([characterId])
+  @@index([organizationId])
+}

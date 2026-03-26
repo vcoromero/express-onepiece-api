@@ -1,35 +1,25 @@
-const { Race } = require('../models');
-const { Op } = require('sequelize');
+const prisma = require('../config/prisma.config');
 
-/**
- * @class RaceService
- * @description Service layer for Race business logic
- */
 class RaceService {
-  /**
-   * Get all races
-   * @param {Object} options - Query options
-   * @returns {Promise<Object>} Service response
-   */
   async getAllRaces(options = {}) {
     try {
       const { search, sortBy = 'name', sortOrder = 'asc' } = options;
-      
-      const whereClause = {};
+
+      const where = {};
       if (search) {
-        whereClause[Op.or] = [
-          { name: { [Op.like]: `%${search}%` } },
-          { description: { [Op.like]: `%${search}%` } }
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } }
         ];
       }
 
-      const validSortFields = ['name', 'created_at', 'updated_at'];
-      const validSortBy = validSortFields.includes(sortBy) ? sortBy : 'name';
-      const validSortOrder = ['asc', 'desc'].includes(sortOrder.toLowerCase()) ? sortOrder.toLowerCase() : 'asc';
+      const validSortFields = ['name', 'createdAt', 'updatedAt'];
+      const sortField = validSortFields.includes(sortBy) ? sortBy : 'name';
+      const orderDirection = sortOrder.toLowerCase() === 'desc' ? 'desc' : 'asc';
 
-      const races = await Race.findAll({
-        where: whereClause,
-        order: [[validSortBy, validSortOrder]]
+      const races = await prisma.race.findMany({
+        where,
+        orderBy: { [sortField]: orderDirection }
       });
 
       return {
@@ -47,11 +37,6 @@ class RaceService {
     }
   }
 
-  /**
-   * Get race by ID
-   * @param {number} id - Race ID
-   * @returns {Promise<Object>} Service response
-   */
   async getRaceById(id) {
     try {
       if (!id || isNaN(id) || parseInt(id) <= 0) {
@@ -62,8 +47,10 @@ class RaceService {
         };
       }
 
-      const race = await Race.findByPk(id);
-      
+      const race = await prisma.race.findUnique({
+        where: { id: parseInt(id) }
+      });
+
       if (!race) {
         return {
           success: false,
@@ -86,12 +73,6 @@ class RaceService {
     }
   }
 
-  /**
-   * Update race
-   * @param {number} id - Race ID
-   * @param {Object} updateData - Data to update
-   * @returns {Promise<Object>} Service response
-   */
   async updateRace(id, updateData) {
     try {
       if (!id || isNaN(id) || parseInt(id) <= 0) {
@@ -102,7 +83,10 @@ class RaceService {
         };
       }
 
-      const race = await Race.findByPk(id);
+      const race = await prisma.race.findUnique({
+        where: { id: parseInt(id) }
+      });
+
       if (!race) {
         return {
           success: false,
@@ -111,7 +95,6 @@ class RaceService {
         };
       }
 
-      // Validate at least one field is provided
       if (!updateData || Object.keys(updateData).length === 0) {
         return {
           success: false,
@@ -120,7 +103,6 @@ class RaceService {
         };
       }
 
-      // Validate name if provided
       if (updateData.name !== undefined) {
         if (!updateData.name || updateData.name.trim() === '') {
           return {
@@ -136,28 +118,29 @@ class RaceService {
             error: 'INVALID_NAME'
           };
         }
-      }
 
-      // Check for duplicate name if name is being updated
-      if (updateData.name && updateData.name !== race.name) {
-        const existingRace = await Race.findOne({
-          where: { name: updateData.name }
-        });
-        if (existingRace) {
-          return {
-            success: false,
-            message: 'A race with this name already exists',
-            error: 'DUPLICATE_NAME'
-          };
+        if (updateData.name !== race.name) {
+          const existingRace = await prisma.race.findUnique({
+            where: { name: updateData.name }
+          });
+          if (existingRace) {
+            return {
+              success: false,
+              message: 'A race with this name already exists',
+              error: 'DUPLICATE_NAME'
+            };
+          }
         }
       }
 
-      await race.update(updateData);
-      await race.reload();
+      const updatedRace = await prisma.race.update({
+        where: { id: parseInt(id) },
+        data: updateData
+      });
 
       return {
         success: true,
-        data: race,
+        data: updatedRace,
         message: 'Race updated successfully'
       };
     } catch (error) {
@@ -170,20 +153,14 @@ class RaceService {
     }
   }
 
-  /**
-   * Check if race name exists
-   * @param {string} name - Race name
-   * @param {number} excludeId - ID to exclude from check
-   * @returns {Promise<boolean>} True if name exists
-   */
   async nameExists(name, excludeId = null) {
     try {
-      const whereClause = { name };
+      const where = { name };
       if (excludeId) {
-        whereClause.id = { [Op.ne]: excludeId };
+        where.id = { not: parseInt(excludeId) };
       }
-      
-      const race = await Race.findOne({ where: whereClause });
+
+      const race = await prisma.race.findFirst({ where });
       return !!race;
     } catch (error) {
       console.error('Error in nameExists:', error);
@@ -191,14 +168,11 @@ class RaceService {
     }
   }
 
-  /**
-   * Check if race ID exists
-   * @param {number} id - Race ID
-   * @returns {Promise<boolean>} True if ID exists
-   */
   async idExists(id) {
     try {
-      const race = await Race.findByPk(id);
+      const race = await prisma.race.findUnique({
+        where: { id: parseInt(id) }
+      });
       return !!race;
     } catch (error) {
       console.error('Error in idExists:', error);
@@ -206,21 +180,12 @@ class RaceService {
     }
   }
 
-  /**
-   * Check if race is in use by characters
-   * @param {number} id - Race ID
-   * @returns {Promise<boolean>} True if race is in use
-   */
   async isRaceInUse(id) {
     try {
-      const race = await Race.findByPk(id, {
-        include: [{
-          association: 'characters',
-          required: false
-        }]
+      const count = await prisma.character.count({
+        where: { raceId: parseInt(id) }
       });
-      
-      return !!(race && race.characters && race.characters.length > 0);
+      return count > 0;
     } catch (error) {
       console.error('Error in isRaceInUse:', error);
       return false;

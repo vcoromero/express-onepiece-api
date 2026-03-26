@@ -1,44 +1,25 @@
-const { HakiType } = require('../models');
-const { Op } = require('sequelize');
+const prisma = require('../config/prisma.config');
 
-/**
- * HakiType Service
- * Contains all business logic for HakiType operations
- */
 class HakiTypeService {
-  /**
-   * Get all Haki types
-   * @param {Object} options - Query options
-   * @param {string} options.search - Search term for name/description
-   * @param {string} options.sortBy - Field to sort by (default: 'name')
-   * @param {string} options.sortOrder - Sort order (asc/desc, default: 'asc')
-   * @returns {Promise<Object>} Result with Haki types
-   */
   async getAllHakiTypes(options = {}) {
     try {
-      const {
-        search,
-        sortBy = 'name',
-        sortOrder = 'asc'
-      } = options;
+      const { search, sortBy = 'name', sortOrder = 'asc' } = options;
 
-      // Build where clause for search
-      const whereClause = {};
+      const where = {};
       if (search) {
-        whereClause[Op.or] = [
-          { name: { [Op.like]: `%${search}%` } },
-          { description: { [Op.like]: `%${search}%` } }
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } }
         ];
       }
 
-      // Validate sort parameters
-      const validSortFields = ['name', 'color', 'created_at', 'updated_at'];
-      const validSortBy = validSortFields.includes(sortBy) ? sortBy : 'name';
-      const validSortOrder = ['asc', 'desc'].includes(sortOrder.toLowerCase()) ? sortOrder.toLowerCase() : 'asc';
+      const validSortFields = ['name', 'color', 'createdAt', 'updatedAt'];
+      const sortField = validSortFields.includes(sortBy) ? sortBy : 'name';
+      const orderDirection = sortOrder.toLowerCase() === 'desc' ? 'desc' : 'asc';
 
-      const hakiTypes = await HakiType.findAll({
-        where: whereClause,
-        order: [[validSortBy, validSortOrder]]
+      const hakiTypes = await prisma.hakiType.findMany({
+        where,
+        orderBy: { [sortField]: orderDirection }
       });
 
       return {
@@ -56,14 +37,8 @@ class HakiTypeService {
     }
   }
 
-  /**
-   * Get a Haki type by ID
-   * @param {number} id - Haki type ID
-   * @returns {Promise<Object>} Haki type data or error
-   */
   async getHakiTypeById(id) {
     try {
-      // Validate ID
       if (!id || isNaN(parseInt(id)) || parseInt(id) <= 0) {
         return {
           success: false,
@@ -72,7 +47,9 @@ class HakiTypeService {
         };
       }
 
-      const hakiType = await HakiType.findByPk(parseInt(id));
+      const hakiType = await prisma.hakiType.findUnique({
+        where: { id: parseInt(id) }
+      });
 
       if (!hakiType) {
         return {
@@ -96,18 +73,8 @@ class HakiTypeService {
     }
   }
 
-  /**
-   * Update a Haki type
-   * @param {number} id - Haki type ID
-   * @param {Object} updateData - Data to update
-   * @param {string} [updateData.name] - New name
-   * @param {string} [updateData.description] - New description
-   * @param {string} [updateData.color] - New color
-   * @returns {Promise<Object>} Updated Haki type or error
-   */
   async updateHakiType(id, updateData) {
     try {
-      // Validate ID
       if (!id || isNaN(parseInt(id)) || parseInt(id) <= 0) {
         return {
           success: false,
@@ -118,8 +85,10 @@ class HakiTypeService {
 
       const { name, description, color } = updateData;
 
-      // Find the Haki type
-      const hakiType = await HakiType.findByPk(parseInt(id));
+      const hakiType = await prisma.hakiType.findUnique({
+        where: { id: parseInt(id) }
+      });
+
       if (!hakiType) {
         return {
           success: false,
@@ -128,16 +97,15 @@ class HakiTypeService {
         };
       }
 
-      // Check for duplicate name if name is being updated
       if (name && name.trim() !== hakiType.name) {
-        const existingHakiType = await HakiType.findOne({
-          where: { 
+        const existing = await prisma.hakiType.findFirst({
+          where: {
             name: name.trim(),
-            id: { [Op.ne]: parseInt(id) }
+            id: { not: parseInt(id) }
           }
         });
 
-        if (existingHakiType) {
+        if (existing) {
           return {
             success: false,
             message: 'A Haki type with this name already exists',
@@ -146,11 +114,14 @@ class HakiTypeService {
         }
       }
 
-      // Update the Haki type
-      const updatedHakiType = await hakiType.update({
-        ...(name && { name: name.trim() }),
-        ...(description !== undefined && { description: description?.trim() || null }),
-        ...(color !== undefined && { color: color?.trim() || null })
+      const updates = {};
+      if (name) updates.name = name.trim();
+      if (description !== undefined) updates.description = description?.trim() || null;
+      if (color !== undefined) updates.color = color?.trim() || null;
+
+      const updatedHakiType = await prisma.hakiType.update({
+        where: { id: parseInt(id) },
+        data: updates
       });
 
       return {
@@ -160,26 +131,6 @@ class HakiTypeService {
       };
     } catch (error) {
       console.error('Error in updateHakiType:', error);
-      
-      // Handle Sequelize validation errors
-      if (error.name === 'SequelizeValidationError') {
-        const validationErrors = error.errors.map(err => err.message).join(', ');
-        return {
-          success: false,
-          message: `Validation error: ${validationErrors}`,
-          error: 'VALIDATION_ERROR'
-        };
-      }
-
-      // Handle unique constraint errors
-      if (error.name === 'SequelizeUniqueConstraintError') {
-        return {
-          success: false,
-          message: 'A Haki type with this name already exists',
-          error: 'DUPLICATE_NAME'
-        };
-      }
-
       return {
         success: false,
         message: 'Failed to update Haki type',
@@ -187,7 +138,6 @@ class HakiTypeService {
       };
     }
   }
-
 }
 
 module.exports = new HakiTypeService();

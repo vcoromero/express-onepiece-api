@@ -1,29 +1,16 @@
-const { Op } = require('sequelize');
-const { Organization, OrganizationType, Character, Ship, CharacterOrganization } = require('../models');
+const prisma = require('../config/prisma.config');
 
-/**
- * Organization Service
- * Business logic layer for organization operations
- * @description Handles all business logic for organizations including CRUD operations,
- * validation, and complex queries with proper error handling
- * @author Database Expert
- * @version 1.0.0
- */
+const serializeBigInt = (obj) => {
+  return JSON.parse(JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+    return value;
+  }));
+};
+
 class OrganizationService {
-  /**
-     * Get all organizations with pagination and filtering
-     * @param {Object} options - Query options
-     * @param {number} options.page - Page number (default: 1)
-     * @param {number} options.limit - Items per page (default: 10)
-     * @param {string} options.search - Search term for name
-     * @param {string} options.status - Filter by status
-     * @param {number} options.organizationTypeId - Filter by organization type
-     * @param {string} options.sortBy - Sort field (default: 'name')
-     * @param {string} options.sortOrder - Sort order (default: 'ASC')
-     * @returns {Promise<Object>} Paginated organizations with metadata
-     * @throws {Error} Database or validation errors
-     */
-  static async getAllOrganizations(options = {}) {
+  async getAllOrganizations(options = {}) {
     try {
       const {
         page = 1,
@@ -32,319 +19,253 @@ class OrganizationService {
         status,
         organizationTypeId,
         sortBy = 'name',
-        sortOrder = 'ASC'
+        sortOrder = 'asc'
       } = options;
 
-      // Validate pagination parameters
       const pageNum = Math.max(1, parseInt(page));
       const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
       const offset = (pageNum - 1) * limitNum;
 
-      // Validate sort parameters
       const allowedSortFields = ['name', 'totalBounty', 'status', 'createdAt'];
       const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'name';
-      const sortDirection = sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+      const orderDirection = sortOrder.toLowerCase() === 'desc' ? 'desc' : 'asc';
 
-      // Build where clause
-      const whereClause = {};
-            
+      const where = {};
+
       if (search) {
-        whereClause.name = {
-          [Op.like]: `%${search}%`
-        };
+        where.name = { contains: search, mode: 'insensitive' };
       }
-            
+
       if (status) {
-        whereClause.status = status;
+        where.status = status;
       }
-            
+
       if (organizationTypeId) {
-        whereClause.organizationTypeId = parseInt(organizationTypeId);
+        where.organizationTypeId = parseInt(organizationTypeId);
       }
 
-      // Execute query with eager loading
-      const { count, rows } = await Organization.findAndCountAll({
-        where: whereClause,
-        attributes: [
-          'id', 'name', 'organizationTypeId', 'leaderId', 'shipId', 
-          'baseLocation', 'totalBounty', 'status', 'description', 
-          'created_at', 'updated_at'
-        ],
-        include: [
-          {
-            model: OrganizationType,
-            as: 'organizationType',
-            attributes: ['id', 'name', 'description']
+      const [organizations, total] = await Promise.all([
+        prisma.organization.findMany({
+          where,
+          include: {
+            organizationType: { select: { id: true, name: true, description: true } },
+            leader: { select: { id: true, name: true, alias: true, bounty: true } },
+            ship: { select: { id: true, name: true, status: true } }
           },
-          {
-            model: Character,
-            as: 'leader',
-            attributes: ['id', 'name', 'alias', 'bounty']
-          },
-          {
-            model: Ship,
-            as: 'ship',
-            attributes: ['id', 'name', 'status']
-          }
-        ],
-        order: [[sortField, sortDirection]],
-        limit: limitNum,
-        offset: offset,
-        distinct: true
-      });
+          orderBy: { [sortField]: orderDirection },
+          skip: offset,
+          take: limitNum
+        }),
+        prisma.organization.count({ where })
+      ]);
 
-      // Calculate pagination metadata
-      const totalPages = Math.ceil(count / limitNum);
-      const hasNextPage = pageNum < totalPages;
-      const hasPrevPage = pageNum > 1;
+      const totalPages = Math.ceil(total / limitNum);
 
       return {
         success: true,
-        organizations: rows,
+        organizations: serializeBigInt(organizations),
         pagination: {
           page: pageNum,
           limit: limitNum,
-          total: count,
+          total,
           totalPages,
-          hasNext: hasNextPage,
-          hasPrev: hasPrevPage
+          hasNext: pageNum < totalPages,
+          hasPrev: pageNum > 1
         }
       };
     } catch (error) {
-      throw new Error(`Error retrieving organizations: ${error.message}`);
+      console.error('Error in getAllOrganizations:', error);
+      return {
+        success: false,
+        message: 'Failed to fetch organizations',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      };
     }
   }
 
-  /**
-     * Get organization by ID with full details
-     * @param {number} id - Organization ID
-     * @returns {Promise<Object>} Organization with all relationships
-     * @throws {Error} Organization not found or database error
-     */
-  static async getOrganizationById(id) {
+  async getOrganizationById(id) {
     try {
-      if (!id || isNaN(parseInt(id))) {
-        throw new Error('Valid organization ID is required');
+      if (!id || isNaN(id) || parseInt(id) <= 0) {
+        return {
+          success: false,
+          message: 'Invalid organization ID',
+          error: 'INVALID_ID'
+        };
       }
 
-      const organization = await Organization.findByPk(parseInt(id), {
-        attributes: [
-          'id', 'name', 'organizationTypeId', 'leaderId', 'shipId', 
-          'baseLocation', 'totalBounty', 'status', 'description', 
-          'created_at', 'updated_at'
-        ],
-        include: [
-          {
-            model: OrganizationType,
-            as: 'organizationType',
-            attributes: ['id', 'name', 'description']
-          },
-          {
-            model: Character,
-            as: 'leader',
-            attributes: ['id', 'name', 'alias', 'bounty', 'status']
-          },
-          {
-            model: Ship,
-            as: 'ship',
-            attributes: ['id', 'name', 'status', 'description']
-          },
-          {
-            model: Character,
-            as: 'characters',
-            through: {
-              model: CharacterOrganization,
-              attributes: ['role', 'joined_date', 'is_current'],
-              where: { is_current: true }
-            },
-            attributes: ['id', 'name', 'alias', 'bounty'],
-            required: false
+      const organization = await prisma.organization.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+          organizationType: { select: { id: true, name: true, description: true } },
+          leader: { select: { id: true, name: true, alias: true, bounty: true } },
+          ship: { select: { id: true, name: true, status: true } },
+          members: {
+            where: { isCurrent: true },
+            include: {
+              character: { select: { id: true, name: true, alias: true } }
+            }
           }
-        ]
+        }
       });
 
       if (!organization) {
-        throw new Error('Organization not found');
+        return {
+          success: false,
+          message: `Organization with ID ${id} not found`,
+          error: 'NOT_FOUND'
+        };
       }
 
       return {
         success: true,
-        data: organization,
-        message: 'Organization retrieved successfully'
+        data: serializeBigInt(organization)
       };
     } catch (error) {
-      throw new Error(`Error retrieving organization: ${error.message}`);
+      console.error('Error in getOrganizationById:', error);
+      return {
+        success: false,
+        message: 'Failed to fetch organization',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      };
     }
   }
 
-  /**
-     * Create new organization
-     * @param {Object} organizationData - Organization data
-     * @returns {Promise<Object>} Created organization
-     * @throws {Error} Validation or database errors
-     */
-  static async createOrganization(organizationData) {
+  async createOrganization(data) {
     try {
-      // Validate required fields
-      const requiredFields = ['name', 'organizationTypeId'];
-      for (const field of requiredFields) {
-        if (!organizationData[field]) {
-          throw new Error(`${field} is required`);
-        }
+      const {
+        name,
+        organizationTypeId,
+        leaderId,
+        shipId,
+        baseLocation,
+        totalBounty,
+        status = 'active',
+        description
+      } = data;
+
+      if (!name || name.trim() === '') {
+        return {
+          success: false,
+          message: 'Name is required',
+          error: 'MISSING_NAME'
+        };
       }
 
-      // Validate organization type exists
-      const organizationType = await OrganizationType.findByPk(organizationData.organizationTypeId);
-      if (!organizationType) {
-        throw new Error('Invalid organization type');
-      }
-
-      // Validate leader exists if provided
-      if (organizationData.leaderId) {
-        const leader = await Character.findByPk(organizationData.leaderId);
-        if (!leader) {
-          throw new Error('Invalid leader ID');
-        }
-      }
-
-      // Validate ship exists if provided
-      if (organizationData.shipId) {
-        const ship = await Ship.findByPk(organizationData.shipId);
-        if (!ship) {
-          throw new Error('Invalid ship ID');
-        }
-      }
-
-      // Check for duplicate name
-      const existingOrganization = await Organization.findOne({
-        where: { name: organizationData.name }
+      const existing = await prisma.organization.findUnique({
+        where: { name: name.trim() }
       });
-      if (existingOrganization) {
-        throw new Error('Organization with this name already exists');
+
+      if (existing) {
+        return {
+          success: false,
+          message: 'An organization with this name already exists',
+          error: 'DUPLICATE_NAME'
+        };
       }
 
-      // Create organization
-      const organization = await Organization.create(organizationData);
-
-      // Return with relationships
-      const createdOrganization = await Organization.findByPk(organization.id, {
-        attributes: [
-          'id', 'name', 'organizationTypeId', 'leaderId', 'shipId', 
-          'baseLocation', 'totalBounty', 'status', 'description', 
-          'created_at', 'updated_at'
-        ],
-        include: [
-          {
-            model: OrganizationType,
-            as: 'organizationType',
-            attributes: ['id', 'name', 'description']
-          },
-          {
-            model: Character,
-            as: 'leader',
-            attributes: ['id', 'name', 'alias', 'bounty']
-          },
-          {
-            model: Ship,
-            as: 'ship',
-            attributes: ['id', 'name', 'status']
-          }
-        ]
+      const newOrganization = await prisma.organization.create({
+        data: {
+          name: name.trim(),
+          organizationTypeId: organizationTypeId || null,
+          leaderId: leaderId || null,
+          shipId: shipId || null,
+          baseLocation: baseLocation ? baseLocation.trim() : null,
+          totalBounty: totalBounty ? BigInt(totalBounty) : BigInt(0),
+          status,
+          description: description ? description.trim() : null
+        },
+        include: {
+          organizationType: { select: { id: true, name: true } },
+          leader: { select: { id: true, name: true } },
+          ship: { select: { id: true, name: true } }
+        }
       });
 
       return {
         success: true,
-        data: createdOrganization,
+        data: newOrganization,
         message: 'Organization created successfully'
       };
     } catch (error) {
-      throw new Error(`Error creating organization: ${error.message}`);
+      console.error('Error in createOrganization:', error);
+      return {
+        success: false,
+        message: 'Failed to create organization',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      };
     }
   }
 
-  /**
-     * Update organization
-     * @param {number} id - Organization ID
-     * @param {Object} updateData - Data to update
-     * @returns {Promise<Object>} Updated organization
-     * @throws {Error} Validation or database errors
-     */
-  static async updateOrganization(id, updateData) {
+  async updateOrganization(id, updateData) {
     try {
-      if (!id || isNaN(parseInt(id))) {
-        throw new Error('Valid organization ID is required');
+      if (!id || isNaN(id) || parseInt(id) <= 0) {
+        return {
+          success: false,
+          message: 'Invalid organization ID',
+          error: 'INVALID_ID'
+        };
       }
 
-      // Check if organization exists
-      const organization = await Organization.findByPk(parseInt(id));
+      const organization = await prisma.organization.findUnique({
+        where: { id: parseInt(id) }
+      });
+
       if (!organization) {
-        throw new Error('Organization not found');
+        return {
+          success: false,
+          message: `Organization with ID ${id} not found`,
+          error: 'NOT_FOUND'
+        };
       }
 
-      // Validate organization type if provided
-      if (updateData.organizationTypeId) {
-        const organizationType = await OrganizationType.findByPk(updateData.organizationTypeId);
-        if (!organizationType) {
-          throw new Error('Invalid organization type');
+      if (!updateData || Object.keys(updateData).length === 0) {
+        return {
+          success: false,
+          message: 'At least one field must be provided for update',
+          error: 'NO_FIELDS_PROVIDED'
+        };
+      }
+
+      if (updateData.name !== undefined) {
+        if (!updateData.name || updateData.name.trim() === '') {
+          return {
+            success: false,
+            message: 'Name cannot be empty',
+            error: 'INVALID_NAME'
+          };
         }
-      }
 
-      // Validate leader if provided
-      if (updateData.leaderId) {
-        const leader = await Character.findByPk(updateData.leaderId);
-        if (!leader) {
-          throw new Error('Invalid leader ID');
-        }
-      }
+        if (updateData.name !== organization.name) {
+          const existing = await prisma.organization.findUnique({
+            where: { name: updateData.name.trim() }
+          });
 
-      // Validate ship if provided
-      if (updateData.shipId) {
-        const ship = await Ship.findByPk(updateData.shipId);
-        if (!ship) {
-          throw new Error('Invalid ship ID');
-        }
-      }
-
-      // Check for duplicate name if name is being updated
-      if (updateData.name && updateData.name !== organization.name) {
-        const existingOrganization = await Organization.findOne({
-          where: { 
-            name: updateData.name,
-            id: { [Op.ne]: parseInt(id) }
+          if (existing) {
+            return {
+              success: false,
+              message: 'An organization with this name already exists',
+              error: 'DUPLICATE_NAME'
+            };
           }
-        });
-        if (existingOrganization) {
-          throw new Error('Organization with this name already exists');
         }
       }
 
-      // Update organization
-      await organization.update(updateData);
+      const dataToUpdate = { ...updateData };
+      if (dataToUpdate.totalBounty !== undefined) {
+        dataToUpdate.totalBounty = BigInt(dataToUpdate.totalBounty);
+      }
+      if (dataToUpdate.name) dataToUpdate.name = dataToUpdate.name.trim();
+      if (dataToUpdate.baseLocation) dataToUpdate.baseLocation = dataToUpdate.baseLocation.trim();
+      if (dataToUpdate.description) dataToUpdate.description = dataToUpdate.description.trim();
 
-      // Return updated organization with relationships
-      const updatedOrganization = await Organization.findByPk(organization.id, {
-        attributes: [
-          'id', 'name', 'organizationTypeId', 'leaderId', 'shipId', 
-          'baseLocation', 'totalBounty', 'status', 'description', 
-          'created_at', 'updated_at'
-        ],
-        include: [
-          {
-            model: OrganizationType,
-            as: 'organizationType',
-            attributes: ['id', 'name', 'description']
-          },
-          {
-            model: Character,
-            as: 'leader',
-            attributes: ['id', 'name', 'alias', 'bounty']
-          },
-          {
-            model: Ship,
-            as: 'ship',
-            attributes: ['id', 'name', 'status']
-          }
-        ]
+      const updatedOrganization = await prisma.organization.update({
+        where: { id: parseInt(id) },
+        data: dataToUpdate,
+        include: {
+          organizationType: { select: { id: true, name: true } },
+          leader: { select: { id: true, name: true } },
+          ship: { select: { id: true, name: true } }
+        }
       });
 
       return {
@@ -353,156 +274,66 @@ class OrganizationService {
         message: 'Organization updated successfully'
       };
     } catch (error) {
-      throw new Error(`Error updating organization: ${error.message}`);
+      console.error('Error in updateOrganization:', error);
+      return {
+        success: false,
+        message: 'Failed to update organization',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
+      };
     }
   }
 
-  /**
-     * Delete organization
-     * @param {number} id - Organization ID
-     * @returns {Promise<Object>} Deletion result
-     * @throws {Error} Organization not found or database error
-     */
-  static async deleteOrganization(id) {
+  async deleteOrganization(id) {
     try {
-      if (!id || isNaN(parseInt(id))) {
-        throw new Error('Valid organization ID is required');
+      if (!id || isNaN(id) || parseInt(id) <= 0) {
+        return {
+          success: false,
+          message: 'Invalid organization ID',
+          error: 'INVALID_ID'
+        };
       }
 
-      // Check if organization exists
-      const organization = await Organization.findByPk(parseInt(id));
-      if (!organization) {
-        throw new Error('Organization not found');
-      }
-
-      // Check if organization has active members
-      const activeMembers = await CharacterOrganization.count({
-        where: { 
-          organizationId: parseInt(id),
-          isCurrent: true 
-        }
+      const organization = await prisma.organization.findUnique({
+        where: { id: parseInt(id) }
       });
 
-      if (activeMembers > 0) {
-        throw new Error('Cannot delete organization with active members. Remove all members first.');
+      if (!organization) {
+        return {
+          success: false,
+          message: `Organization with ID ${id} not found`,
+          error: 'NOT_FOUND'
+        };
       }
 
-      // Delete organization
-      await organization.destroy();
+      const memberCount = await prisma.characterOrganization.count({
+        where: { organizationId: parseInt(id), isCurrent: true }
+      });
+
+      if (memberCount > 0) {
+        return {
+          success: false,
+          message: 'Cannot delete organization with active members',
+          error: 'HAS_MEMBERS'
+        };
+      }
+
+      await prisma.organization.delete({
+        where: { id: parseInt(id) }
+      });
 
       return {
         success: true,
-        data: { id: parseInt(id) },
         message: 'Organization deleted successfully'
       };
     } catch (error) {
-      throw new Error(`Error deleting organization: ${error.message}`);
-    }
-  }
-
-  /**
-     * Get organizations by type
-     * @param {number} organizationTypeId - Organization type ID
-     * @returns {Promise<Object>} Organizations of specified type
-     * @throws {Error} Database or validation errors
-     */
-  static async getOrganizationsByType(organizationTypeId) {
-    try {
-      if (!organizationTypeId || isNaN(parseInt(organizationTypeId))) {
-        throw new Error('Valid organization type ID is required');
-      }
-
-      // Validate organization type exists
-      const organizationType = await OrganizationType.findByPk(parseInt(organizationTypeId));
-      if (!organizationType) {
-        throw new Error('Organization type not found');
-      }
-
-      const organizations = await Organization.findAll({
-        where: { organizationTypeId: parseInt(organizationTypeId) },
-        attributes: [
-          'id', 'name', 'organizationTypeId', 'leaderId', 'shipId', 
-          'baseLocation', 'totalBounty', 'status', 'description', 
-          'created_at', 'updated_at'
-        ],
-        include: [
-          {
-            model: OrganizationType,
-            as: 'organizationType',
-            attributes: ['id', 'name', 'description']
-          },
-          {
-            model: Character,
-            as: 'leader',
-            attributes: ['id', 'name', 'alias', 'bounty']
-          },
-          {
-            model: Ship,
-            as: 'ship',
-            attributes: ['id', 'name', 'status']
-          }
-        ],
-        order: [['totalBounty', 'DESC']]
-      });
-
+      console.error('Error in deleteOrganization:', error);
       return {
-        success: true,
-        data: organizations,
-        message: `Found ${organizations.length} organizations of type: ${organizationType.name}`
+        success: false,
+        message: 'Failed to delete organization',
+        error: process.env.NODE_ENV === 'development' ? error.message : undefined
       };
-    } catch (error) {
-      throw new Error(`Error retrieving organizations by type: ${error.message}`);
-    }
-  }
-
-  /**
-     * Get organization members
-     * @param {number} id - Organization ID
-     * @returns {Promise<Object>} Organization members
-     * @throws {Error} Organization not found or database error
-     */
-  static async getOrganizationMembers(id) {
-    try {
-      if (!id || isNaN(parseInt(id))) {
-        throw new Error('Valid organization ID is required');
-      }
-
-      // Check if organization exists
-      const organization = await Organization.findByPk(parseInt(id));
-      if (!organization) {
-        throw new Error('Organization not found');
-      }
-
-      const members = await CharacterOrganization.findAll({
-        where: { organization_id: parseInt(id) },
-        include: [
-          {
-            model: Character,
-            as: 'character',
-            attributes: ['id', 'name', 'alias', 'bounty', 'status']
-          }
-        ],
-        order: [
-          ['is_current', 'DESC'],
-          ['role', 'ASC']
-        ]
-      });
-
-      return {
-        success: true,
-        data: {
-          organization: {
-            id: organization.id,
-            name: organization.name
-          },
-          members
-        },
-        message: `Found ${members.length} members for organization: ${organization.name}`
-      };
-    } catch (error) {
-      throw new Error(`Error retrieving organization members: ${error.message}`);
     }
   }
 }
 
-module.exports = OrganizationService;
+module.exports = new OrganizationService();
