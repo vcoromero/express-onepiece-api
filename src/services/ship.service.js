@@ -1,20 +1,15 @@
-const { Ship, Organization } = require('../models');
-const { Op } = require('sequelize');
+const prisma = require('../config/prisma.config');
 
-/**
- * Ship Service
- * Contains all business logic for ship management
- */
+const serializeBigInt = (obj) => {
+  return JSON.parse(JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+    return value;
+  }));
+};
+
 class ShipService {
-  /**
-     * Get all ships with pagination and filtering
-     * @param {Object} options - Query options
-     * @param {number} options.page - Page number (default: 1)
-     * @param {number} options.limit - Items per page (default: 10)
-     * @param {string} options.status - Filter by status
-     * @param {string} options.search - Search term for name
-     * @returns {Promise<Object>} Paginated ships data
-     */
   async getAllShips(options = {}) {
     try {
       const {
@@ -24,52 +19,45 @@ class ShipService {
         search
       } = options;
 
-      // Validate pagination parameters
       const pageNum = Math.max(1, parseInt(page));
       const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
       const offset = (pageNum - 1) * limitNum;
 
-      // Build where clause
-      const whereClause = {};
-            
+      const where = {};
+
       if (status) {
         if (!['active', 'destroyed', 'retired'].includes(status)) {
           throw new Error('SHIP_INVALID_STATUS');
         }
-        whereClause.status = status;
+        where.status = status;
       }
 
       if (search) {
-        whereClause.name = {
-          [Op.like]: `%${search}%`
-        };
+        where.name = { contains: search, mode: 'insensitive' };
       }
 
-      // Execute query with pagination
-      const { count, rows } = await Ship.findAndCountAll({
-        where: whereClause,
-        include: [
-          {
-            model: Organization,
-            as: 'organizations',
-            attributes: ['id', 'name', 'status', 'total_bounty'],
-            required: false
-          }
-        ],
-        order: [['name', 'ASC']],
-        limit: limitNum,
-        offset: offset
-      });
+      const [ships, total] = await Promise.all([
+        prisma.ship.findMany({
+          where,
+          include: {
+            organization: { select: { id: true, name: true, status: true, totalBounty: true } }
+          },
+          orderBy: { name: 'asc' },
+          skip: offset,
+          take: limitNum
+        }),
+        prisma.ship.count({ where })
+      ]);
 
-      const totalPages = Math.ceil(count / limitNum);
+      const totalPages = Math.ceil(total / limitNum);
 
       return {
         success: true,
-        data: rows,
+        data: serializeBigInt(ships),
         pagination: {
           page: pageNum,
           limit: limitNum,
-          total: count,
+          total,
           totalPages,
           hasNext: pageNum < totalPages,
           hasPrev: pageNum > 1
@@ -85,11 +73,6 @@ class ShipService {
     }
   }
 
-  /**
-     * Get ship by ID with relationships
-     * @param {number} id - Ship ID
-     * @returns {Promise<Object>} Ship data
-     */
   async getShipById(id) {
     try {
       if (!id || isNaN(id) || parseInt(id) <= 0) {
@@ -100,15 +83,11 @@ class ShipService {
         };
       }
 
-      const ship = await Ship.findByPk(parseInt(id), {
-        include: [
-          {
-            model: Organization,
-            as: 'organizations',
-            attributes: ['id', 'name', 'status', 'total_bounty'],
-            required: false
-          }
-        ]
+      const ship = await prisma.ship.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+          organization: { select: { id: true, name: true, status: true, totalBounty: true } }
+        }
       });
 
       if (!ship) {
@@ -121,7 +100,7 @@ class ShipService {
 
       return {
         success: true,
-        data: ship
+        data: serializeBigInt(ship)
       };
     } catch (error) {
       console.error('Error in getShipById:', error);
@@ -133,30 +112,19 @@ class ShipService {
     }
   }
 
-  /**
-     * Create a new ship
-     * @param {Object} shipData - Ship data
-     * @param {string} shipData.name - Ship name
-     * @param {string} shipData.description - Ship description
-     * @param {string} shipData.status - Ship status
-     * @returns {Promise<Object>} Created ship
-     */
   async createShip(shipData) {
     try {
       const { name, description, status = 'active' } = shipData;
 
-      // Validate required fields
       if (!name || name.trim().length === 0) {
         throw new Error('SHIP_NAME_REQUIRED');
       }
 
-      // Validate status
       if (status && !['active', 'destroyed', 'retired'].includes(status)) {
         throw new Error('SHIP_INVALID_STATUS');
       }
 
-      // Check for duplicate name
-      const existingShip = await Ship.findOne({
+      const existingShip = await prisma.ship.findUnique({
         where: { name: name.trim() }
       });
 
@@ -164,14 +132,14 @@ class ShipService {
         throw new Error('SHIP_NAME_EXISTS');
       }
 
-      // Create ship
-      const ship = await Ship.create({
-        name: name.trim(),
-        description: description?.trim() || null,
-        status: status
+      const ship = await prisma.ship.create({
+        data: {
+          name: name.trim(),
+          description: description?.trim() || null,
+          status
+        }
       });
 
-      // Return ship with relationships
       return await this.getShipById(ship.id);
     } catch (error) {
       if (['SHIP_NAME_REQUIRED', 'SHIP_INVALID_STATUS', 'SHIP_NAME_EXISTS'].includes(error.message)) {
@@ -181,37 +149,31 @@ class ShipService {
     }
   }
 
-  /**
-     * Update ship by ID
-     * @param {number} id - Ship ID
-     * @param {Object} updateData - Update data
-     * @returns {Promise<Object>} Updated ship
-     */
   async updateShip(id, updateData) {
     try {
       if (!id || isNaN(id) || id <= 0) {
         throw new Error('SHIP_INVALID_ID');
       }
 
-      const { name, description, status, image_url } = updateData;
+      const { name, description, status } = updateData;
 
-      // Check if ship exists
-      const existingShip = await Ship.findByPk(id);
+      const existingShip = await prisma.ship.findUnique({
+        where: { id: parseInt(id) }
+      });
+
       if (!existingShip) {
         throw new Error('SHIP_NOT_FOUND');
       }
 
-      // Validate status if provided
       if (status && !['active', 'destroyed', 'retired'].includes(status)) {
         throw new Error('SHIP_INVALID_STATUS');
       }
 
-      // Check for duplicate name if name is being updated
       if (name && name.trim() !== existingShip.name) {
-        const duplicateShip = await Ship.findOne({
-          where: { 
+        const duplicateShip = await prisma.ship.findFirst({
+          where: {
             name: name.trim(),
-            id: { [Op.ne]: id }
+            id: { not: parseInt(id) }
           }
         });
 
@@ -220,18 +182,16 @@ class ShipService {
         }
       }
 
-      // Update ship
       const updateFields = {};
       if (name !== undefined) updateFields.name = name.trim();
       if (description !== undefined) updateFields.description = description?.trim() || null;
       if (status !== undefined) updateFields.status = status;
-      if (image_url !== undefined) updateFields.image_url = image_url?.trim() || null;
 
-      await Ship.update(updateFields, {
-        where: { id }
+      await prisma.ship.update({
+        where: { id: parseInt(id) },
+        data: updateFields
       });
 
-      // Return updated ship with relationships
       return await this.getShipById(id);
     } catch (error) {
       if (['SHIP_INVALID_ID', 'SHIP_NOT_FOUND', 'SHIP_INVALID_STATUS', 'SHIP_NAME_EXISTS'].includes(error.message)) {
@@ -241,35 +201,30 @@ class ShipService {
     }
   }
 
-  /**
-     * Delete ship by ID
-     * @param {number} id - Ship ID
-     * @returns {Promise<Object>} Deletion result
-     */
   async deleteShip(id) {
     try {
       if (!id || isNaN(id) || id <= 0) {
         throw new Error('SHIP_INVALID_ID');
       }
 
-      // Check if ship exists
-      const ship = await Ship.findByPk(id);
+      const ship = await prisma.ship.findUnique({
+        where: { id: parseInt(id) }
+      });
+
       if (!ship) {
         throw new Error('SHIP_NOT_FOUND');
       }
 
-      // Check if ship is being used by any organization
-      const organizationsUsingShip = await Organization.count({
-        where: { ship_id: id }
+      const organizationsUsingShip = await prisma.organization.count({
+        where: { shipId: parseInt(id) }
       });
 
       if (organizationsUsingShip > 0) {
         throw new Error('SHIP_IN_USE');
       }
 
-      // Delete ship
-      await Ship.destroy({
-        where: { id }
+      await prisma.ship.delete({
+        where: { id: parseInt(id) }
       });
 
       return {
@@ -284,28 +239,18 @@ class ShipService {
     }
   }
 
-  /**
-     * Get ships by status
-     * @param {string} status - Ship status
-     * @returns {Promise<Array>} Ships with specified status
-     */
   async getShipsByStatus(status) {
     try {
       if (!['active', 'destroyed', 'retired'].includes(status)) {
         throw new Error('SHIP_INVALID_STATUS');
       }
 
-      const ships = await Ship.findAll({
+      const ships = await prisma.ship.findMany({
         where: { status },
-        include: [
-          {
-            model: Organization,
-            as: 'organizations',
-            attributes: ['id', 'name', 'status'],
-            required: false
-          }
-        ],
-        order: [['name', 'ASC']]
+        include: {
+          organization: { select: { id: true, name: true, status: true } }
+        },
+        orderBy: { name: 'asc' }
       });
 
       return ships;

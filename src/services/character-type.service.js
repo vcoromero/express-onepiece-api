@@ -1,35 +1,25 @@
-const { CharacterType } = require('../models');
-const { Op } = require('sequelize');
+const prisma = require('../config/prisma.config');
 
-/**
- * @class CharacterTypeService
- * @description Service layer for CharacterType business logic
- */
 class CharacterTypeService {
-  /**
-   * Get all character types
-   * @param {Object} options - Query options
-   * @returns {Promise<Object>} Service response
-   */
   async getAllCharacterTypes(options = {}) {
     try {
       const { search, sortBy = 'name', sortOrder = 'asc' } = options;
-      
-      const whereClause = {};
+
+      const where = {};
       if (search) {
-        whereClause[Op.or] = [
-          { name: { [Op.like]: `%${search}%` } },
-          { description: { [Op.like]: `%${search}%` } }
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } }
         ];
       }
 
-      const validSortFields = ['name', 'created_at', 'updated_at'];
-      const validSortBy = validSortFields.includes(sortBy) ? sortBy : 'name';
-      const validSortOrder = ['asc', 'desc'].includes(sortOrder.toLowerCase()) ? sortOrder.toLowerCase() : 'asc';
+      const validSortFields = ['name', 'createdAt', 'updatedAt'];
+      const sortField = validSortFields.includes(sortBy) ? sortBy : 'name';
+      const orderDirection = sortOrder.toLowerCase() === 'desc' ? 'desc' : 'asc';
 
-      const characterTypes = await CharacterType.findAll({
-        where: whereClause,
-        order: [[validSortBy, validSortOrder]]
+      const characterTypes = await prisma.characterType.findMany({
+        where,
+        orderBy: { [sortField]: orderDirection }
       });
 
       return {
@@ -47,11 +37,6 @@ class CharacterTypeService {
     }
   }
 
-  /**
-   * Get character type by ID
-   * @param {number} id - Character type ID
-   * @returns {Promise<Object>} Service response
-   */
   async getCharacterTypeById(id) {
     try {
       if (!id || isNaN(id) || parseInt(id) <= 0) {
@@ -62,8 +47,10 @@ class CharacterTypeService {
         };
       }
 
-      const characterType = await CharacterType.findByPk(id);
-      
+      const characterType = await prisma.characterType.findUnique({
+        where: { id: parseInt(id) }
+      });
+
       if (!characterType) {
         return {
           success: false,
@@ -86,12 +73,6 @@ class CharacterTypeService {
     }
   }
 
-  /**
-   * Update character type
-   * @param {number} id - Character type ID
-   * @param {Object} updateData - Data to update
-   * @returns {Promise<Object>} Service response
-   */
   async updateCharacterType(id, updateData) {
     try {
       if (!id || isNaN(id) || parseInt(id) <= 0) {
@@ -102,7 +83,10 @@ class CharacterTypeService {
         };
       }
 
-      const characterType = await CharacterType.findByPk(id);
+      const characterType = await prisma.characterType.findUnique({
+        where: { id: parseInt(id) }
+      });
+
       if (!characterType) {
         return {
           success: false,
@@ -111,7 +95,6 @@ class CharacterTypeService {
         };
       }
 
-      // Validate at least one field is provided
       if (!updateData || Object.keys(updateData).length === 0) {
         return {
           success: false,
@@ -120,7 +103,6 @@ class CharacterTypeService {
         };
       }
 
-      // Validate name if provided
       if (updateData.name !== undefined) {
         if (!updateData.name || updateData.name.trim() === '') {
           return {
@@ -136,28 +118,29 @@ class CharacterTypeService {
             error: 'INVALID_NAME'
           };
         }
-      }
 
-      // Check for duplicate name if name is being updated
-      if (updateData.name && updateData.name !== characterType.name) {
-        const existingCharacterType = await CharacterType.findOne({
-          where: { name: updateData.name }
-        });
-        if (existingCharacterType) {
-          return {
-            success: false,
-            message: 'A character type with this name already exists',
-            error: 'DUPLICATE_NAME'
-          };
+        if (updateData.name !== characterType.name) {
+          const existing = await prisma.characterType.findUnique({
+            where: { name: updateData.name }
+          });
+          if (existing) {
+            return {
+              success: false,
+              message: 'A character type with this name already exists',
+              error: 'DUPLICATE_NAME'
+            };
+          }
         }
       }
 
-      await characterType.update(updateData);
-      await characterType.reload();
+      const updated = await prisma.characterType.update({
+        where: { id: parseInt(id) },
+        data: updateData
+      });
 
       return {
         success: true,
-        data: characterType,
+        data: updated,
         message: 'Character type updated successfully'
       };
     } catch (error) {
@@ -170,20 +153,14 @@ class CharacterTypeService {
     }
   }
 
-  /**
-   * Check if character type name exists
-   * @param {string} name - Character type name
-   * @param {number} excludeId - ID to exclude from check
-   * @returns {Promise<boolean>} True if name exists
-   */
   async nameExists(name, excludeId = null) {
     try {
-      const whereClause = { name };
+      const where = { name };
       if (excludeId) {
-        whereClause.id = { [Op.ne]: excludeId };
+        where.id = { not: parseInt(excludeId) };
       }
-      
-      const characterType = await CharacterType.findOne({ where: whereClause });
+
+      const characterType = await prisma.characterType.findFirst({ where });
       return !!characterType;
     } catch (error) {
       console.error('Error in nameExists:', error);
@@ -191,14 +168,11 @@ class CharacterTypeService {
     }
   }
 
-  /**
-   * Check if character type ID exists
-   * @param {number} id - Character type ID
-   * @returns {Promise<boolean>} True if ID exists
-   */
   async idExists(id) {
     try {
-      const characterType = await CharacterType.findByPk(id);
+      const characterType = await prisma.characterType.findUnique({
+        where: { id: parseInt(id) }
+      });
       return !!characterType;
     } catch (error) {
       console.error('Error in idExists:', error);
@@ -206,21 +180,12 @@ class CharacterTypeService {
     }
   }
 
-  /**
-   * Check if character type is in use by characters
-   * @param {number} id - Character type ID
-   * @returns {Promise<boolean>} True if character type is in use
-   */
   async isCharacterTypeInUse(id) {
     try {
-      const characterType = await CharacterType.findByPk(id, {
-        include: [{
-          association: 'characters',
-          required: false
-        }]
+      const count = await prisma.characterCharacterType.count({
+        where: { characterTypeId: parseInt(id) }
       });
-      
-      return !!(characterType && characterType.characters && characterType.characters.length > 0);
+      return count > 0;
     } catch (error) {
       console.error('Error in isCharacterTypeInUse:', error);
       return false;

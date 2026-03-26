@@ -28,3 +28,5 @@ logs/*
 # Postman Collections (keep local only)
 onepiece-api-local.postman_environment.json
 onepiece-api-production.postman_environment.json
+
+/src/generated/prisma

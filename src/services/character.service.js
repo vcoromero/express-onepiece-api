@@ -1,16 +1,15 @@
-const { Character, Race, HakiType, CharacterHaki, DevilFruit, CharacterDevilFruit, CharacterType, CharacterCharacterType, Organization, CharacterOrganization } = require('../models');
-const { Op } = require('sequelize');
+const prisma = require('../config/prisma.config');
 
-/**
- * @class CharacterService
- * @description Service layer for Character business logic
- */
+const serializeBigInt = (obj) => {
+  return JSON.parse(JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+    return value;
+  }));
+};
+
 class CharacterService {
-  /**
-   * Get all characters with pagination and filtering
-   * @param {Object} options - Query options
-   * @returns {Promise<Object>} Service response
-   */
   async getAllCharacters(options = {}) {
     try {
       const {
@@ -21,176 +20,86 @@ class CharacterService {
         min_bounty,
         max_bounty,
         status,
-        devil_fruit_id,
-        character_type_id,
-        organization_id,
-        haki_type_id,
         sortBy = 'name',
         sortOrder = 'asc'
       } = options;
 
-      // Validate pagination parameters
       const pageNum = Math.max(1, parseInt(page));
       const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
       const offset = (pageNum - 1) * limitNum;
 
-      // Build where clause
-      const whereClause = {};
-      
+      const where = {};
+
       if (search) {
-        whereClause[Op.or] = [
-          { name: { [Op.like]: `%${search}%` } },
-          { alias: { [Op.like]: `%${search}%` } },
-          { description: { [Op.like]: `%${search}%` } }
+        where.OR = [
+          { name: { contains: search, mode: 'insensitive' } },
+          { alias: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } }
         ];
       }
 
       if (race_id) {
-        whereClause.race_id = race_id;
+        where.raceId = parseInt(race_id);
       }
 
       if (status) {
-        whereClause.status = status;
+        where.status = status;
       }
 
       if (min_bounty !== undefined || max_bounty !== undefined) {
-        whereClause.bounty = {};
+        where.bounty = {};
         if (min_bounty !== undefined) {
-          whereClause.bounty[Op.gte] = min_bounty;
+          where.bounty.gte = BigInt(min_bounty);
         }
         if (max_bounty !== undefined) {
-          whereClause.bounty[Op.lte] = max_bounty;
+          where.bounty.lte = BigInt(max_bounty);
         }
       }
 
-      // Build include conditions for filtering
-      const includeConditions = [];
-      
-      if (devil_fruit_id) {
-        includeConditions.push({
-          model: DevilFruit,
-          as: 'devil_fruits',
-          where: { id: devil_fruit_id },
-          through: { where: { is_current: true } },
-          required: true
-        });
-      }
+      const validSortFields = ['name', 'alias', 'bounty', 'age', 'status', 'createdAt'];
+      const sortField = validSortFields.includes(sortBy) ? sortBy : 'name';
+      const orderDirection = sortOrder.toLowerCase() === 'desc' ? 'desc' : 'asc';
 
-      if (character_type_id) {
-        includeConditions.push({
-          model: CharacterType,
-          as: 'character_types',
-          where: { id: character_type_id },
-          through: { where: { is_current: true } },
-          required: true
-        });
-      }
-
-      if (organization_id) {
-        includeConditions.push({
-          model: Organization,
-          as: 'organizations',
-          where: { id: organization_id },
-          through: { where: { is_current: true } },
-          required: true
-        });
-      }
-
-      if (haki_type_id) {
-        includeConditions.push({
-          model: HakiType,
-          as: 'haki_types',
-          where: { id: haki_type_id },
-          required: true
-        });
-      }
-
-      // Validate sort parameters
-      const validSortFields = ['name', 'alias', 'bounty', 'age', 'status', 'created_at', 'updated_at'];
-      const validSortBy = validSortFields.includes(sortBy) ? sortBy : 'name';
-      const validSortOrder = ['asc', 'desc'].includes(sortOrder.toLowerCase()) ? sortOrder.toLowerCase() : 'asc';
-
-      // Get total count (without includes for better performance)
-      const total = await Character.count({ 
-        where: whereClause,
-        distinct: true,
-        col: 'id'
-      });
-
-      // Build base includes
-      const baseIncludes = [
-        {
-          model: Race,
-          as: 'race',
-          attributes: ['id', 'name']
-        },
-        {
-          model: DevilFruit,
-          as: 'devil_fruits',
-          through: {
-            model: CharacterDevilFruit,
-            attributes: ['acquired_date', 'is_current'],
-            where: { is_current: true }
+      const [characters, total] = await Promise.all([
+        prisma.character.findMany({
+          where,
+          include: {
+            race: { select: { id: true, name: true } },
+            devilFruits: {
+              where: { isCurrent: true },
+              include: {
+                devilFruit: { select: { id: true, name: true, japaneseName: true } }
+              }
+            },
+            characterTypes: {
+              where: { isCurrent: true },
+              include: {
+                characterType: { select: { id: true, name: true } }
+              }
+            },
+            organizations: {
+              where: { isCurrent: true },
+              include: {
+                organization: { select: { id: true, name: true, status: true } }
+              }
+            }
           },
-          attributes: ['id', 'name', 'japanese_name'],
-          required: false
-        },
-        {
-          model: CharacterType,
-          as: 'character_types',
-          through: {
-            model: CharacterCharacterType,
-            attributes: ['acquired_date', 'is_current'],
-            where: { is_current: true }
-          },
-          attributes: ['id', 'name'],
-          required: false
-        },
-        {
-          model: Organization,
-          as: 'organizations',
-          through: {
-            model: CharacterOrganization,
-            attributes: ['role', 'is_current'],
-            where: { is_current: true }
-          },
-          attributes: ['id', 'name', 'status'],
-          required: false
-        }
-      ];
-
-      // Add HakiType include if filtering by haki
-      if (haki_type_id) {
-        baseIncludes.push({
-          model: HakiType,
-          as: 'haki_types',
-          where: { id: haki_type_id },
-          required: true
-        });
-      }
-
-      // Merge include conditions
-      const allIncludes = [...baseIncludes, ...includeConditions];
-
-      // Get characters with pagination
-      const characters = await Character.findAll({
-        where: whereClause,
-        include: allIncludes,
-        order: [[validSortBy, validSortOrder]],
-        limit: limitNum,
-        offset: offset,
-        distinct: true
-      });
+          orderBy: { [sortField]: orderDirection },
+          skip: offset,
+          take: limitNum
+        }),
+        prisma.character.count({ where })
+      ]);
 
       const totalPages = Math.ceil(total / limitNum);
 
       return {
         success: true,
-        characters,
+        characters: serializeBigInt(characters),
         pagination: {
           page: pageNum,
           limit: limitNum,
-          total: total,
+          total,
           totalPages,
           hasNext: pageNum < totalPages,
           hasPrev: pageNum > 1
@@ -206,11 +115,6 @@ class CharacterService {
     }
   }
 
-  /**
-   * Get character by ID
-   * @param {number} id - Character ID
-   * @returns {Promise<Object>} Service response
-   */
   async getCharacterById(id) {
     try {
       if (!id || isNaN(id) || parseInt(id) <= 0) {
@@ -221,52 +125,33 @@ class CharacterService {
         };
       }
 
-      const character = await Character.findByPk(id, {
-        include: [
-          {
-            model: Race,
-            as: 'race',
-            attributes: ['id', 'name', 'description']
+      const character = await prisma.character.findUnique({
+        where: { id: parseInt(id) },
+        include: {
+          race: { select: { id: true, name: true, description: true } },
+          hakiTypes: {
+            include: {
+              hakiType: { select: { id: true, name: true, description: true, color: true } }
+            }
           },
-          {
-            model: HakiType,
-            as: 'haki_types',
-            through: {
-              model: CharacterHaki,
-              attributes: ['mastery_level', 'awakened', 'notes']
-            },
-            attributes: ['id', 'name', 'description', 'color']
+          devilFruits: {
+            include: {
+              devilFruit: { select: { id: true, name: true, japaneseName: true, description: true, abilities: true } }
+            }
           },
-          {
-            model: DevilFruit,
-            as: 'devil_fruits',
-            through: {
-              model: CharacterDevilFruit,
-              attributes: ['acquired_date', 'is_current', 'notes']
-            },
-            attributes: ['id', 'name', 'japanese_name', 'description', 'abilities', 'weaknesses', 'awakening_description', 'image_url']
+          characterTypes: {
+            include: {
+              characterType: { select: { id: true, name: true, description: true } }
+            }
           },
-          {
-            model: CharacterType,
-            as: 'character_types',
-            through: {
-              model: CharacterCharacterType,
-              attributes: ['acquired_date', 'is_current']
-            },
-            attributes: ['id', 'name', 'description']
-          },
-          {
-            model: Organization,
-            as: 'organizations',
-            through: {
-              model: CharacterOrganization,
-              attributes: ['role', 'joined_date', 'left_date', 'is_current']
-            },
-            attributes: ['id', 'name', 'status', 'description']
+          organizations: {
+            include: {
+              organization: { select: { id: true, name: true, status: true, description: true } }
+            }
           }
-        ]
+        }
       });
-      
+
       if (!character) {
         return {
           success: false,
@@ -277,7 +162,7 @@ class CharacterService {
 
       return {
         success: true,
-        data: character
+        data: serializeBigInt(character)
       };
     } catch (error) {
       console.error('Error in getCharacterById:', error);
@@ -289,17 +174,12 @@ class CharacterService {
     }
   }
 
-  /**
-   * Create new character
-   * @param {Object} characterData - Character data
-   * @returns {Promise<Object>} Service response
-   */
   async createCharacter(characterData) {
     try {
       const {
         name,
         alias,
-        race_id,
+        raceId,
         bounty,
         age,
         birthday,
@@ -310,7 +190,6 @@ class CharacterService {
         debut
       } = characterData;
 
-      // Validate required fields
       if (!name || name.trim() === '') {
         return {
           success: false,
@@ -319,10 +198,10 @@ class CharacterService {
         };
       }
 
-      // Check if name already exists
-      const existingCharacter = await Character.findOne({
+      const existingCharacter = await prisma.character.findUnique({
         where: { name: name.trim() }
       });
+
       if (existingCharacter) {
         return {
           success: false,
@@ -331,8 +210,7 @@ class CharacterService {
         };
       }
 
-      // Validate race_id if provided
-      if (race_id && !(await this.raceExists(race_id))) {
+      if (raceId && !(await this.raceExists(raceId))) {
         return {
           success: false,
           message: 'Invalid race ID',
@@ -340,35 +218,28 @@ class CharacterService {
         };
       }
 
-      // Create character
-      const newCharacter = await Character.create({
-        name: name.trim(),
-        alias: alias ? alias.trim() : null,
-        race_id: race_id || null,
-        bounty: bounty || null,
-        age: age || null,
-        birthday: birthday ? birthday.trim() : null,
-        height: height ? height.trim() : null,
-        origin: origin ? origin.trim() : null,
-        status: status,
-        description: description ? description.trim() : null,
-        debut: debut ? debut.trim() : null
-      });
-
-      // Reload with associations
-      await newCharacter.reload({
-        include: [
-          {
-            model: Race,
-            as: 'race',
-            attributes: ['id', 'name']
-          }
-        ]
+      const newCharacter = await prisma.character.create({
+        data: {
+          name: name.trim(),
+          alias: alias ? alias.trim() : null,
+          raceId: raceId || null,
+          bounty: bounty ? BigInt(bounty) : null,
+          age: age || null,
+          birthday: birthday ? birthday.trim() : null,
+          height: height ? height.trim() : null,
+          origin: origin ? origin.trim() : null,
+          status,
+          description: description ? description.trim() : null,
+          debut: debut ? debut.trim() : null
+        },
+        include: {
+          race: { select: { id: true, name: true } }
+        }
       });
 
       return {
         success: true,
-        data: newCharacter,
+        data: serializeBigInt(newCharacter),
         message: 'Character created successfully'
       };
     } catch (error) {
@@ -381,12 +252,6 @@ class CharacterService {
     }
   }
 
-  /**
-   * Update character
-   * @param {number} id - Character ID
-   * @param {Object} updateData - Data to update
-   * @returns {Promise<Object>} Service response
-   */
   async updateCharacter(id, updateData) {
     try {
       if (!id || isNaN(id) || parseInt(id) <= 0) {
@@ -397,7 +262,10 @@ class CharacterService {
         };
       }
 
-      const character = await Character.findByPk(id);
+      const character = await prisma.character.findUnique({
+        where: { id: parseInt(id) }
+      });
+
       if (!character) {
         return {
           success: false,
@@ -406,7 +274,6 @@ class CharacterService {
         };
       }
 
-      // Validate at least one field is provided
       if (!updateData || Object.keys(updateData).length === 0) {
         return {
           success: false,
@@ -415,7 +282,6 @@ class CharacterService {
         };
       }
 
-      // Validate name if provided
       if (updateData.name !== undefined) {
         if (!updateData.name || updateData.name.trim() === '') {
           return {
@@ -424,10 +290,12 @@ class CharacterService {
             error: 'INVALID_NAME'
           };
         }
+
         if (updateData.name !== character.name) {
-          const existingCharacter = await Character.findOne({
+          const existingCharacter = await prisma.character.findUnique({
             where: { name: updateData.name.trim() }
           });
+
           if (existingCharacter) {
             return {
               success: false,
@@ -438,30 +306,32 @@ class CharacterService {
         }
       }
 
-      // Validate race_id if provided
-      if (updateData.race_id !== undefined && updateData.race_id !== null && !(await this.raceExists(updateData.race_id))) {
-        return {
-          success: false,
-          message: 'Invalid race ID',
-          error: 'INVALID_RACE'
-        };
+      if (updateData.raceId !== undefined && updateData.raceId !== null) {
+        if (!(await this.raceExists(updateData.raceId))) {
+          return {
+            success: false,
+            message: 'Invalid race ID',
+            error: 'INVALID_RACE'
+          };
+        }
       }
 
-      // Update character
-      await character.update(updateData);
-      await character.reload({
-        include: [
-          {
-            model: Race,
-            as: 'race',
-            attributes: ['id', 'name']
-          }
-        ]
+      const dataToUpdate = { ...updateData };
+      if (dataToUpdate.bounty !== undefined) {
+        dataToUpdate.bounty = BigInt(dataToUpdate.bounty);
+      }
+
+      const updatedCharacter = await prisma.character.update({
+        where: { id: parseInt(id) },
+        data: dataToUpdate,
+        include: {
+          race: { select: { id: true, name: true } }
+        }
       });
 
       return {
         success: true,
-        data: character,
+        data: serializeBigInt(updatedCharacter),
         message: 'Character updated successfully'
       };
     } catch (error) {
@@ -474,11 +344,6 @@ class CharacterService {
     }
   }
 
-  /**
-   * Delete character
-   * @param {number} id - Character ID
-   * @returns {Promise<Object>} Service response
-   */
   async deleteCharacter(id) {
     try {
       if (!id || isNaN(id) || parseInt(id) <= 0) {
@@ -489,7 +354,10 @@ class CharacterService {
         };
       }
 
-      const character = await Character.findByPk(id);
+      const character = await prisma.character.findUnique({
+        where: { id: parseInt(id) }
+      });
+
       if (!character) {
         return {
           success: false,
@@ -498,9 +366,11 @@ class CharacterService {
         };
       }
 
-      // Check if character has associated devil fruits
-      const hasDevilFruits = await this.characterHasDevilFruits(id);
-      if (hasDevilFruits) {
+      const hasDevilFruits = await prisma.characterDevilFruit.count({
+        where: { characterId: parseInt(id), isCurrent: true }
+      });
+
+      if (hasDevilFruits > 0) {
         return {
           success: false,
           message: 'Cannot delete character with associated devil fruits',
@@ -508,7 +378,9 @@ class CharacterService {
         };
       }
 
-      await character.destroy();
+      await prisma.character.delete({
+        where: { id: parseInt(id) }
+      });
 
       return {
         success: true,
@@ -524,14 +396,11 @@ class CharacterService {
     }
   }
 
-  /**
-   * Check if race exists
-   * @param {number} raceId - Race ID
-   * @returns {Promise<boolean>} True if race exists
-   */
   async raceExists(raceId) {
     try {
-      const race = await Race.findByPk(raceId);
+      const race = await prisma.race.findUnique({
+        where: { id: parseInt(raceId) }
+      });
       return !!race;
     } catch (error) {
       console.error('Error in raceExists:', error);
@@ -539,34 +408,6 @@ class CharacterService {
     }
   }
 
-  /**
-   * Check if character has associated devil fruits
-   * @param {number} characterId - Character ID
-   * @returns {Promise<boolean>} True if character has devil fruits
-   */
-  async characterHasDevilFruits(characterId) {
-    try {
-      const { sequelize } = require('../config/sequelize.config');
-      const [results] = await sequelize.query(
-        'SELECT COUNT(*) as count FROM devil_fruits WHERE current_user_id = ?',
-        {
-          replacements: [characterId],
-          type: require('sequelize').QueryTypes.SELECT
-        }
-      );
-      return results.count > 0;
-    } catch (error) {
-      console.error('Error in characterHasDevilFruits:', error);
-      return false;
-    }
-  }
-
-  /**
-   * Search characters by name
-   * @param {string} searchTerm - Search term
-   * @param {Object} options - Search options
-   * @returns {Promise<Object>} Service response
-   */
   async searchCharacters(searchTerm, options = {}) {
     try {
       if (!searchTerm || searchTerm.trim() === '') {
