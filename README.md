@@ -1,7 +1,7 @@
 # 🏴‍☠️ One Piece API
 
 [![Tests](https://img.shields.io/badge/tests-passing-brightgreen)](https://github.com)
-[![Coverage](https://img.shields.io/badge/coverage-87.37%25-brightgreen)](https://github.com)
+[![Coverage](https://img.shields.io/badge/coverage-33.14%25-yellow)](https://github.com)
 [![Node](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
 [![AWS](https://img.shields.io/badge/AWS-deployed-orange)](https://aws.amazon.com)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
@@ -16,7 +16,7 @@ A comprehensive RESTful API inspired by the One Piece universe, built with Expre
 - **📊 Advanced Relationships**: Complex many-to-many relationships between entities
 - **🔍 Full-Text Search**: Search across all entities with pagination
 - **⚡ Rate Limiting**: Built-in protection against abuse
-- **🧪 Comprehensive Testing**: 778 tests with 87.37% coverage
+- **🧪 Comprehensive Testing**: 176 tests with 33.14% coverage
 - **📚 Complete Documentation**: Detailed API documentation and guides
 
 ## 🚀 Live Demo
@@ -157,7 +157,7 @@ npm test -- --coverage
 npm run test:watch
 ```
 
-**Current Status**: 778 tests passing with 87.37% coverage
+**Current Status**: 176 tests passing with 33.14% coverage
 
 ## 🚀 Deployment
 
