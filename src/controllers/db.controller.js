@@ -110,7 +110,7 @@ const executeSqlFiles = async (req, res) => {
       results.push({
         fileName,
         success: true,
-        message: `SQL execution not supported in Prisma. Use Prisma CLI instead.`
+        message: 'SQL execution not supported in Prisma. Use Prisma CLI instead.'
       });
     }
     
@@ -125,7 +125,7 @@ const executeSqlFiles = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      message: `SQL file execution is not supported. Use Prisma CLI (db push, migrate)`,
+      message: 'SQL file execution is not supported. Use Prisma CLI (db push, migrate)',
       data: {
         totalFiles: fileNames.length,
         successfulFiles,
