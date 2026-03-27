@@ -66,7 +66,6 @@ npm run dev
 - `GET /api/health`
 - `POST /api/auth/login`
 - `GET /api/auth/verify`
-- `POST /api/auth/generate-hash` (dev/test only)
 
 - Characters: `GET/POST/PUT/DELETE /api/characters`, `GET /api/characters/search`
 - Devil Fruits: `GET/POST/PUT/DELETE /api/devil-fruits`, `GET /api/devil-fruits/type/:typeId`

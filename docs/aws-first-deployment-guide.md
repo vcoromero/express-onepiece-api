@@ -180,7 +180,7 @@ Lambda needs the same logical config as local `.env`, but you should **not** com
 
 1. **CI/CD or local deploy:** export variables in the shell before deploy, or use a **`.env`** with `serverless-dotenv-plugin` (do not commit `.env` with production secrets).
 2. **AWS Systems Manager Parameter Store** or **Secrets Manager** — reference ARNs in `serverless.yml` and grant the **Lambda execution role** `ssm:GetParameters` or `secretsmanager:GetSecretValue` as needed.
-3. For a **first test**, minimal vars often include: `DATABASE_URL` (Neon), `JWT_SECRET`, `JWT_EXPIRES_IN`, `ADMIN_USERNAME`, `ADMIN_PASSWORD_HASH`, and rate-limit vars (see [deployment.md](./deployment.md)).
+3. For a **first test**, minimal vars often include: `DATABASE_URL` (Neon), `JWT_SECRET`, `JWT_EXPIRES_IN`, and rate-limit vars (see [deployment.md](./deployment.md)). Create a **`users`** row (after migrations) via `SEED_ADMIN_*` + `db:seed` or manual SQL.
 
 **Neon:** use a connection string with **`sslmode=require`**.
 

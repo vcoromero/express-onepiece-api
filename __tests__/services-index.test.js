@@ -33,4 +33,10 @@ describe('Services Index', () => {
     expect(services.shipService).toBeDefined();
     expect(typeof services.shipService.getAllShips).toBe('function');
   });
+
+  it('exports authService', () => {
+    const services = require('../src/services');
+    expect(services.authService).toBeDefined();
+    expect(typeof services.authService.loginWithCredentials).toBe('function');
+  });
 });

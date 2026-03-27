@@ -11,15 +11,11 @@
 
 const fruitTypeService = require('./fruit-type.service');
 const shipService = require('./ship.service');
-
-// Add more services as they are created:
-// const characterService = require('./character.service');
-// const devilFruitService = require('./devil-fruit.service');
-// const organizationService = require('./organization.service');
+const authService = require('./auth.service');
 
 module.exports = {
   fruitTypeService,
-  shipService
-  // Export more services here
+  shipService,
+  authService
 };
 

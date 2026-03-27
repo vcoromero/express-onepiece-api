@@ -19,7 +19,6 @@ Authorization: Bearer <token>
 
 - `POST /api/auth/login`
 - `GET /api/auth/verify`
-- `POST /api/auth/generate-hash` (only in `development` and `test`)
 
 ## Rate Limiting
 

@@ -12,8 +12,6 @@ custom:
       - DATABASE_URL
       - JWT_SECRET
       - JWT_EXPIRES_IN
-      - ADMIN_USERNAME
-      - ADMIN_PASSWORD_HASH
       - RATE_LIMIT_WINDOW_MS
       - RATE_LIMIT_MAX_REQUESTS
       - RATE_LIMIT_LOGIN_MAX
@@ -24,8 +22,6 @@ custom:
       env:
         - DATABASE_URL
         - JWT_SECRET
-        - ADMIN_USERNAME
-        - ADMIN_PASSWORD_HASH
 
 provider:
   name: aws
@@ -46,6 +42,8 @@ provider:
     LOG_HTTP_REQUESTS: 'false'
 
 package:
+  # Only production dependencies; devDependencies (jest, serverless, prisma CLI, etc.) must not ship.
+  excludeDevDependencies: true
   patterns:
     - '!**/__tests__/**'
     - '!**/*.test.js'
@@ -53,7 +51,19 @@ package:
     - '!coverage/**'
     - '!.env'
     - '!.env.*'
+    - '!docs/**'
+    - '!.git/**'
     - 'prisma/schema.prisma'
+    # Often hoisted though unused at runtime (SDK v2 is huge; Lambda runtime does not need this in the zip)
+    - '!node_modules/aws-sdk/**'
+    # Prisma CLI / Studio — must not be required by Lambda (safety if hoisted into the zip)
+    - '!node_modules/prisma/**'
+    - '!node_modules/@prisma/studio-core/**'
+    - '!node_modules/@prisma/dev/**'
+    # Local generate often produces a second engine; Lambda (Amazon Linux 2023) uses only rhel-openssl-3.0.x
+    - '!node_modules/.prisma/client/libquery_engine-debian-openssl-3.0.x.so.node'
+    - '!node_modules/.prisma/client/libquery_engine-darwin*'
+    - '!node_modules/.prisma/client/libquery_engine-linux-musl*'
 
 functions:
   api:

@@ -1,7 +1,7 @@
-const bcrypt = require('bcryptjs');
 const JWTUtil = require('../utils/jwt.util');
 const logger = require('../utils/logger');
-const { getAdminCredentials } = require('../config/auth.config');
+const { authService } = require('../services');
+const { getStatusForServiceError } = require('../utils/http-response.helper');
 
 /**
  * Authentication Controller
@@ -15,14 +15,13 @@ class AuthController {
    */
   static async login(req, res) {
     const ip = req.ip || req.connection.remoteAddress;
-    
+
     try {
       const { username, password } = req.body;
 
-      // Validate that username and password are provided
       if (!username || !password) {
         logger.security.loginFailed(username || 'unknown', ip, 'Missing credentials');
-        
+
         return res.status(400).json({
           success: false,
           message: 'Incomplete credentials',
@@ -30,61 +29,44 @@ class AuthController {
         });
       }
 
-      // Get admin credentials from configuration
-      const { username: adminUsername, passwordHash: adminPasswordHash } = getAdminCredentials();
+      const result = await authService.loginWithCredentials(username, password);
 
-      if (!adminUsername || !adminPasswordHash) {
-        logger.error('Authentication configuration error', {
-          missingVars: {
-            username: !adminUsername,
-            passwordHash: !adminPasswordHash
-          }
-        });
-        
-        return res.status(500).json({
+      if (!result.success) {
+        const status = getStatusForServiceError(result.error, {}, 401);
+
+        if (result.error === 'INVALID_CREDENTIALS' || result.error === 'ACCOUNT_DISABLED') {
+          logger.security.loginFailed(username, ip, result.error);
+        }
+
+        const message =
+          result.error === 'MISSING_CREDENTIALS'
+            ? 'Incomplete credentials'
+            : 'Invalid credentials';
+        const clientError =
+          result.error === 'MISSING_CREDENTIALS'
+            ? 'Username and password are required'
+            : 'Incorrect username or password';
+
+        return res.status(status).json({
           success: false,
-          message: 'Authentication configuration error',
-          error: 'Environment variables not configured'
+          message,
+          error: clientError
         });
       }
 
-      // Verify username
-      if (username !== adminUsername) {
-        logger.security.loginFailed(username, ip, 'Invalid username');
-        
-        return res.status(401).json({
-          success: false,
-          message: 'Invalid credentials',
-          error: 'Incorrect username or password'
-        });
-      }
+      const { user } = result;
 
-      // Verify password
-      const isPasswordValid = await bcrypt.compare(password, adminPasswordHash);
-
-      if (!isPasswordValid) {
-        logger.security.loginFailed(username, ip, 'Invalid password');
-        
-        return res.status(401).json({
-          success: false,
-          message: 'Invalid credentials',
-          error: 'Incorrect username or password'
-        });
-      }
-
-      // Generate JWT token
       const token = JWTUtil.generateToken({
-        username: adminUsername,
-        role: 'admin',
+        userId: user.id,
+        username: user.username,
+        role: user.role,
         timestamp: Date.now()
       });
 
-      // Log successful login
-      logger.security.loginSuccess(adminUsername, ip, {
+      logger.security.loginSuccess(user.username, ip, {
         userAgent: req.get('user-agent')
       });
 
-      // Respond with the token
       return res.status(200).json({
         success: true,
         message: 'Login successful',
@@ -92,8 +74,9 @@ class AuthController {
           token,
           expiresIn: process.env.JWT_EXPIRES_IN || '24h',
           user: {
-            username: adminUsername,
-            role: 'admin'
+            id: user.id,
+            username: user.username,
+            role: user.role
           }
         }
       });
@@ -103,7 +86,7 @@ class AuthController {
         stack: error.stack,
         ip
       });
-      
+
       return res.status(500).json({
         success: false,
         message: 'Error processing login',
@@ -119,7 +102,6 @@ class AuthController {
    */
   static async verifyToken(req, res) {
     try {
-      // If we got here, the middleware already verified the token
       return res.status(200).json({
         success: true,
         message: 'Token is valid',
@@ -131,41 +113,6 @@ class AuthController {
       return res.status(500).json({
         success: false,
         message: 'Error verifying token',
-        error: error.message
-      });
-    }
-  }
-
-  /**
-   * Utility to generate password hash
-   * For development only - DO NOT expose in production
-   */
-  static async generatePasswordHash(req, res) {
-    try {
-      const { password } = req.body;
-
-      if (!password) {
-        return res.status(400).json({
-          success: false,
-          message: 'Password is required',
-          error: 'The password field is required'
-        });
-      }
-
-      const hash = await bcrypt.hash(password, 10);
-
-      return res.status(200).json({
-        success: true,
-        message: 'Hash generated successfully',
-        data: {
-          hash,
-          note: 'Save this hash in the ADMIN_PASSWORD_HASH variable in your .env file'
-        }
-      });
-    } catch (error) {
-      return res.status(500).json({
-        success: false,
-        message: 'Error generating hash',
         error: error.message
       });
     }
