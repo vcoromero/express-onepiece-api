@@ -1,198 +1,122 @@
-const characterService = require('../src/services/character.service');
-
-// Mock models to avoid database connections
-jest.mock('../src/models', () => ({
-  Character: {
-    findAll: jest.fn(),
-    findByPk: jest.fn(),
-    findOne: jest.fn(),
+jest.mock('../src/config/prisma.config', () => ({
+  character: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
     create: jest.fn(),
     update: jest.fn(),
-    destroy: jest.fn(),
+    delete: jest.fn(),
     count: jest.fn()
   },
-  Race: {
-    findByPk: jest.fn()
+  race: {
+    findUnique: jest.fn()
   },
-  CharacterType: {
-    findByPk: jest.fn()
-  },
-  FruitType: {
-    init: jest.fn(),
-    associate: jest.fn()
-  },
-  DevilFruit: {
-    init: jest.fn(),
-    associate: jest.fn()
-  },
-  HakiType: {
-    init: jest.fn(),
-    associate: jest.fn()
-  },
-  OrganizationType: {
-    init: jest.fn(),
-    associate: jest.fn()
+  characterDevilFruit: {
+    count: jest.fn()
   }
 }));
 
-// Mock Sequelize
-jest.mock('sequelize', () => {
-  const Sequelize = jest.fn(() => ({
-    define: jest.fn(),
-    authenticate: jest.fn().mockResolvedValue(true),
-    sync: jest.fn().mockResolvedValue(true),
-    query: jest.fn()
-  }));
-  
-  Sequelize.Op = {
-    or: Symbol('or'),
-    like: Symbol('like'),
-    ne: Symbol('ne'),
-    iLike: Symbol('iLike'),
-    and: Symbol('and'),
-    gte: Symbol('gte'),
-    lte: Symbol('lte')
-  };
-  
-  return Sequelize;
-});
+const prisma = require('../src/config/prisma.config');
+const characterService = require('../src/services/character.service');
 
-// Mock database configuration
-jest.mock('../src/config/sequelize.config', () => ({
-  sequelize: {
-    authenticate: jest.fn().mockResolvedValue(true),
-    sync: jest.fn().mockResolvedValue(true),
-    query: jest.fn()
-  }
-}));
+const mockRace = { id: 1, name: 'Human' };
+const mockCharacter = {
+  id: 1,
+  name: 'Monkey D. Luffy',
+  alias: 'Straw Hat Luffy',
+  raceId: 1,
+  bounty: BigInt('3000000000'),
+  age: 19,
+  status: 'alive',
+  race: mockRace,
+  devilFruits: [],
+  characterTypes: [],
+  organizations: [],
+  createdAt: new Date(),
+  updatedAt: new Date()
+};
 
-// Mock console to avoid logs in tests
-const originalConsole = global.console;
-beforeAll(() => {
-  global.console = {
-    ...originalConsole,
-    log: jest.fn(),
-    debug: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn()
-  };
-});
-
-afterAll(() => {
-  global.console = originalConsole;
-});
-
-describe('Character Service', () => {
-  // Reset mocks before each test
+describe('CharacterService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  // Clean up after all tests
-  afterAll(async () => {
-    jest.restoreAllMocks();
+    jest.resetAllMocks();
   });
 
   describe('getAllCharacters', () => {
-    it('should return all characters with pagination', async () => {
-      const mockCharacters = [
-        {
-          id: 1,
-          name: 'Monkey D. Luffy',
-          japanese_name: 'モンキー・D・ルフィ',
-          bounty: 3000000000,
-          age: 19,
-          height: 174,
-          is_alive: true
-        },
-        {
-          id: 2,
-          name: 'Roronoa Zoro',
-          japanese_name: 'ロロノア・ゾロ',
-          bounty: 1111000000,
-          age: 21,
-          height: 181,
-          is_alive: true
-        }
-      ];
+    it('returns all characters with pagination', async () => {
+      prisma.character.findMany.mockResolvedValue([mockCharacter]);
+      prisma.character.count.mockResolvedValue(1);
 
-      const { Character } = require('../src/models');
-      Character.count.mockResolvedValue(2);
-      Character.findAll.mockResolvedValue(mockCharacters);
-
-      const result = await characterService.getAllCharacters({
-        page: 1,
-        limit: 10
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.characters).toHaveLength(2);
-      expect(Character.findAll).toHaveBeenCalled();
-    });
-
-    it('should handle search parameters', async () => {
-      const mockCharacters = [
-        {
-          id: 1,
-          name: 'Monkey D. Luffy',
-          bounty: 3000000000
-        }
-      ];
-
-      const { Character } = require('../src/models');
-      Character.count.mockResolvedValue(1);
-      Character.findAll.mockResolvedValue(mockCharacters);
-
-      const result = await characterService.getAllCharacters({
-        page: 1,
-        limit: 10,
-        search: 'luffy'
-      });
+      const result = await characterService.getAllCharacters();
 
       expect(result.success).toBe(true);
       expect(result.characters).toHaveLength(1);
-      expect(Character.findAll).toHaveBeenCalled();
+      expect(result.pagination).toBeDefined();
+      expect(result.pagination.total).toBe(1);
     });
 
-    it('should handle filtering parameters', async () => {
-      const mockCharacters = [
-        {
-          id: 1,
-          name: 'Monkey D. Luffy',
-          bounty: 3000000000,
-          race_id: 1,
-          character_type_id: 1
-        }
-      ];
+    it('supports search option', async () => {
+      prisma.character.findMany.mockResolvedValue([mockCharacter]);
+      prisma.character.count.mockResolvedValue(1);
 
-      const { Character } = require('../src/models');
-      Character.count.mockResolvedValue(1);
-      Character.findAll.mockResolvedValue(mockCharacters);
+      await characterService.getAllCharacters({ search: 'Luffy' });
 
-      const result = await characterService.getAllCharacters({
-        page: 1,
-        limit: 10,
-        race_id: 1,
-        character_type_id: 1,
-        min_bounty: 1000000000,
-        max_bounty: 5000000000,
-        is_alive: true
-      });
+      expect(prisma.character.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ OR: expect.any(Array) }) })
+      );
+    });
+
+    it('supports race_id filter', async () => {
+      prisma.character.findMany.mockResolvedValue([mockCharacter]);
+      prisma.character.count.mockResolvedValue(1);
+
+      await characterService.getAllCharacters({ race_id: 1 });
+
+      expect(prisma.character.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ raceId: 1 }) })
+      );
+    });
+
+    it('supports status filter', async () => {
+      prisma.character.findMany.mockResolvedValue([mockCharacter]);
+      prisma.character.count.mockResolvedValue(1);
+
+      await characterService.getAllCharacters({ status: 'alive' });
+
+      expect(prisma.character.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ status: 'alive' }) })
+      );
+    });
+
+    it('enters bounty filter branch when min_bounty or max_bounty is provided', async () => {
+      prisma.character.findMany.mockResolvedValue([mockCharacter]);
+      prisma.character.count.mockResolvedValue(1);
+
+      const result = await characterService.getAllCharacters({ min_bounty: '1000000' });
+
+      expect(result).toBeDefined();
+    });
+
+    it('supports desc sort order', async () => {
+      prisma.character.findMany.mockResolvedValue([mockCharacter]);
+      prisma.character.count.mockResolvedValue(1);
+
+      const result = await characterService.getAllCharacters({ sortBy: 'bounty', sortOrder: 'desc' });
 
       expect(result.success).toBe(true);
-      expect(result.characters).toHaveLength(1);
-      expect(Character.findAll).toHaveBeenCalled();
     });
 
-    it('should handle database errors', async () => {
-      const { Character } = require('../src/models');
-      Character.findAll.mockRejectedValue(new Error('Database connection failed'));
+    it('falls back to default sort field for invalid sortBy', async () => {
+      prisma.character.findMany.mockResolvedValue([mockCharacter]);
+      prisma.character.count.mockResolvedValue(1);
 
-      const result = await characterService.getAllCharacters({
-        page: 1,
-        limit: 10
-      });
+      const result = await characterService.getAllCharacters({ sortBy: 'invalidField' });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('returns error object on failure', async () => {
+      prisma.character.findMany.mockRejectedValue(new Error('DB error'));
+
+      const result = await characterService.getAllCharacters();
 
       expect(result.success).toBe(false);
       expect(result.message).toBe('Failed to fetch characters');
@@ -200,130 +124,99 @@ describe('Character Service', () => {
   });
 
   describe('getCharacterById', () => {
-    it('should return character when found', async () => {
-      const mockCharacter = {
-        id: 1,
-        name: 'Monkey D. Luffy',
-        japanese_name: 'モンキー・D・ルフィ',
-        bounty: 3000000000,
-        age: 19,
-        height: 174,
-        is_alive: true
-      };
-
-      const { Character } = require('../src/models');
-      Character.findByPk.mockResolvedValue(mockCharacter);
+    it('returns a character for a valid ID', async () => {
+      prisma.character.findUnique.mockResolvedValue(mockCharacter);
 
       const result = await characterService.getCharacterById(1);
 
       expect(result.success).toBe(true);
       expect(result.data.name).toBe('Monkey D. Luffy');
-      expect(Character.findByPk).toHaveBeenCalledWith(1, expect.objectContaining({
-        include: expect.arrayContaining([
-          expect.objectContaining({ as: 'race' }),
-          expect.objectContaining({ as: 'haki_types' }),
-          expect.objectContaining({ as: 'devil_fruits' }),
-          expect.objectContaining({ as: 'character_types' }),
-          expect.objectContaining({ as: 'organizations' })
-        ])
-      }));
     });
 
-    it('should return error for invalid ID', async () => {
-      const result = await characterService.getCharacterById('invalid');
-
+    it('returns INVALID_ID for string zero ID', async () => {
+      const result = await characterService.getCharacterById('0');
       expect(result.success).toBe(false);
-      expect(result.message).toBe('Invalid character ID');
       expect(result.error).toBe('INVALID_ID');
     });
 
-    it('should return error when character not found', async () => {
-      const { Character } = require('../src/models');
-      Character.findByPk.mockResolvedValue(null);
+    it('returns error on DB failure', async () => {
+      prisma.character.findUnique.mockRejectedValue(new Error('DB error'));
+      const result = await characterService.getCharacterById(1);
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to fetch character');
+    });
+
+    it('returns INVALID_ID for ID <= 0', async () => {
+      const result = await characterService.getCharacterById(0);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
+    });
+
+    it('returns NOT_FOUND when character does not exist', async () => {
+      prisma.character.findUnique.mockResolvedValue(null);
 
       const result = await characterService.getCharacterById(999);
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe('Character with ID 999 not found');
       expect(result.error).toBe('NOT_FOUND');
-    });
-
-    it('should handle database errors', async () => {
-      const { Character } = require('../src/models');
-      Character.findByPk.mockRejectedValue(new Error('Database connection failed'));
-
-      const result = await characterService.getCharacterById(1);
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('Failed to fetch character');
     });
   });
 
   describe('createCharacter', () => {
-    it('should create character successfully', async () => {
-      const characterData = {
+    it('creates a character successfully', async () => {
+      prisma.character.findUnique.mockResolvedValue(null);
+      prisma.race.findUnique.mockResolvedValue(mockRace);
+      prisma.character.create.mockResolvedValue(mockCharacter);
+
+      const result = await characterService.createCharacter({
         name: 'Monkey D. Luffy',
-        alias: 'Straw Hat Luffy',
-        race_id: 1,
-        bounty: 3000000000,
-        age: 19,
-        birthday: 'May 5',
-        height: '174 cm',
-        origin: 'East Blue',
-        status: 'alive',
-        description: 'Captain of the Straw Hat Pirates',
-        image_url: 'https://example.com/luffy.jpg',
-        debut: 'Chapter 1'
-      };
-
-      const createdCharacter = {
-        id: 1,
-        ...characterData
-      };
-
-      const { Character, Race, CharacterType } = require('../src/models');
-      Character.findOne.mockResolvedValue(null); // No existing character
-      Race.findByPk.mockResolvedValue({ id: 1, name: 'Human' }); // Race exists
-      CharacterType.findByPk.mockResolvedValue({ id: 1, name: 'Pirate' }); // Character type exists
-      Character.create.mockResolvedValue(createdCharacter);
-      createdCharacter.reload = jest.fn().mockResolvedValue(createdCharacter);
-
-      const result = await characterService.createCharacter(characterData);
+        raceId: 1
+      });
 
       expect(result.success).toBe(true);
-      expect(result.data.name).toBe('Monkey D. Luffy');
       expect(result.message).toBe('Character created successfully');
-      expect(Character.create).toHaveBeenCalled();
     });
 
-    it('should return error for missing name', async () => {
-      const result = await characterService.createCharacter({});
-
+    it('returns MISSING_NAME when name is not provided', async () => {
+      const result = await characterService.createCharacter({ alias: 'Straw Hat' });
       expect(result.success).toBe(false);
-      expect(result.message).toBe('Name is required');
       expect(result.error).toBe('MISSING_NAME');
     });
 
-    it('should return error for duplicate name', async () => {
-      const { Character } = require('../src/models');
-      Character.findOne.mockResolvedValue({ id: 1, name: 'Monkey D. Luffy' });
+    it('returns DUPLICATE_NAME when character name already exists', async () => {
+      prisma.character.findUnique.mockResolvedValue(mockCharacter);
 
-      const result = await characterService.createCharacter({
-        name: 'Monkey D. Luffy'
-      });
+      const result = await characterService.createCharacter({ name: 'Monkey D. Luffy' });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe('A character with this name already exists');
       expect(result.error).toBe('DUPLICATE_NAME');
     });
 
-    it('should handle database errors', async () => {
-      const { Character } = require('../src/models');
-      Character.findOne.mockRejectedValue(new Error('Database connection failed'));
+    it('returns INVALID_RACE when raceId does not exist', async () => {
+      prisma.character.findUnique.mockResolvedValue(null);
+      prisma.race.findUnique.mockResolvedValue(null);
 
-      const result = await characterService.createCharacter({
-        name: 'Test Character'
-      });
+      const result = await characterService.createCharacter({ name: 'New Character', raceId: 99 });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_RACE');
+    });
+
+    it('creates character without raceId (raceId optional)', async () => {
+      prisma.character.findUnique.mockResolvedValue(null);
+      prisma.character.create.mockResolvedValue({ ...mockCharacter, raceId: null });
+
+      const result = await characterService.createCharacter({ name: 'Nameless' });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('returns error on DB failure during create', async () => {
+      prisma.character.findUnique.mockResolvedValue(null);
+      prisma.race.findUnique.mockResolvedValue(mockRace);
+      prisma.character.create.mockRejectedValue(new Error('DB error'));
+
+      const result = await characterService.createCharacter({ name: 'New Character', raceId: 1 });
 
       expect(result.success).toBe(false);
       expect(result.message).toBe('Failed to create character');
@@ -331,174 +224,135 @@ describe('Character Service', () => {
   });
 
   describe('updateCharacter', () => {
-    it('should update character successfully', async () => {
-      const updateData = {
-        name: 'Monkey D. Luffy Updated',
-        bounty: 5000000000
-      };
+    it('updates a character successfully', async () => {
+      const updated = { ...mockCharacter, alias: 'King of Pirates' };
+      prisma.character.findUnique
+        .mockResolvedValueOnce(mockCharacter)
+        .mockResolvedValueOnce(null);
+      prisma.character.update.mockResolvedValue(updated);
 
-      const updatedCharacter = {
-        id: 1,
-        name: 'Monkey D. Luffy Updated',
-        bounty: 5000000000,
-        race: { id: 1, name: 'Human' },
-        character_type: { id: 1, name: 'Pirate' }
-      };
-      const existingCharacter = {
-        id: 1,
-        name: 'Monkey D. Luffy',
-        bounty: 3000000000,
-        update: jest.fn().mockResolvedValue(),
-        reload: jest.fn().mockResolvedValue(updatedCharacter)
-      };
-
-      const { Character } = require('../src/models');
-      Character.findByPk.mockResolvedValue(existingCharacter);
-      Character.findOne.mockResolvedValue(null); // No duplicate name found
-
-      const result = await characterService.updateCharacter(1, updateData);
+      const result = await characterService.updateCharacter(1, { alias: 'King of Pirates' });
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Character updated successfully');
-      expect(existingCharacter.update).toHaveBeenCalledWith(updateData);
-      expect(existingCharacter.reload).toHaveBeenCalled();
     });
 
-    it('should return error for invalid ID', async () => {
-      const result = await characterService.updateCharacter('invalid', {});
+    it('returns NOT_FOUND for non-existing character', async () => {
+      prisma.character.findUnique.mockResolvedValue(null);
+
+      const result = await characterService.updateCharacter(999, { alias: 'Test' });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe('Invalid character ID');
-      expect(result.error).toBe('INVALID_ID');
-    });
-
-    it('should return error when character not found', async () => {
-      const { Character } = require('../src/models');
-      Character.findByPk.mockResolvedValue(null);
-
-      const result = await characterService.updateCharacter(999, {
-        name: 'Updated Character'
-      });
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('Character with ID 999 not found');
       expect(result.error).toBe('NOT_FOUND');
     });
 
-    it('should return error for no fields provided', async () => {
-      const existingCharacter = {
-        id: 1,
-        name: 'Monkey D. Luffy'
-      };
-
-      const { Character } = require('../src/models');
-      Character.findByPk.mockResolvedValue(existingCharacter);
+    it('returns NO_FIELDS_PROVIDED for empty update', async () => {
+      prisma.character.findUnique.mockResolvedValue(mockCharacter);
 
       const result = await characterService.updateCharacter(1, {});
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe('At least one field must be provided for update');
       expect(result.error).toBe('NO_FIELDS_PROVIDED');
     });
 
-    it('should handle database errors', async () => {
-      const { Character } = require('../src/models');
-      Character.findByPk.mockRejectedValue(new Error('Database connection failed'));
+    it('returns INVALID_ID for ID <= 0', async () => {
+      const result = await characterService.updateCharacter(0, { alias: 'Test' });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
+    });
 
-      const result = await characterService.updateCharacter(1, {
-        name: 'Updated Character'
-      });
+    it('returns DUPLICATE_NAME when updated name already exists', async () => {
+      prisma.character.findUnique
+        .mockResolvedValueOnce(mockCharacter)
+        .mockResolvedValueOnce({ ...mockCharacter, id: 2, name: 'Roronoa Zoro' });
+
+      const result = await characterService.updateCharacter(1, { name: 'Roronoa Zoro' });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe('Failed to update character');
+      expect(result.error).toBe('DUPLICATE_NAME');
+    });
+
+    it('allows updating name to the same value', async () => {
+      prisma.character.findUnique
+        .mockResolvedValueOnce(mockCharacter)
+        .mockResolvedValueOnce(null);
+      prisma.character.update.mockResolvedValue(mockCharacter);
+
+      const result = await characterService.updateCharacter(1, { name: 'Monkey D. Luffy' });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('returns INVALID_RACE when updated raceId does not exist', async () => {
+      prisma.character.findUnique.mockResolvedValueOnce(mockCharacter);
+      prisma.race.findUnique.mockResolvedValue(null);
+
+      const result = await characterService.updateCharacter(1, { raceId: 99 });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_RACE');
     });
   });
 
   describe('deleteCharacter', () => {
-    it('should delete character successfully', async () => {
-      const existingCharacter = {
-        id: 1,
-        name: 'Monkey D. Luffy',
-        destroy: jest.fn().mockResolvedValue()
-      };
-
-      const { Character } = require('../src/models');
-      Character.findByPk.mockResolvedValue(existingCharacter);
+    it('deletes a character successfully', async () => {
+      prisma.character.findUnique.mockResolvedValue(mockCharacter);
+      prisma.characterDevilFruit.count.mockResolvedValue(0);
+      prisma.character.delete.mockResolvedValue(mockCharacter);
 
       const result = await characterService.deleteCharacter(1);
 
       expect(result.success).toBe(true);
       expect(result.message).toBe('Character deleted successfully');
-      expect(existingCharacter.destroy).toHaveBeenCalled();
     });
 
-    it('should return error for invalid ID', async () => {
-      const result = await characterService.deleteCharacter('invalid');
-
-      expect(result.success).toBe(false);
-      expect(result.message).toBe('Invalid character ID');
-      expect(result.error).toBe('INVALID_ID');
-    });
-
-    it('should return error when character not found', async () => {
-      const { Character } = require('../src/models');
-      Character.findByPk.mockResolvedValue(null);
+    it('returns NOT_FOUND when character does not exist', async () => {
+      prisma.character.findUnique.mockResolvedValue(null);
 
       const result = await characterService.deleteCharacter(999);
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe('Character with ID 999 not found');
       expect(result.error).toBe('NOT_FOUND');
     });
 
-    it('should handle database errors', async () => {
-      const { Character } = require('../src/models');
-      Character.findByPk.mockRejectedValue(new Error('Database connection failed'));
+    it('returns HAS_ASSOCIATIONS when character has devil fruits', async () => {
+      prisma.character.findUnique.mockResolvedValue(mockCharacter);
+      prisma.characterDevilFruit.count.mockResolvedValue(1);
 
       const result = await characterService.deleteCharacter(1);
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe('Failed to delete character');
+      expect(result.error).toBe('HAS_ASSOCIATIONS');
+    });
+
+    it('returns INVALID_ID for ID <= 0', async () => {
+      const result = await characterService.deleteCharacter(0);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
     });
   });
 
   describe('searchCharacters', () => {
-    it('should search characters successfully', async () => {
-      const mockCharacters = [
-        {
-          id: 1,
-          name: 'Monkey D. Luffy',
-          bounty: 3000000000
-        }
-      ];
+    it('returns matching characters', async () => {
+      prisma.character.findMany.mockResolvedValue([mockCharacter]);
+      prisma.character.count.mockResolvedValue(1);
 
-      const { Character } = require('../src/models');
-      Character.count.mockResolvedValue(1);
-      Character.findAll.mockResolvedValue(mockCharacters);
-
-      const result = await characterService.searchCharacters('luffy', {
-        page: 1,
-        limit: 10
-      });
+      const result = await characterService.searchCharacters('Luffy');
 
       expect(result.success).toBe(true);
       expect(result.characters).toHaveLength(1);
-      expect(Character.findAll).toHaveBeenCalled();
     });
 
-    it('should return error for missing search term', async () => {
+    it('returns error when search term is empty', async () => {
       const result = await characterService.searchCharacters('');
-
       expect(result.success).toBe(false);
-      expect(result.message).toBe('Search term is required');
       expect(result.error).toBe('MISSING_SEARCH_TERM');
     });
 
-    it('should handle database errors', async () => {
-      const { Character } = require('../src/models');
-      Character.findAll.mockRejectedValue(new Error('Database connection failed'));
+    it('returns error on DB failure during search', async () => {
+      prisma.character.findMany.mockRejectedValue(new Error('DB error'));
 
-      const result = await characterService.searchCharacters('luffy');
+      const result = await characterService.searchCharacters('Luffy');
 
       expect(result.success).toBe(false);
       expect(result.message).toBe('Failed to fetch characters');

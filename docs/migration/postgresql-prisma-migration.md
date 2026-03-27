@@ -7,6 +7,7 @@ This document outlines the migration from MySQL + Sequelize to PostgreSQL + Pris
 ## Migration Stages
 
 ### Stage 1: PostgreSQL + Prisma (Current Branch)
+
 - [x] Create branch `feat/postgresql-prisma-migration`
 - [x] Install dependencies (Prisma, pg, ioredis)
 - [x] Create Prisma schema from Sequelize models
@@ -17,6 +18,7 @@ This document outlines the migration from MySQL + Sequelize to PostgreSQL + Pris
 - [x] Run tests and verify (database seeded successfully)
 
 ### Stage 2: GraphQL Integration
+
 - Replace REST API with GraphQL (Apollo Server)
 - Define GraphQL schema from domain models
 - Implement resolvers using Prisma
@@ -24,6 +26,7 @@ This document outlines the migration from MySQL + Sequelize to PostgreSQL + Pris
 - Add authentication (API key for admin, public for queries)
 
 ### Stage 3: Redis Caching
+
 - Add Redis for query caching
 - Implement cache invalidation on mutations
 - Use for session/token storage
@@ -33,17 +36,21 @@ This document outlines the migration from MySQL + Sequelize to PostgreSQL + Pris
 ## Technical Decisions
 
 ### Database
+
 - **PostgreSQL** - Better cloud support (AWS RDS, Cloud SQL, ElastiCache-ready)
 - **Prisma ORM** - Type-safe, built-in migrations, DynamoDB-ready for future
 
 ### Pagination
+
 - **Cursor-based** - Better performance for large datasets, prevents offset manipulation
 
 ### Authentication
+
 - **API Key** - For admin mutations (stored in header)
 - **Public queries** - Read-only access without auth
 
 ### Caching Strategy
+
 - Cache frequently accessed data (lists, details)
 - TTL: 5 minutes for lists, 15 minutes for single items
 - Invalidate on mutations
@@ -53,7 +60,7 @@ This document outlines the migration from MySQL + Sequelize to PostgreSQL + Pris
 ## Current API Endpoints (to be replaced with GraphQL)
 
 | Entity | GET | POST | PUT | DELETE |
-|--------|-----|------|-----|--------|
+| -------- | ----- | ------ | ----- | -------- |
 | Characters | `/api/characters` | `/api/characters` | `/api/characters/:id` | `/api/characters/:id` |
 | Races | `/api/races` | `/api/races` | `/api/races/:id` | `/api/races/:id` |
 | Character Types | `/api/character-types` | `/api/character-types` | `/api/character-types/:id` | `/api/character-types/:id` |
@@ -71,7 +78,7 @@ This document outlines the migration from MySQL + Sequelize to PostgreSQL + Pris
 ### Sequelize → Prisma
 
 | Sequelize Model | Prisma Model | Notes |
-|----------------|--------------|-------|
+| ---------------- | -------------- | ------- |
 | `Character` | `Character` | Main entity |
 | `Race` | `Race` | Reference table |
 | `CharacterType` | `CharacterType` | Reference table |
@@ -90,7 +97,7 @@ This document outlines the migration from MySQL + Sequelize to PostgreSQL + Pris
 ## Seed Data Summary
 
 | Table | Records |
-|-------|---------|
+| ------- | --------- |
 | races | 12 |
 | character_types | 21 |
 | fruit_types | 3 |
@@ -147,13 +154,17 @@ npm test            # Run tests
 ## Future Considerations
 
 ### DynamoDB Migration
+
 Prisma supports DynamoDB natively. When ready:
+
 1. Change provider in schema: `provider = "dynamodb"`
 2. Update connection string
 3. Adjust queries (no joins in DynamoDB)
 
 ### GraphQL Federation
+
 When adding more services:
+
 - Use Apollo Gateway
 - Split domain into subgraphs
 - Share schema via composition
@@ -171,6 +182,7 @@ When adding more services:
 ## Current Status (Stage 1)
 
 ### Completed
+
 - ✅ Branch created: `feat/postgresql-prisma-migration`
 - ✅ Dependencies installed: @prisma/client, prisma, ioredis, pg
 - ✅ Prisma schema created from Sequelize models
@@ -182,12 +194,14 @@ When adding more services:
 - ✅ Redis configured but not yet integrated
 
 ### Pending for Stage 1 Completion
+
 - ⚠️ Update services layer to use Prisma instead of Sequelize (NOT STARTED)
 - ⚠️ Run existing tests to verify no breaking changes
 - ⚠️ Remove old Sequelize files (config/sequelize.config.js, models/, etc.)
 - ⚠️ Update REST API to use new Prisma-based services
 
 ### Next Steps
+
 1. Update `src/services/*.js` to use Prisma instead of Sequelize
 2. Update REST controllers to work with new service layer
 3. Run tests and verify functionality
@@ -198,6 +212,7 @@ When adding more services:
 ## Environment Setup
 
 ### Local Development
+
 ```bash
 # Start PostgreSQL and Redis
 docker-compose up -d
@@ -215,9 +230,10 @@ npm run db:seed
 npm run dev
 ```
 
-### Production (AWS)
+### Production
+
 ```env
-DATABASE_URL=postgresql://user:pass@your-rds-endpoint:5432/dbname
-REDIS_HOST=your-elasticache-endpoint
+DATABASE_URL=postgresql://user:pass@your-db-host:5432/onepiece_db
+REDIS_HOST=your-redis-host
 REDIS_PORT=6379
 ```

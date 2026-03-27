@@ -1,301 +1,251 @@
-const request = require('supertest');
-const app = require('../src/app');
+jest.mock('../src/config/prisma.config', () => ({
+  organizationType: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn()
+  },
+  organization: {
+    count: jest.fn()
+  }
+}));
+
+const prisma = require('../src/config/prisma.config');
 const organizationTypeService = require('../src/services/organization-type.service');
 
-// Mock JWTUtil since it has its own unit tests
-jest.mock('../src/utils/jwt.util', () => ({
-  generateToken: jest.fn(),
-  verifyToken: jest.fn((token) => {
-    if (token === 'valid-test-token') {
-      return { username: 'testadmin', role: 'admin' };
-    }
-    throw new Error('Invalid token');
-  }),
-  decodeToken: jest.fn()
-}));
+const mockOrgType = {
+  id: 1,
+  name: 'Pirate Crew',
+  description: 'A group of pirates',
+  createdAt: new Date(),
+  updatedAt: new Date()
+};
 
-// Mock OrganizationTypeService - This is the Service Layer
-jest.mock('../src/services/organization-type.service', () => ({
-  getAllOrganizationTypes: jest.fn(),
-  getOrganizationTypeById: jest.fn(),
-  updateOrganizationType: jest.fn(),
-  nameExists: jest.fn(),
-  idExists: jest.fn(),
-  isOrganizationTypeInUse: jest.fn()
-}));
-
-describe('Organization Type API Endpoints', () => {
-  let authToken;
-
-  // Setup mock token before all tests
-  beforeAll(() => {
-    // Use a mock token instead of generating a real one
-    authToken = 'valid-test-token';
-  });
-
-  // Reset mocks before each test
+describe('OrganizationTypeService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
-  // Clean up after all tests
-  afterAll(async () => {
-    jest.restoreAllMocks();
-  });
+  describe('getAllOrganizationTypes', () => {
+    it('returns all organization types successfully', async () => {
+      prisma.organizationType.findMany.mockResolvedValue([mockOrgType]);
 
-  describe('GET /api/organization-types', () => {
-    it('should return all organization types', async () => {
-      const mockOrganizationTypes = [
-        {
-          id: 1,
-          name: 'Pirate Crew',
-          description: 'Groups of pirates sailing together under a captain',
-          created_at: new Date(),
-          updated_at: new Date()
-        },
-        {
-          id: 2,
-          name: 'Marine',
-          description: 'Military force of the World Government',
-          created_at: new Date(),
-          updated_at: new Date()
-        }
-      ];
+      const result = await organizationTypeService.getAllOrganizationTypes();
 
-      organizationTypeService.getAllOrganizationTypes.mockResolvedValue({
-        success: true,
-        organizationTypes: mockOrganizationTypes,
-        total: 2
-      });
-
-      const response = await request(app)
-        .get('/api/organization-types')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toBeDefined();
-      expect(organizationTypeService.getAllOrganizationTypes).toHaveBeenCalledWith({
-        search: undefined,
-        sortBy: 'name',
-        sortOrder: 'asc'
-      });
+      expect(result.success).toBe(true);
+      expect(result.organizationTypes).toHaveLength(1);
+      expect(result.total).toBe(1);
     });
 
-    it('should handle service errors', async () => {
-      organizationTypeService.getAllOrganizationTypes.mockResolvedValue({
-        success: false,
-        message: 'Database connection failed'
-      });
+    it('filters by search term', async () => {
+      prisma.organizationType.findMany.mockResolvedValue([mockOrgType]);
 
-      const response = await request(app)
-        .get('/api/organization-types')
-        .expect(500);
+      await organizationTypeService.getAllOrganizationTypes({ search: 'Pirate' });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Database connection failed');
+      expect(prisma.organizationType.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ OR: expect.any(Array) }) })
+      );
     });
 
-    it('should handle search and sorting parameters', async () => {
-      const mockOrganizationTypes = [
-        {
-          id: 1,
-          name: 'Pirate Crew',
-          description: 'Groups of pirates sailing together under a captain'
-        }
-      ];
+    it('returns error object on failure', async () => {
+      prisma.organizationType.findMany.mockRejectedValue(new Error('DB error'));
 
-      organizationTypeService.getAllOrganizationTypes.mockResolvedValue({
-        success: true,
-        organizationTypes: mockOrganizationTypes,
-        total: 1
-      });
+      const result = await organizationTypeService.getAllOrganizationTypes();
 
-      const response = await request(app)
-        .get('/api/organization-types?search=pirate&sortBy=name&sortOrder=desc')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(organizationTypeService.getAllOrganizationTypes).toHaveBeenCalledWith({
-        search: 'pirate',
-        sortBy: 'name',
-        sortOrder: 'desc'
-      });
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to fetch organization types');
     });
   });
 
-  describe('GET /api/organization-types/:id', () => {
-    it('should return an organization type by ID', async () => {
-      const mockOrganizationType = {
-        id: 1,
-        name: 'Pirate Crew',
-        description: 'Groups of pirates sailing together under a captain',
-        created_at: new Date(),
-        updated_at: new Date()
-      };
+  describe('getOrganizationTypeById', () => {
+    it('returns an organization type for a valid ID', async () => {
+      prisma.organizationType.findUnique.mockResolvedValue(mockOrgType);
 
-      organizationTypeService.getOrganizationTypeById.mockResolvedValue({
-        success: true,
-        data: mockOrganizationType
-      });
+      const result = await organizationTypeService.getOrganizationTypeById(1);
 
-      const response = await request(app)
-        .get('/api/organization-types/1')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(organizationTypeService.getOrganizationTypeById).toHaveBeenCalledWith(1);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockOrgType);
     });
 
-    it('should return 404 for non-existent organization type', async () => {
-      organizationTypeService.getOrganizationTypeById.mockResolvedValue({
-        success: false,
-        message: 'Organization type with ID 999 not found',
-        error: 'NOT_FOUND'
-      });
-
-      const response = await request(app)
-        .get('/api/organization-types/999')
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Organization type with ID 999 not found');
+    it('returns INVALID_ID for non-numeric ID', async () => {
+      const result = await organizationTypeService.getOrganizationTypeById('abc');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
     });
 
-    it('should validate ID parameter', async () => {
-      const response = await request(app)
-        .get('/api/organization-types/invalid')
-        .expect(400);
+    it('returns NOT_FOUND when type does not exist', async () => {
+      prisma.organizationType.findUnique.mockResolvedValue(null);
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Invalid organization type ID');
+      const result = await organizationTypeService.getOrganizationTypeById(999);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NOT_FOUND');
     });
   });
 
-  describe('PUT /api/organization-types/:id', () => {
-    it('should update an organization type', async () => {
-      const updateData = {
-        name: 'Pirate Crew Updated',
-        description: 'Updated description for Pirate Crew organization type'
-      };
+  describe('updateOrganizationType', () => {
+    it('updates successfully', async () => {
+      const updated = { ...mockOrgType, name: 'Marine Division' };
+      prisma.organizationType.findUnique
+        .mockResolvedValueOnce(mockOrgType)
+        .mockResolvedValueOnce(null);
+      prisma.organizationType.update.mockResolvedValue(updated);
 
-      const updatedOrganizationType = {
-        id: 1,
-        name: 'Pirate Crew Updated',
-        description: 'Updated description for Pirate Crew organization type',
-        created_at: new Date(),
-        updated_at: new Date()
-      };
+      const result = await organizationTypeService.updateOrganizationType(1, { name: 'Marine Division' });
 
-      organizationTypeService.updateOrganizationType.mockResolvedValue({
-        success: true,
-        data: updatedOrganizationType,
-        message: 'Organization type updated successfully'
-      });
-
-      const response = await request(app)
-        .put('/api/organization-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBeDefined();
-      expect(organizationTypeService.updateOrganizationType).toHaveBeenCalledWith(1, updateData);
+      expect(result.success).toBe(true);
+      expect(result.message).toBe('Organization type updated successfully');
     });
 
-    it('should return 404 for non-existent organization type', async () => {
-      const updateData = { name: 'Updated Organization Type' };
+    it('returns NOT_FOUND for non-existing ID', async () => {
+      prisma.organizationType.findUnique.mockResolvedValue(null);
 
-      organizationTypeService.updateOrganizationType.mockResolvedValue({
-        success: false,
-        message: 'Organization type with ID 999 not found',
-        error: 'NOT_FOUND'
-      });
+      const result = await organizationTypeService.updateOrganizationType(999, { name: 'New Name' });
 
-      const response = await request(app)
-        .put('/api/organization-types/999')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Organization type with ID 999 not found');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NOT_FOUND');
     });
 
-    it('should validate at least one field is provided', async () => {
-      organizationTypeService.updateOrganizationType.mockResolvedValue({
-        success: false,
-        message: 'At least one field must be provided for update',
-        error: 'NO_FIELDS_PROVIDED'
-      });
+    it('returns NO_FIELDS_PROVIDED for empty update', async () => {
+      prisma.organizationType.findUnique.mockResolvedValue(mockOrgType);
 
-      const response = await request(app)
-        .put('/api/organization-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({})
-        .expect(400);
+      const result = await organizationTypeService.updateOrganizationType(1, {});
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('At least one field must be provided for update');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NO_FIELDS_PROVIDED');
     });
 
-    it('should require authentication', async () => {
-      const response = await request(app)
-        .put('/api/organization-types/1')
-        .send({ name: 'Unauthorized Update' })
-        .expect(401);
+    it('returns INVALID_NAME when name is empty', async () => {
+      prisma.organizationType.findUnique.mockResolvedValue(mockOrgType);
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Authentication token not provided');
+      const result = await organizationTypeService.updateOrganizationType(1, { name: '' });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_NAME');
     });
 
-    it('should validate ID parameter', async () => {
-      const response = await request(app)
-        .put('/api/organization-types/invalid')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Test' })
-        .expect(400);
+    it('returns INVALID_NAME when name exceeds 50 characters', async () => {
+      prisma.organizationType.findUnique.mockResolvedValue(mockOrgType);
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Invalid organization type ID');
+      const result = await organizationTypeService.updateOrganizationType(1, { name: 'A'.repeat(51) });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_NAME');
     });
 
-    it('should handle duplicate name error', async () => {
-      const updateData = { name: 'Marine' };
+    it('skips duplicate check when name is unchanged', async () => {
+      prisma.organizationType.findUnique.mockResolvedValue(mockOrgType);
+      prisma.organizationType.update.mockResolvedValue(mockOrgType);
 
-      organizationTypeService.updateOrganizationType.mockResolvedValue({
-        success: false,
-        message: 'An organization type with this name already exists',
-        error: 'DUPLICATE_NAME'
-      });
+      const result = await organizationTypeService.updateOrganizationType(1, { name: 'Pirate Crew' });
 
-      const response = await request(app)
-        .put('/api/organization-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(409);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('An organization type with this name already exists');
+      expect(result.success).toBe(true);
+      expect(prisma.organizationType.findFirst).not.toHaveBeenCalled();
     });
 
-    it('should validate name length', async () => {
-      const updateData = { name: 'A'.repeat(51) };
+    it('returns DUPLICATE_NAME when updated name already exists', async () => {
+      prisma.organizationType.findUnique
+        .mockResolvedValueOnce(mockOrgType)
+        .mockResolvedValueOnce({ id: 2, name: 'Marine Division' });
 
-      organizationTypeService.updateOrganizationType.mockResolvedValue({
-        success: false,
-        message: 'Name cannot exceed 50 characters',
-        error: 'INVALID_NAME'
-      });
+      const result = await organizationTypeService.updateOrganizationType(1, { name: 'Marine Division' });
 
-      const response = await request(app)
-        .put('/api/organization-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(400);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('DUPLICATE_NAME');
+    });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Name cannot exceed 50 characters');
+    it('returns error on DB failure', async () => {
+      prisma.organizationType.findUnique.mockRejectedValue(new Error('DB error'));
+
+      const result = await organizationTypeService.updateOrganizationType(1, { name: 'Test' });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to update organization type');
+    });
+  });
+
+  describe('getOrganizationTypeById', () => {
+    it('returns INVALID_ID for ID <= 0', async () => {
+      const result = await organizationTypeService.getOrganizationTypeById(0);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
+    });
+
+    it('returns error on DB failure', async () => {
+      prisma.organizationType.findUnique.mockRejectedValue(new Error('DB error'));
+
+      const result = await organizationTypeService.getOrganizationTypeById(1);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to fetch organization type');
+    });
+  });
+
+  describe('nameExists', () => {
+    it('returns true when name exists', async () => {
+      prisma.organizationType.findFirst.mockResolvedValue(mockOrgType);
+      const result = await organizationTypeService.nameExists('Pirate Crew');
+      expect(result).toBe(true);
+    });
+
+    it('returns false when name does not exist', async () => {
+      prisma.organizationType.findFirst.mockResolvedValue(null);
+      const result = await organizationTypeService.nameExists('Unknown');
+      expect(result).toBe(false);
+    });
+
+    it('uses excludeId in query when provided', async () => {
+      prisma.organizationType.findFirst.mockResolvedValue(null);
+      await organizationTypeService.nameExists('Pirate Crew', 1);
+      expect(prisma.organizationType.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ id: { not: 1 } }) })
+      );
+    });
+
+    it('returns false on DB error', async () => {
+      prisma.organizationType.findFirst.mockRejectedValue(new Error('DB error'));
+      const result = await organizationTypeService.nameExists('Pirate Crew');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('idExists', () => {
+    it('returns true when ID exists', async () => {
+      prisma.organizationType.findUnique.mockResolvedValue(mockOrgType);
+      const result = await organizationTypeService.idExists(1);
+      expect(result).toBe(true);
+    });
+
+    it('returns false when ID does not exist', async () => {
+      prisma.organizationType.findUnique.mockResolvedValue(null);
+      const result = await organizationTypeService.idExists(999);
+      expect(result).toBe(false);
+    });
+
+    it('returns false on DB error', async () => {
+      prisma.organizationType.findUnique.mockRejectedValue(new Error('DB error'));
+      const result = await organizationTypeService.idExists(1);
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('isOrganizationTypeInUse', () => {
+    it('returns true when organizations use the type', async () => {
+      prisma.organization.count.mockResolvedValue(2);
+      const result = await organizationTypeService.isOrganizationTypeInUse(1);
+      expect(result).toBe(true);
+    });
+
+    it('returns false when no organizations use the type', async () => {
+      prisma.organization.count.mockResolvedValue(0);
+      const result = await organizationTypeService.isOrganizationTypeInUse(1);
+      expect(result).toBe(false);
+    });
+
+    it('returns false on DB error', async () => {
+      prisma.organization.count.mockRejectedValue(new Error('DB error'));
+      const result = await organizationTypeService.isOrganizationTypeInUse(1);
+      expect(result).toBe(false);
     });
   });
 });

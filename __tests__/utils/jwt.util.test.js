@@ -1,119 +1,75 @@
-// JWT Utility Tests
-// These are unit tests for the JWT utility functions
-
-const jwt = require('jsonwebtoken');
 const JWTUtil = require('../../src/utils/jwt.util');
 
-// Mock jsonwebtoken
-jest.mock('jsonwebtoken');
-
 describe('JWTUtil', () => {
-  const mockPayload = { username: 'testuser', role: 'admin' };
-  const mockToken = 'mock.jwt.token';
-  const mockSecret = 'test-secret';
+  const originalSecret = process.env.JWT_SECRET;
 
   beforeEach(() => {
-    jest.clearAllMocks();
-    process.env.JWT_SECRET = mockSecret;
+    process.env.JWT_SECRET = 'test-secret-key-for-testing-only';
+    process.env.JWT_EXPIRES_IN = '24h';
   });
 
   afterEach(() => {
-    delete process.env.JWT_SECRET;
+    process.env.JWT_SECRET = originalSecret;
   });
 
   describe('generateToken', () => {
-    it('should generate a token with correct payload', () => {
-      jwt.sign.mockReturnValue(mockToken);
-
-      const result = JWTUtil.generateToken(mockPayload);
-
-      expect(jwt.sign).toHaveBeenCalledWith(
-        mockPayload,
-        mockSecret,
-        { expiresIn: '24h' }
-      );
-      expect(result).toBe(mockToken);
+    it('generates a token string for a given payload', () => {
+      const token = JWTUtil.generateToken({ username: 'admin', role: 'admin' });
+      expect(typeof token).toBe('string');
+      expect(token.split('.')).toHaveLength(3);
     });
 
-    it('should use custom expiresIn when provided', () => {
-      jwt.sign.mockReturnValue(mockToken);
-
-      const result = JWTUtil.generateToken(mockPayload, '2h');
-
-      expect(jwt.sign).toHaveBeenCalledWith(
-        mockPayload,
-        mockSecret,
-        { expiresIn: '2h' }
-      );
-      expect(result).toBe(mockToken);
-    });
-
-    it('should throw error if JWT_SECRET is not set', () => {
+    it('throws if JWT_SECRET is not set', () => {
       delete process.env.JWT_SECRET;
+      expect(() => JWTUtil.generateToken({ username: 'admin' })).toThrow(
+        'JWT_SECRET is not configured in environment variables'
+      );
+    });
 
-      expect(() => JWTUtil.generateToken(mockPayload)).toThrow('JWT_SECRET is not configured in environment variables');
+    it('accepts a custom expiresIn option', () => {
+      const token = JWTUtil.generateToken({ username: 'admin' }, '1h');
+      const decoded = JWTUtil.decodeToken(token);
+      expect(decoded.exp).toBeDefined();
     });
   });
 
   describe('verifyToken', () => {
-    it('should verify a valid token', () => {
-      jwt.verify.mockReturnValue(mockPayload);
-
-      const result = JWTUtil.verifyToken(mockToken);
-
-      expect(jwt.verify).toHaveBeenCalledWith(mockToken, mockSecret);
-      expect(result).toEqual(mockPayload);
+    it('decodes a valid token correctly', () => {
+      const payload = { username: 'admin', role: 'admin' };
+      const token = JWTUtil.generateToken(payload);
+      const decoded = JWTUtil.verifyToken(token);
+      expect(decoded.username).toBe('admin');
+      expect(decoded.role).toBe('admin');
     });
 
-    it('should throw error for invalid token', () => {
-      jwt.verify.mockImplementation(() => {
-        throw new Error('Invalid token');
-      });
-
-      expect(() => JWTUtil.verifyToken('invalid-token')).toThrow('Invalid token');
+    it('throws "Invalid token" for a malformed token', () => {
+      expect(() => JWTUtil.verifyToken('invalid.token.here')).toThrow('Invalid token');
     });
 
-    it('should throw error if JWT_SECRET is not set', () => {
+    it('throws "Token expired" for an expired token', () => {
+      const token = JWTUtil.generateToken({ username: 'admin' }, '-1s');
+      expect(() => JWTUtil.verifyToken(token)).toThrow('Token expired');
+    });
+
+    it('throws if JWT_SECRET is not set', () => {
       delete process.env.JWT_SECRET;
-
-      expect(() => JWTUtil.verifyToken(mockToken)).toThrow('JWT_SECRET is not configured in environment variables');
+      expect(() => JWTUtil.verifyToken('any.token.here')).toThrow(
+        'JWT_SECRET is not configured in environment variables'
+      );
     });
   });
 
   describe('decodeToken', () => {
-    it('should decode token without verification', () => {
-      jwt.decode.mockReturnValue(mockPayload);
-
-      const result = JWTUtil.decodeToken(mockToken);
-
-      expect(jwt.decode).toHaveBeenCalledWith(mockToken);
-      expect(result).toEqual(mockPayload);
+    it('decodes without verifying signature', () => {
+      const payload = { username: 'admin' };
+      const token = JWTUtil.generateToken(payload);
+      const decoded = JWTUtil.decodeToken(token);
+      expect(decoded.username).toBe('admin');
     });
 
-    it('should return null for invalid token', () => {
-      jwt.decode.mockReturnValue(null);
-
-      const result = JWTUtil.decodeToken('invalid-token');
-
+    it('returns null for an invalid token', () => {
+      const result = JWTUtil.decodeToken('not-a-jwt');
       expect(result).toBeNull();
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('should handle jwt.sign errors', () => {
-      jwt.sign.mockImplementation(() => {
-        throw new Error('Sign error');
-      });
-
-      expect(() => JWTUtil.generateToken(mockPayload)).toThrow('Sign error');
-    });
-
-    it('should handle jwt.verify errors', () => {
-      jwt.verify.mockImplementation(() => {
-        throw new Error('Verify error');
-      });
-
-      expect(() => JWTUtil.verifyToken(mockToken)).toThrow('Verify error');
     });
   });
 });

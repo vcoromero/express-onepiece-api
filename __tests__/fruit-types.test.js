@@ -1,316 +1,232 @@
-const request = require('supertest');
-const app = require('../src/app');
+jest.mock('../src/config/prisma.config', () => ({
+  fruitType: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn()
+  },
+  devilFruit: {
+    count: jest.fn()
+  }
+}));
+
+const prisma = require('../src/config/prisma.config');
 const fruitTypeService = require('../src/services/fruit-type.service');
 
-// Note: These are unit tests with mocked dependencies
-// We mock the Service Layer to test controller logic in isolation
-// This ensures tests are fast, reliable, and don't depend on database
+const mockFruitType = {
+  id: 1,
+  name: 'Paramecia',
+  description: 'The most common Devil Fruit type',
+  createdAt: new Date(),
+  updatedAt: new Date()
+};
 
-// Mock JWTUtil since it has its own unit tests
-jest.mock('../src/utils/jwt.util', () => ({
-  generateToken: jest.fn(),
-  verifyToken: jest.fn((token) => {
-    if (token === 'valid-test-token') {
-      return { username: 'testadmin', role: 'admin' };
-    }
-    throw new Error('Invalid token');
-  }),
-  decodeToken: jest.fn()
-}));
-
-// Mock FruitTypeService - This is the Service Layer
-jest.mock('../src/services/fruit-type.service', () => ({
-  getAllTypes: jest.fn(),
-  getTypeById: jest.fn(),
-  updateType: jest.fn(),
-  nameExists: jest.fn(),
-  hasAssociatedFruits: jest.fn()
-}));
-
-describe('Fruit Types API Endpoints', () => {
-  let authToken;
-
-  // Setup mock token before all tests
-  beforeAll(() => {
-    // Use a mock token instead of generating a real one
-    authToken = 'valid-test-token';
-  });
-
-  // Reset mocks before each test
+describe('FruitTypeService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
-  // Clean up after all tests
-  afterAll(async () => {
-    jest.restoreAllMocks();
+  describe('getAllTypes', () => {
+    it('returns all fruit types successfully', async () => {
+      prisma.fruitType.findMany.mockResolvedValue([mockFruitType]);
+
+      const result = await fruitTypeService.getAllTypes();
+
+      expect(result.success).toBe(true);
+      expect(result.data).toHaveLength(1);
+      expect(result.count).toBe(1);
+    });
+
+    it('returns error object on failure', async () => {
+      prisma.fruitType.findMany.mockRejectedValue(new Error('DB error'));
+
+      const result = await fruitTypeService.getAllTypes();
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to fetch fruit types');
+    });
   });
 
-  describe('GET /api/fruit-types', () => {
-    it('should return 200 and a list of fruit types', async () => {
-      // Mock service response
-      const mockFruitTypes = [
-        { id: 1, name: 'Paramecia', description: 'Test description', created_at: new Date(), updated_at: new Date() },
-        { id: 2, name: 'Zoan', description: 'Test description 2', created_at: new Date(), updated_at: new Date() }
-      ];
-      fruitTypeService.getAllTypes.mockResolvedValueOnce({
-        success: true,
-        data: mockFruitTypes,
-        count: 2
+  describe('getTypeById', () => {
+    it('returns a fruit type for a valid ID', async () => {
+      prisma.fruitType.findUnique.mockResolvedValue(mockFruitType);
+
+      const result = await fruitTypeService.getTypeById(1);
+
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockFruitType);
+    });
+
+    it('returns INVALID_ID for non-numeric ID', async () => {
+      const result = await fruitTypeService.getTypeById('abc');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
+    });
+
+    it('returns NOT_FOUND when type does not exist', async () => {
+      prisma.fruitType.findUnique.mockResolvedValue(null);
+
+      const result = await fruitTypeService.getTypeById(999);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NOT_FOUND');
+    });
+  });
+
+  describe('createType', () => {
+    it('creates a fruit type successfully', async () => {
+      prisma.fruitType.findFirst.mockResolvedValue(null);
+      prisma.fruitType.create.mockResolvedValue(mockFruitType);
+
+      const result = await fruitTypeService.createType({ name: 'Paramecia', description: 'Test' });
+
+      expect(result.id).toBe(1);
+      expect(result.name).toBe('Paramecia');
+    });
+
+    it('throws DUPLICATE_NAME when name already exists', async () => {
+      prisma.fruitType.findFirst.mockResolvedValue(mockFruitType);
+
+      await expect(fruitTypeService.createType({ name: 'Paramecia' })).rejects.toMatchObject({
+        code: 'DUPLICATE_NAME'
       });
-
-      const response = await request(app).get('/api/fruit-types');
-
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body).toHaveProperty('count', 2);
-      expect(response.body).toHaveProperty('data');
-      expect(Array.isArray(response.body.data)).toBe(true);
-      expect(fruitTypeService.getAllTypes).toHaveBeenCalledTimes(1);
-    });
-
-    it('should return fruit types with correct structure', async () => {
-      // Mock service response
-      const mockFruitTypes = [
-        { id: 1, name: 'Paramecia', description: 'Test description', created_at: new Date(), updated_at: new Date() }
-      ];
-      fruitTypeService.getAllTypes.mockResolvedValueOnce({
-        success: true,
-        data: mockFruitTypes,
-        count: 1
-      });
-
-      const response = await request(app).get('/api/fruit-types');
-
-      if (response.body.data.length > 0) {
-        const fruitType = response.body.data[0];
-        expect(fruitType).toHaveProperty('id');
-        expect(fruitType).toHaveProperty('name');
-        expect(fruitType).toHaveProperty('description');
-        expect(fruitType).toHaveProperty('created_at');
-        expect(fruitType).toHaveProperty('updated_at');
-      }
     });
   });
 
-  describe('GET /api/fruit-types/:id', () => {
-    it('should return 200 and an existing fruit type', async () => {
-      // Mock service response for existing fruit type
-      const mockFruitType = { id: 1, name: 'Paramecia', description: 'Test', created_at: new Date(), updated_at: new Date() };
-      fruitTypeService.getTypeById.mockResolvedValueOnce({
-        success: true,
-        data: mockFruitType
-      });
+  describe('deleteType', () => {
+    it('deletes a fruit type successfully', async () => {
+      prisma.fruitType.findUnique.mockResolvedValue(mockFruitType);
+      prisma.devilFruit.count.mockResolvedValue(0);
+      prisma.fruitType.delete.mockResolvedValue(mockFruitType);
 
-      const response = await request(app).get('/api/fruit-types/1');
+      const result = await fruitTypeService.deleteType(1);
 
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body).toHaveProperty('data');
-      expect(response.body.data).toHaveProperty('id', 1);
+      expect(result.id).toBe(1);
+      expect(result.name).toBe('Paramecia');
     });
 
-    it('should return 404 for a non-existent ID', async () => {
-      // Mock service response for non-existent fruit type
-      fruitTypeService.getTypeById.mockResolvedValueOnce({
-        success: false,
-        message: 'Fruit type not found',
-        error: 'NOT_FOUND'
+    it('throws NOT_FOUND when type does not exist', async () => {
+      prisma.fruitType.findUnique.mockResolvedValue(null);
+
+      await expect(fruitTypeService.deleteType(999)).rejects.toMatchObject({
+        code: 'NOT_FOUND'
       });
-
-      const response = await request(app).get('/api/fruit-types/99999');
-
-      expect(response.status).toBe(404);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body).toHaveProperty('message');
     });
 
-    it('should return 400 for an invalid ID', async () => {
-      const response = await request(app).get('/api/fruit-types/invalid');
+    it('throws HAS_ASSOCIATIONS when type has associated devil fruits', async () => {
+      prisma.fruitType.findUnique.mockResolvedValue(mockFruitType);
+      prisma.devilFruit.count.mockResolvedValue(3);
 
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body).toHaveProperty('message', 'Invalid ID');
+      await expect(fruitTypeService.deleteType(1)).rejects.toMatchObject({
+        code: 'HAS_ASSOCIATIONS'
+      });
     });
   });
 
-
-  describe('PUT /api/fruit-types/:id', () => {
-    it('should return 401 when no authentication token is provided', async () => {
-      const response = await request(app)
-        .put('/api/fruit-types/1')
-        .send({ name: 'Unauthorized Update' });
-
-      expect(response.status).toBe(401);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('Authentication token not provided');
+  describe('nameExists', () => {
+    it('returns true when name exists', async () => {
+      prisma.fruitType.findFirst.mockResolvedValue(mockFruitType);
+      const result = await fruitTypeService.nameExists('Paramecia');
+      expect(result).toBe(true);
     });
 
-    it('should update an existing fruit type with authentication', async () => {
-      const updatedData = {
-        name: 'Test Type Updated',
-        description: 'Updated description'
-      };
-
-      // Mock service response
-      const mockUpdatedRecord = { id: 1, name: 'Test Type Updated', description: 'Updated description', created_at: new Date(), updated_at: new Date() };
-      fruitTypeService.updateType.mockResolvedValueOnce(mockUpdatedRecord);
-
-      const response = await request(app)
-        .put('/api/fruit-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updatedData);
-
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body.data).toHaveProperty('name', updatedData.name);
-      expect(response.body.data).toHaveProperty('description', updatedData.description);
-      expect(fruitTypeService.updateType).toHaveBeenCalledWith('1', updatedData);
+    it('returns false when name does not exist', async () => {
+      prisma.fruitType.findFirst.mockResolvedValue(null);
+      const result = await fruitTypeService.nameExists('Unknown');
+      expect(result).toBe(false);
     });
 
-    it('should return 404 for a non-existent ID', async () => {
-      // Mock service throwing not found error
-      const error = new Error('Fruit type with ID 99999 not found');
-      error.code = 'NOT_FOUND';
-      fruitTypeService.updateType.mockRejectedValueOnce(error);
-
-      const response = await request(app)
-        .put('/api/fruit-types/99999')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Does not exist' });
-
-      expect(response.status).toBe(404);
-      expect(response.body).toHaveProperty('success', false);
+    it('uses excludeId when provided', async () => {
+      prisma.fruitType.findFirst.mockResolvedValue(null);
+      const result = await fruitTypeService.nameExists('Paramecia', 1);
+      expect(result).toBe(false);
+      expect(prisma.fruitType.findFirst).toHaveBeenCalledWith({
+        where: { name: 'Paramecia', id: { not: 1 } }
+      });
     });
 
-    it('should return 400 if no fields are provided', async () => {
-      const response = await request(app)
-        .put('/api/fruit-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({});
-
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('fields');
-    });
-
-    it('should return 400 for an invalid ID', async () => {
-      const response = await request(app)
-        .put('/api/fruit-types/invalid')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Test' });
-
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('Invalid ID');
-    });
-
-    it('should return 400 if name is empty string', async () => {
-      const response = await request(app)
-        .put('/api/fruit-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: '   ' });
-
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('empty');
-    });
-
-    it('should return 400 if name exceeds 50 characters', async () => {
-      const response = await request(app)
-        .put('/api/fruit-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'B'.repeat(51) });
-
-      expect(response.status).toBe(400);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('50 characters');
-    });
-
-    it('should return 409 if trying to update to an existing name', async () => {
-      // Mock service throwing duplicate error
-      const error = new Error('Another fruit type with this name already exists');
-      error.code = 'DUPLICATE_NAME';
-      fruitTypeService.updateType.mockRejectedValueOnce(error);
-
-      const response = await request(app)
-        .put('/api/fruit-types/2')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Paramecia' });
-
-      expect(response.status).toBe(409);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('exists');
-    });
-
-    it('should update only description', async () => {
-      // Mock service response
-      const mockUpdatedRecord = { id: 1, name: 'Existing Name', description: 'Updated description only', created_at: new Date(), updated_at: new Date() };
-      fruitTypeService.updateType.mockResolvedValueOnce(mockUpdatedRecord);
-
-      const response = await request(app)
-        .put('/api/fruit-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ description: 'Updated description only' });
-
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body.data).toHaveProperty('description', 'Updated description only');
-    });
-
-    it('should update description to null', async () => {
-      // Mock service response
-      const mockUpdatedRecord = { id: 1, name: 'Existing Name', description: null, created_at: new Date(), updated_at: new Date() };
-      fruitTypeService.updateType.mockResolvedValueOnce(mockUpdatedRecord);
-
-      const response = await request(app)
-        .put('/api/fruit-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ description: null });
-
-      expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
+    it('returns false on findFirst error', async () => {
+      prisma.fruitType.findFirst.mockRejectedValue(new Error('DB error'));
+      const result = await fruitTypeService.nameExists('Paramecia');
+      expect(result).toBe(false);
     });
   });
 
-
-  describe('Error Handling', () => {
-    it('should handle service errors on GET all', async () => {
-      // Mock service error
-      fruitTypeService.getAllTypes.mockRejectedValueOnce(new Error('Service error'));
-
-      const response = await request(app).get('/api/fruit-types');
-
-      expect(response.status).toBe(500);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('Error fetching fruit types');
+  describe('hasAssociatedFruits', () => {
+    it('returns true when associated devil fruits exist', async () => {
+      prisma.devilFruit.count.mockResolvedValue(5);
+      const result = await fruitTypeService.hasAssociatedFruits(1);
+      expect(result).toBe(true);
     });
 
-    it('should handle service errors on GET by ID', async () => {
-      // Mock service error
-      fruitTypeService.getTypeById.mockRejectedValueOnce(new Error('Service error'));
-
-      const response = await request(app).get('/api/fruit-types/1');
-
-      expect(response.status).toBe(500);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('Error fetching fruit type');
+    it('returns false when no associated devil fruits', async () => {
+      prisma.devilFruit.count.mockResolvedValue(0);
+      const result = await fruitTypeService.hasAssociatedFruits(1);
+      expect(result).toBe(false);
     });
 
+    it('returns false on error', async () => {
+      prisma.devilFruit.count.mockRejectedValue(new Error('DB error'));
+      const result = await fruitTypeService.hasAssociatedFruits(1);
+      expect(result).toBe(false);
+    });
+  });
 
-    it('should handle service errors on PUT', async () => {
-      // Mock service error (generic error, not not_found or duplicate)
-      fruitTypeService.updateType.mockRejectedValueOnce(new Error('Service error'));
-
-      const response = await request(app)
-        .put('/api/fruit-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Updated Name' });
-
-      expect(response.status).toBe(500);
-      expect(response.body).toHaveProperty('success', false);
-      expect(response.body.message).toContain('Error updating fruit type');
+  describe('getAssociatedFruitsCount', () => {
+    it('returns count of associated devil fruits', async () => {
+      prisma.devilFruit.count.mockResolvedValue(7);
+      const result = await fruitTypeService.getAssociatedFruitsCount(1);
+      expect(result).toBe(7);
     });
 
+    it('returns 0 on error', async () => {
+      prisma.devilFruit.count.mockRejectedValue(new Error('DB error'));
+      const result = await fruitTypeService.getAssociatedFruitsCount(1);
+      expect(result).toBe(0);
+    });
+  });
+
+  describe('updateType', () => {
+    it('updates name and description successfully', async () => {
+      prisma.fruitType.findUnique
+        .mockResolvedValueOnce(mockFruitType)
+        .mockResolvedValueOnce({ ...mockFruitType, name: 'Zoan' });
+      prisma.fruitType.findFirst.mockResolvedValue(null);
+      prisma.fruitType.update.mockResolvedValue({ ...mockFruitType, name: 'Zoan' });
+
+      const result = await fruitTypeService.updateType(1, { name: 'Zoan', description: 'Animals' });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('throws NOT_FOUND when type does not exist', async () => {
+      prisma.fruitType.findUnique.mockResolvedValue(null);
+
+      await expect(fruitTypeService.updateType(999, { name: 'Zoan' })).rejects.toMatchObject({
+        code: 'NOT_FOUND'
+      });
+    });
+
+    it('throws DUPLICATE_NAME when new name already taken', async () => {
+      prisma.fruitType.findUnique.mockResolvedValue(mockFruitType);
+      prisma.fruitType.findFirst.mockResolvedValue({ id: 2, name: 'Zoan' });
+
+      await expect(fruitTypeService.updateType(1, { name: 'Zoan' })).rejects.toMatchObject({
+        code: 'DUPLICATE_NAME'
+      });
+    });
+
+    it('updates only description when name not provided', async () => {
+      prisma.fruitType.findUnique
+        .mockResolvedValueOnce(mockFruitType)
+        .mockResolvedValueOnce({ ...mockFruitType, description: 'New desc' });
+      prisma.fruitType.update.mockResolvedValue({ ...mockFruitType, description: 'New desc' });
+
+      const result = await fruitTypeService.updateType(1, { description: 'New desc' });
+
+      expect(result.success).toBe(true);
+    });
   });
 });

@@ -1,591 +1,383 @@
-const request = require('supertest');
-const app = require('../src/app');
+jest.mock('../src/config/prisma.config', () => ({
+  devilFruit: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    create: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn()
+  },
+  fruitType: {
+    findUnique: jest.fn()
+  }
+}));
+
+const prisma = require('../src/config/prisma.config');
 const devilFruitService = require('../src/services/devil-fruit.service');
 
-// Note: These are unit tests with mocked dependencies
-// We mock the Service Layer to test controller logic in isolation
-// This ensures tests are fast, reliable, and don't depend on database
+const mockFruitType = { id: 1, name: 'Paramecia', description: 'Common type' };
+const mockFruit = {
+  id: 1,
+  name: 'Gomu Gomu no Mi',
+  japaneseName: 'ゴムゴムの実',
+  typeId: 1,
+  description: 'Rubber fruit',
+  currentUserId: null,
+  fruitType: mockFruitType,
+  createdAt: new Date(),
+  updatedAt: new Date()
+};
 
-// Mock JWTUtil since it has its own unit tests
-jest.mock('../src/utils/jwt.util', () => ({
-  generateToken: jest.fn(),
-  verifyToken: jest.fn((token) => {
-    if (token === 'valid-test-token') {
-      return { username: 'testadmin', role: 'admin' };
-    }
-    throw new Error('Invalid token');
-  }),
-  decodeToken: jest.fn()
-}));
-
-// Mock DevilFruitService - This is the Service Layer
-jest.mock('../src/services/devil-fruit.service', () => ({
-  getAllFruits: jest.fn(),
-  getFruitById: jest.fn(),
-  createFruit: jest.fn(),
-  updateFruit: jest.fn(),
-  deleteFruit: jest.fn(),
-  getFruitsByType: jest.fn(),
-  nameExists: jest.fn(),
-  typeExists: jest.fn()
-}));
-
-describe('Devil Fruits API Endpoints', () => {
-  let authToken;
-
-  // Setup mock token before all tests
-  beforeAll(() => {
-    // Use a mock token instead of generating a real one
-    authToken = 'valid-test-token';
-  });
-
-  // Reset mocks before each test
+describe('DevilFruitService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
-  // Clean up after all tests
-  afterAll(async () => {
-    jest.restoreAllMocks();
-  });
+  describe('getAllFruits', () => {
+    it('returns all devil fruits with pagination', async () => {
+      prisma.devilFruit.findMany.mockResolvedValue([mockFruit]);
+      prisma.devilFruit.count.mockResolvedValue(1);
 
-  describe('GET /api/devil-fruits', () => {
-    it('should return all devil fruits with pagination', async () => {
-      const mockFruits = [
-        {
-          id: 1,
-          name: 'Gomu Gomu no Mi',
-          japanese_name: 'ゴムゴムの実',
-          type_id: 1,
-          description: 'Rubber fruit',
-          abilities: 'Stretching abilities',
-          weaknesses: 'Cutting attacks',
-          awakening_description: 'Sun God Nika form',
-          current_user_id: 1,
-          previous_users: [2, 3],
-          image_url: 'https://example.com/gomu-gomu.jpg',
-          type: {
-            id: 1,
-            name: 'Paramecia',
-            description: 'Superhuman powers'
-          }
-        }
-      ];
+      const result = await devilFruitService.getAllFruits();
 
-      const mockPagination = {
-        page: 1,
-        limit: 10,
-        total: 1,
-        totalPages: 1,
-        hasNext: false,
-        hasPrev: false
-      };
-
-      devilFruitService.getAllFruits.mockResolvedValue({
-        fruits: mockFruits,
-        pagination: mockPagination
-      });
-
-      const response = await request(app)
-        .get('/api/devil-fruits')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toEqual(mockFruits);
-      expect(response.body.pagination).toEqual(mockPagination);
-      expect(devilFruitService.getAllFruits).toHaveBeenCalledWith({
-        page: 1,
-        limit: 10,
-        search: undefined,
-        type_id: undefined,
-        rarity: undefined,
-        sortBy: 'id',
-        sortOrder: 'ASC'
-      });
+      expect(result.success).toBe(true);
+      expect(result.fruits).toHaveLength(1);
+      expect(result.pagination).toBeDefined();
+      expect(result.pagination.total).toBe(1);
     });
 
-    it('should handle query parameters correctly', async () => {
-      devilFruitService.getAllFruits.mockResolvedValue({
-        fruits: [],
-        pagination: { currentPage: 1, totalPages: 0, totalItems: 0, itemsPerPage: 5 }
-      });
+    it('supports pagination options', async () => {
+      prisma.devilFruit.findMany.mockResolvedValue([]);
+      prisma.devilFruit.count.mockResolvedValue(50);
 
-      await request(app)
-        .get('/api/devil-fruits?page=2&limit=5&search=gomu&type_id=1&rarity=legendary&sortBy=name&sortOrder=DESC')
-        .expect(200);
+      const result = await devilFruitService.getAllFruits({ page: 2, limit: 5 });
 
-      expect(devilFruitService.getAllFruits).toHaveBeenCalledWith({
-        page: 2,
-        limit: 5,
-        search: 'gomu',
-        type_id: '1',
-        sortBy: 'name',
-        sortOrder: 'DESC'
-      });
+      expect(result.success).toBe(true);
+      expect(result.pagination.page).toBe(2);
+      expect(result.pagination.limit).toBe(5);
     });
 
-    it('should validate pagination parameters', async () => {
-      await request(app)
-        .get('/api/devil-fruits?page=0')
-        .expect(400);
+    it('applies search filter', async () => {
+      prisma.devilFruit.findMany.mockResolvedValue([mockFruit]);
+      prisma.devilFruit.count.mockResolvedValue(1);
 
-      await request(app)
-        .get('/api/devil-fruits?limit=0')
-        .expect(400);
+      await devilFruitService.getAllFruits({ search: 'Gomu' });
 
-      await request(app)
-        .get('/api/devil-fruits?limit=101')
-        .expect(400);
+      expect(prisma.devilFruit.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ OR: expect.any(Array) }) })
+      );
     });
 
-    it('should validate sort parameters', async () => {
-      await request(app)
-        .get('/api/devil-fruits?sortBy=invalid')
-        .expect(400);
+    it('applies type_id filter', async () => {
+      prisma.devilFruit.findMany.mockResolvedValue([mockFruit]);
+      prisma.devilFruit.count.mockResolvedValue(1);
 
-      await request(app)
-        .get('/api/devil-fruits?sortOrder=INVALID')
-        .expect(400);
+      await devilFruitService.getAllFruits({ type_id: 1 });
+
+      expect(prisma.devilFruit.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ typeId: 1 }) })
+      );
     });
 
+    it('uses desc sort order', async () => {
+      prisma.devilFruit.findMany.mockResolvedValue([mockFruit]);
+      prisma.devilFruit.count.mockResolvedValue(1);
 
-    it('should handle service errors', async () => {
-      devilFruitService.getAllFruits.mockRejectedValue(new Error('Database error'));
+      const result = await devilFruitService.getAllFruits({ sortBy: 'createdAt', sortOrder: 'desc' });
 
-      const response = await request(app)
-        .get('/api/devil-fruits')
-        .expect(500);
+      expect(result.success).toBe(true);
+    });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Error fetching devil fruits');
+    it('falls back to default sort field for invalid sortBy', async () => {
+      prisma.devilFruit.findMany.mockResolvedValue([mockFruit]);
+      prisma.devilFruit.count.mockResolvedValue(1);
+
+      const result = await devilFruitService.getAllFruits({ sortBy: 'invalidField' });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('calculates hasNext and hasPrev pagination flags', async () => {
+      prisma.devilFruit.findMany.mockResolvedValue([mockFruit]);
+      prisma.devilFruit.count.mockResolvedValue(25);
+
+      const result = await devilFruitService.getAllFruits({ page: 2, limit: 10 });
+
+      expect(result.pagination.hasNext).toBe(true);
+      expect(result.pagination.hasPrev).toBe(true);
+    });
+
+    it('returns error object on failure', async () => {
+      prisma.devilFruit.findMany.mockRejectedValue(new Error('DB error'));
+
+      const result = await devilFruitService.getAllFruits();
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to fetch devil fruits');
     });
   });
 
-  describe('GET /api/devil-fruits/:id', () => {
-    it('should return a devil fruit by ID', async () => {
-      const mockFruit = {
-        id: 1,
+  describe('getFruitById', () => {
+    it('returns a fruit for a valid ID', async () => {
+      prisma.devilFruit.findUnique.mockResolvedValue(mockFruit);
+
+      const result = await devilFruitService.getFruitById(1);
+
+      expect(result).toEqual(mockFruit);
+    });
+
+    it('returns null for an invalid ID (non-numeric)', async () => {
+      const result = await devilFruitService.getFruitById('abc');
+      expect(result).toBeNull();
+    });
+
+    it('returns null for ID <= 0', async () => {
+      const result = await devilFruitService.getFruitById(0);
+      expect(result).toBeNull();
+    });
+
+    it('returns null when fruit does not exist', async () => {
+      prisma.devilFruit.findUnique.mockResolvedValue(null);
+
+      const result = await devilFruitService.getFruitById(999);
+
+      expect(result).toBeNull();
+    });
+
+    it('returns null on DB error', async () => {
+      prisma.devilFruit.findUnique.mockRejectedValue(new Error('DB error'));
+
+      const result = await devilFruitService.getFruitById(1);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('createFruit', () => {
+    it('creates a devil fruit successfully', async () => {
+      prisma.devilFruit.findFirst.mockResolvedValue(null);
+      prisma.fruitType.findUnique.mockResolvedValue(mockFruitType);
+      prisma.devilFruit.create.mockResolvedValue(mockFruit);
+      prisma.devilFruit.findUnique.mockResolvedValue(mockFruit);
+
+      const result = await devilFruitService.createFruit({
         name: 'Gomu Gomu no Mi',
-        japanese_name: 'ゴムゴムの実',
-        type_id: 1,
-        description: 'Rubber fruit',
-        abilities: 'Stretching abilities',
-        weaknesses: 'Cutting attacks',
-        awakening_description: 'Sun God Nika form',
-        current_user_id: 1,
-        previous_users: [2, 3],
-        image_url: 'https://example.com/gomu-gomu.jpg',
-        type: {
-          id: 1,
-          name: 'Paramecia',
-          description: 'Superhuman powers'
-        }
-      };
+        typeId: 1
+      });
 
-      devilFruitService.getFruitById.mockResolvedValue(mockFruit);
-
-      const response = await request(app)
-        .get('/api/devil-fruits/1')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toEqual(mockFruit);
-      expect(devilFruitService.getFruitById).toHaveBeenCalledWith('1');
+      expect(result).toEqual(mockFruit);
     });
 
-    it('should return 404 for non-existent fruit', async () => {
-      devilFruitService.getFruitById.mockResolvedValue(null);
+    it('throws DUPLICATE_NAME when fruit name exists', async () => {
+      prisma.devilFruit.findFirst.mockResolvedValue(mockFruit);
 
-      const response = await request(app)
-        .get('/api/devil-fruits/999')
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Devil fruit with ID 999 not found');
+      await expect(devilFruitService.createFruit({ name: 'Gomu Gomu no Mi', typeId: 1 })).rejects.toMatchObject({
+        code: 'DUPLICATE_NAME'
+      });
     });
 
-    it('should validate ID parameter', async () => {
-      await request(app)
-        .get('/api/devil-fruits/invalid')
-        .expect(400);
+    it('throws INVALID_TYPE when type does not exist', async () => {
+      prisma.devilFruit.findFirst.mockResolvedValue(null);
+      prisma.fruitType.findUnique.mockResolvedValue(null);
 
-      await request(app)
-        .get('/api/devil-fruits/')
-        .expect(500);
-    });
-
-    it('should handle service errors', async () => {
-      devilFruitService.getFruitById.mockRejectedValue(new Error('Database error'));
-
-      const response = await request(app)
-        .get('/api/devil-fruits/1')
-        .expect(500);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Error fetching devil fruit');
+      await expect(devilFruitService.createFruit({ name: 'New Fruit', typeId: 99 })).rejects.toMatchObject({
+        code: 'INVALID_TYPE'
+      });
     });
   });
 
-  describe('POST /api/devil-fruits', () => {
-    it('should create a new devil fruit with valid data', async () => {
-      const fruitData = {
-        name: 'Gomu Gomu no Mi',
-        type_id: 1,
-        japanese_name: 'ゴムゴムの実',
-        description: 'Rubber fruit',
-        abilities: 'Stretching abilities',
-        weaknesses: 'Cutting attacks',
-        awakening_description: 'Sun God Nika form',
-        current_user_id: 1,
-        previous_users: [2, 3],
-        image_url: 'https://example.com/gomu-gomu.jpg'
-      };
+  describe('deleteFruit', () => {
+    it('deletes a fruit successfully', async () => {
+      prisma.devilFruit.findUnique.mockResolvedValue(mockFruit);
+      prisma.devilFruit.delete.mockResolvedValue(mockFruit);
 
-      const mockCreatedFruit = {
-        id: 1,
-        ...fruitData,
-        type: {
-          id: 1,
-          name: 'Paramecia',
-          description: 'Superhuman powers'
-        }
-      };
+      const result = await devilFruitService.deleteFruit(1);
 
-      devilFruitService.createFruit.mockResolvedValue(mockCreatedFruit);
+      expect(result.id).toBe(1);
+      expect(result.name).toBe('Gomu Gomu no Mi');
+    });
 
-      const response = await request(app)
-        .post('/api/devil-fruits')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(fruitData)
-        .expect(201);
+    it('throws NOT_FOUND when fruit does not exist', async () => {
+      prisma.devilFruit.findUnique.mockResolvedValue(null);
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Devil fruit created successfully');
-      expect(response.body.data).toEqual(mockCreatedFruit);
-      expect(devilFruitService.createFruit).toHaveBeenCalledWith({
-        name: 'Gomu Gomu no Mi',
-        type_id: 1,
-        japanese_name: 'ゴムゴムの実',
-        description: 'Rubber fruit',
-        abilities: 'Stretching abilities',
-        weaknesses: 'Cutting attacks',
-        awakening_description: 'Sun God Nika form',
-        current_user_id: 1,
-        previous_users: [2, 3],
-        image_url: 'https://example.com/gomu-gomu.jpg'
+      await expect(devilFruitService.deleteFruit(999)).rejects.toMatchObject({
+        code: 'NOT_FOUND'
       });
-    });
-
-    it('should require authentication', async () => {
-      await request(app)
-        .post('/api/devil-fruits')
-        .send({ name: 'Test Fruit', type_id: 1 })
-        .expect(401);
-    });
-
-    it('should validate required fields', async () => {
-      await request(app)
-        .post('/api/devil-fruits')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({})
-        .expect(400);
-
-      await request(app)
-        .post('/api/devil-fruits')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: '', type_id: 1 })
-        .expect(400);
-
-      await request(app)
-        .post('/api/devil-fruits')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Test Fruit' })
-        .expect(400);
-    });
-
-    it('should validate field constraints', async () => {
-      // Name too long
-      await request(app)
-        .post('/api/devil-fruits')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          name: 'A'.repeat(101),
-          type_id: 1
-        })
-        .expect(400);
-
-      // Invalid type_id
-      await request(app)
-        .post('/api/devil-fruits')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          name: 'Test Fruit',
-          type_id: 'invalid'
-        })
-        .expect(400);
-
-    });
-
-    it('should handle duplicate name error', async () => {
-      const error = new Error('A devil fruit with this name already exists');
-      error.code = 'DUPLICATE_NAME';
-      devilFruitService.createFruit.mockRejectedValue(error);
-
-      const response = await request(app)
-        .post('/api/devil-fruits')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Existing Fruit', type_id: 1 })
-        .expect(409);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('A devil fruit with this name already exists');
-    });
-
-    it('should handle invalid type error', async () => {
-      const error = new Error('Invalid type ID');
-      error.code = 'INVALID_TYPE';
-      devilFruitService.createFruit.mockRejectedValue(error);
-
-      const response = await request(app)
-        .post('/api/devil-fruits')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Test Fruit', type_id: 999 })
-        .expect(400);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Invalid type ID');
-    });
-
-    it('should handle service errors', async () => {
-      devilFruitService.createFruit.mockRejectedValue(new Error('Database error'));
-
-      const response = await request(app)
-        .post('/api/devil-fruits')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          name: 'Test Fruit',
-          type_id: 1
-        })
-        .expect(500);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Error creating devil fruit');
     });
   });
 
-  describe('PUT /api/devil-fruits/:id', () => {
-    it('should update a devil fruit with valid data', async () => {
-      const updateData = {
-        name: 'Updated Fruit Name',
-        japanese_name: 'Updated Japanese Name',
-        description: 'Updated description'
-      };
-
-      const mockUpdatedFruit = {
-        id: 1,
-        name: 'Updated Fruit Name',
-        japanese_name: 'Updated Japanese Name',
-        type_id: 1,
-        description: 'Updated description',
-        type: {
-          id: 1,
-          name: 'Paramecia'
-        }
-      };
-
-      devilFruitService.updateFruit.mockResolvedValue(mockUpdatedFruit);
-
-      const response = await request(app)
-        .put('/api/devil-fruits/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Devil fruit updated successfully');
-      expect(response.body.data).toEqual(mockUpdatedFruit);
-      expect(devilFruitService.updateFruit).toHaveBeenCalledWith('1', updateData);
+  describe('nameExists', () => {
+    it('returns true when name exists', async () => {
+      prisma.devilFruit.findFirst.mockResolvedValue(mockFruit);
+      const result = await devilFruitService.nameExists('Gomu Gomu no Mi');
+      expect(result).toBe(true);
     });
 
-    it('should require authentication', async () => {
-      await request(app)
-        .put('/api/devil-fruits/1')
-        .send({ name: 'Updated Name' })
-        .expect(401);
+    it('returns false when name does not exist', async () => {
+      prisma.devilFruit.findFirst.mockResolvedValue(null);
+      const result = await devilFruitService.nameExists('Unknown Fruit');
+      expect(result).toBe(false);
     });
 
-    it('should validate ID parameter', async () => {
-      await request(app)
-        .put('/api/devil-fruits/invalid')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Updated Name' })
-        .expect(400);
+    it('uses excludeId in query when provided', async () => {
+      prisma.devilFruit.findFirst.mockResolvedValue(null);
+      const result = await devilFruitService.nameExists('Gomu Gomu no Mi', 1);
+      expect(prisma.devilFruit.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ id: { not: 1 } }) })
+      );
+      expect(result).toBe(false);
     });
 
-    it('should require at least one field to update', async () => {
-      await request(app)
-        .put('/api/devil-fruits/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({})
-        .expect(400);
-    });
-
-    it('should handle not found error', async () => {
-      const error = new Error('Devil fruit with ID 999 not found');
-      error.code = 'NOT_FOUND';
-      devilFruitService.updateFruit.mockRejectedValue(error);
-
-      const response = await request(app)
-        .put('/api/devil-fruits/999')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Updated Name' })
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Devil fruit with ID 999 not found');
-    });
-
-    it('should handle duplicate name error', async () => {
-      const error = new Error('Another devil fruit with this name already exists');
-      error.code = 'DUPLICATE_NAME';
-      devilFruitService.updateFruit.mockRejectedValue(error);
-
-      const response = await request(app)
-        .put('/api/devil-fruits/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Existing Name' })
-        .expect(409);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Another devil fruit with this name already exists');
+    it('returns false on DB error', async () => {
+      prisma.devilFruit.findFirst.mockRejectedValue(new Error('DB error'));
+      const result = await devilFruitService.nameExists('Gomu Gomu no Mi');
+      expect(result).toBe(false);
     });
   });
 
-  describe('DELETE /api/devil-fruits/:id', () => {
-    it('should delete a devil fruit', async () => {
-      const mockDeletedFruit = {
-        id: 1,
-        name: 'Deleted Fruit'
-      };
-
-      devilFruitService.deleteFruit.mockResolvedValue(mockDeletedFruit);
-
-      const response = await request(app)
-        .delete('/api/devil-fruits/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Devil fruit "Deleted Fruit" deleted successfully');
-      expect(devilFruitService.deleteFruit).toHaveBeenCalledWith('1');
+  describe('typeExists', () => {
+    it('returns true when type exists', async () => {
+      prisma.fruitType.findUnique.mockResolvedValue(mockFruitType);
+      const result = await devilFruitService.typeExists(1);
+      expect(result).toBe(true);
     });
 
-    it('should require authentication', async () => {
-      await request(app)
-        .delete('/api/devil-fruits/1')
-        .expect(401);
+    it('returns false when type does not exist', async () => {
+      prisma.fruitType.findUnique.mockResolvedValue(null);
+      const result = await devilFruitService.typeExists(99);
+      expect(result).toBe(false);
     });
 
-    it('should validate ID parameter', async () => {
-      await request(app)
-        .delete('/api/devil-fruits/invalid')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(400);
-    });
-
-    it('should handle not found error', async () => {
-      const error = new Error('Devil fruit with ID 999 not found');
-      error.code = 'NOT_FOUND';
-      devilFruitService.deleteFruit.mockRejectedValue(error);
-
-      const response = await request(app)
-        .delete('/api/devil-fruits/999')
-        .set('Authorization', `Bearer ${authToken}`)
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Devil fruit with ID 999 not found');
+    it('returns false on DB error', async () => {
+      prisma.fruitType.findUnique.mockRejectedValue(new Error('DB error'));
+      const result = await devilFruitService.typeExists(1);
+      expect(result).toBe(false);
     });
   });
 
-  describe('GET /api/devil-fruits/type/:typeId', () => {
-    it('should return devil fruits by type', async () => {
-      const mockFruits = [
-        {
-          id: 1,
-          name: 'Gomu Gomu no Mi',
-          japanese_name: 'ゴムゴムの実',
-          type_id: 1,
-          description: 'Rubber fruit',
-          type: {
-            id: 1,
-            name: 'Paramecia'
-          }
-        }
-      ];
+  describe('updateFruit', () => {
+    it('updates a fruit successfully (name + typeId)', async () => {
+      const updatedFruit = { ...mockFruit, name: 'Hito Hito no Mi' };
+      prisma.devilFruit.findUnique
+        .mockResolvedValueOnce(mockFruit)
+        .mockResolvedValueOnce(updatedFruit);
+      prisma.devilFruit.findFirst.mockResolvedValue(null);
+      prisma.fruitType.findUnique.mockResolvedValue(mockFruitType);
+      prisma.devilFruit.update.mockResolvedValue(updatedFruit);
 
-      const mockPagination = {
-        page: 1,
-        limit: 10,
-        total: 1,
-        totalPages: 1,
-        hasNext: false,
-        hasPrev: false
-      };
+      const result = await devilFruitService.updateFruit(1, { name: 'Hito Hito no Mi', typeId: 1 });
 
-      devilFruitService.getFruitsByType.mockResolvedValue({
-        fruits: mockFruits,
-        pagination: mockPagination
+      expect(result).toEqual(updatedFruit);
+    });
+
+    it('updates fruit with optional fields (japaneseName, description, currentUserId)', async () => {
+      const updatedFruit = { ...mockFruit, description: 'Updated' };
+      prisma.devilFruit.findUnique
+        .mockResolvedValueOnce(mockFruit)
+        .mockResolvedValueOnce(updatedFruit);
+      prisma.devilFruit.update.mockResolvedValue(updatedFruit);
+
+      const result = await devilFruitService.updateFruit(1, {
+        japaneseName: 'ゴムゴムの実',
+        description: 'Updated',
+        currentUserId: 5
       });
 
-      const response = await request(app)
-        .get('/api/devil-fruits/type/1')
-        .expect(200);
+      expect(result).toEqual(updatedFruit);
+    });
 
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toEqual(mockFruits);
-      expect(response.body.pagination).toEqual(mockPagination);
-      expect(devilFruitService.getFruitsByType).toHaveBeenCalledWith(1, {
-        page: 1,
-        limit: 10,
-        sortBy: 'id',
-        sortOrder: 'ASC'
+    it('clears optional fields when set to null/empty', async () => {
+      prisma.devilFruit.findUnique
+        .mockResolvedValueOnce(mockFruit)
+        .mockResolvedValueOnce(mockFruit);
+      prisma.devilFruit.update.mockResolvedValue(mockFruit);
+
+      const result = await devilFruitService.updateFruit(1, {
+        japaneseName: '',
+        description: '',
+        currentUserId: 0
+      });
+
+      expect(result).toEqual(mockFruit);
+    });
+
+    it('throws NOT_FOUND when fruit does not exist', async () => {
+      prisma.devilFruit.findUnique.mockResolvedValue(null);
+
+      await expect(devilFruitService.updateFruit(999, { name: 'Test' })).rejects.toMatchObject({
+        code: 'NOT_FOUND'
       });
     });
 
-    it('should validate type ID parameter', async () => {
-      await request(app)
-        .get('/api/devil-fruits/type/invalid')
-        .expect(400);
-    });
+    it('throws DUPLICATE_NAME when updated name already exists', async () => {
+      prisma.devilFruit.findUnique.mockResolvedValue(mockFruit);
+      prisma.devilFruit.findFirst.mockResolvedValue({ ...mockFruit, id: 2, name: 'Hito Hito no Mi' });
 
-    it('should handle query parameters', async () => {
-      devilFruitService.getFruitsByType.mockResolvedValue({
-        fruits: [],
-        pagination: { currentPage: 2, totalPages: 0, totalItems: 0, itemsPerPage: 5 }
-      });
-
-      await request(app)
-        .get('/api/devil-fruits/type/1?page=2&limit=5&sortBy=name&sortOrder=DESC')
-        .expect(200);
-
-      expect(devilFruitService.getFruitsByType).toHaveBeenCalledWith(1, {
-        page: 2,
-        limit: 5,
-        sortBy: 'name',
-        sortOrder: 'DESC'
+      await expect(devilFruitService.updateFruit(1, { name: 'Hito Hito no Mi' })).rejects.toMatchObject({
+        code: 'DUPLICATE_NAME'
       });
     });
 
-    it('should handle service errors', async () => {
-      devilFruitService.getFruitsByType.mockRejectedValue(new Error('Database error'));
+    it('throws INVALID_TYPE when updated typeId does not exist', async () => {
+      prisma.devilFruit.findUnique.mockResolvedValue(mockFruit);
+      prisma.devilFruit.findFirst.mockResolvedValue(null);
+      prisma.fruitType.findUnique.mockResolvedValue(null);
 
-      const response = await request(app)
-        .get('/api/devil-fruits/type/1')
-        .expect(500);
+      await expect(devilFruitService.updateFruit(1, { typeId: 99 })).rejects.toMatchObject({
+        code: 'INVALID_TYPE'
+      });
+    });
+  });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Error fetching devil fruits by type');
+  describe('getFruitsByType', () => {
+    it('returns fruits for a given type with pagination', async () => {
+      prisma.devilFruit.findMany.mockResolvedValue([mockFruit]);
+      prisma.devilFruit.count.mockResolvedValue(1);
+
+      const result = await devilFruitService.getFruitsByType(1);
+
+      expect(result.success).toBe(true);
+      expect(result.fruits).toHaveLength(1);
+      expect(result.pagination).toBeDefined();
+    });
+
+    it('supports pagination options', async () => {
+      prisma.devilFruit.findMany.mockResolvedValue([]);
+      prisma.devilFruit.count.mockResolvedValue(30);
+
+      const result = await devilFruitService.getFruitsByType(1, { page: 2, limit: 5 });
+
+      expect(result.success).toBe(true);
+      expect(result.pagination.page).toBe(2);
+      expect(result.pagination.hasPrev).toBe(true);
+    });
+
+    it('uses desc sort order', async () => {
+      prisma.devilFruit.findMany.mockResolvedValue([mockFruit]);
+      prisma.devilFruit.count.mockResolvedValue(1);
+
+      const result = await devilFruitService.getFruitsByType(1, { sortOrder: 'desc' });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('falls back to default sortBy for invalid field', async () => {
+      prisma.devilFruit.findMany.mockResolvedValue([mockFruit]);
+      prisma.devilFruit.count.mockResolvedValue(1);
+
+      const result = await devilFruitService.getFruitsByType(1, { sortBy: 'invalidField' });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('returns error object on failure', async () => {
+      prisma.devilFruit.findMany.mockRejectedValue(new Error('DB error'));
+
+      const result = await devilFruitService.getFruitsByType(1);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to fetch devil fruits by type');
     });
   });
 });
