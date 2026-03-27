@@ -1,6 +1,40 @@
 const devilFruitService = require('../services/devil-fruit.service');
 const { createPaginatedResponse, createItemResponse } = require('../utils/response.helper');
 
+const getKnownDevilFruitErrorStatus = (errorCode) => {
+  const statusByCode = {
+    NOT_FOUND: 404,
+    DUPLICATE_NAME: 409,
+    INVALID_TYPE: 400,
+    INVALID_JSON: 400
+  };
+
+  return statusByCode[errorCode] || null;
+};
+
+const validateUpdateDevilFruitPayload = (payload) => {
+  const { name, type_id } = payload;
+
+  if (name !== undefined && name.trim() === '') {
+    return 'Name cannot be empty';
+  }
+
+  if (name !== undefined && name.length > 100) {
+    return 'Name cannot exceed 100 characters';
+  }
+
+  if (type_id !== undefined && (Number.isNaN(type_id) || type_id < 1)) {
+    return 'Valid type_id is required';
+  }
+
+  const hasFields = Object.values(payload).some((field) => field !== undefined);
+  if (!hasFields) {
+    return 'No fields provided to update';
+  }
+
+  return null;
+};
+
 /**
  * Get all devil fruits with optional filtering and pagination
  * @route GET /api/devil-fruits
@@ -17,8 +51,8 @@ const getAllDevilFruits = async (req, res) => {
     } = req.query;
 
     // Validate pagination parameters
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    const pageNum = Number.parseInt(page);
+    const limitNum = Number.parseInt(limit);
 
     if (pageNum < 1) {
       return res.status(400).json({
@@ -83,7 +117,7 @@ const getDevilFruitById = async (req, res) => {
     const { id } = req.params;
 
     // Validate ID is a valid number
-    if (!id || isNaN(id)) {
+    if (!id || Number.isNaN(id)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid ID'
@@ -147,7 +181,7 @@ const createDevilFruit = async (req, res) => {
       });
     }
 
-    if (!type_id || isNaN(type_id)) {
+    if (!type_id || Number.isNaN(type_id)) {
       return res.status(400).json({
         success: false,
         message: 'Valid type_id is required'
@@ -157,13 +191,13 @@ const createDevilFruit = async (req, res) => {
     // Create via service
     const newFruit = await devilFruitService.createFruit({
       name,
-      type_id: parseInt(type_id),
+      type_id: Number.parseInt(type_id),
       japanese_name,
       description,
       abilities,
       weaknesses,
       awakening_description,
-      current_user_id: current_user_id ? parseInt(current_user_id) : undefined,
+      current_user_id: current_user_id ? Number.parseInt(current_user_id) : undefined,
       previous_users,
       image_url
     });
@@ -226,61 +260,42 @@ const updateDevilFruit = async (req, res) => {
     } = req.body;
 
     // Validate ID
-    if (!id || isNaN(id)) {
+    if (!id || Number.isNaN(id)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid ID'
       });
     }
 
-    // Validate name if provided
-    if (name !== undefined) {
-      if (name.trim() === '') {
-        return res.status(400).json({
-          success: false,
-          message: 'Name cannot be empty'
-        });
-      }
-
-      if (name.length > 100) {
-        return res.status(400).json({
-          success: false,
-          message: 'Name cannot exceed 100 characters'
-        });
-      }
-    }
-
-    // Validate type_id if provided
-    if (type_id !== undefined && (isNaN(type_id) || type_id < 1)) {
+    const validationMessage = validateUpdateDevilFruitPayload({
+      name,
+      type_id,
+      japanese_name,
+      description,
+      abilities,
+      weaknesses,
+      awakening_description,
+      current_user_id,
+      previous_users,
+      image_url
+    });
+    if (validationMessage) {
       return res.status(400).json({
         success: false,
-        message: 'Valid type_id is required'
-      });
-    }
-
-    // Check if any fields are provided
-    const hasFields = [
-      name, type_id, japanese_name, description, abilities, weaknesses,
-      awakening_description, current_user_id, previous_users, image_url
-    ].some(field => field !== undefined);
-
-    if (!hasFields) {
-      return res.status(400).json({
-        success: false,
-        message: 'No fields provided to update'
+        message: validationMessage
       });
     }
 
     // Update via service
     const updatedFruit = await devilFruitService.updateFruit(id, {
       name,
-      type_id: type_id ? parseInt(type_id) : undefined,
+      type_id: type_id ? Number.parseInt(type_id) : undefined,
       japanese_name,
       description,
       abilities,
       weaknesses,
       awakening_description,
-      current_user_id: current_user_id ? parseInt(current_user_id) : undefined,
+      current_user_id: current_user_id ? Number.parseInt(current_user_id) : undefined,
       previous_users,
       image_url
     });
@@ -292,30 +307,9 @@ const updateDevilFruit = async (req, res) => {
   } catch (error) {
     console.error('Error updating devil fruit:', error);
 
-    // Handle known service errors
-    if (error.code === 'NOT_FOUND') {
-      return res.status(404).json({
-        success: false,
-        message: error.message
-      });
-    }
-
-    if (error.code === 'DUPLICATE_NAME') {
-      return res.status(409).json({
-        success: false,
-        message: error.message
-      });
-    }
-
-    if (error.code === 'INVALID_TYPE') {
-      return res.status(400).json({
-        success: false,
-        message: error.message
-      });
-    }
-
-    if (error.code === 'INVALID_JSON') {
-      return res.status(400).json({
+    const knownStatus = getKnownDevilFruitErrorStatus(error.code);
+    if (knownStatus) {
+      return res.status(knownStatus).json({
         success: false,
         message: error.message
       });
@@ -338,7 +332,7 @@ const deleteDevilFruit = async (req, res) => {
     const { id } = req.params;
 
     // Validate ID
-    if (!id || isNaN(id)) {
+    if (!id || Number.isNaN(id)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid ID'
@@ -386,7 +380,7 @@ const getDevilFruitsByType = async (req, res) => {
     } = req.query;
 
     // Validate typeId
-    if (!typeId || isNaN(typeId)) {
+    if (!typeId || Number.isNaN(typeId)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid type ID'
@@ -394,8 +388,8 @@ const getDevilFruitsByType = async (req, res) => {
     }
 
     // Validate pagination parameters
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
+    const pageNum = Number.parseInt(page);
+    const limitNum = Number.parseInt(limit);
 
     if (pageNum < 1) {
       return res.status(400).json({
@@ -427,7 +421,7 @@ const getDevilFruitsByType = async (req, res) => {
       });
     }
 
-    const result = await devilFruitService.getFruitsByType(parseInt(typeId), {
+    const result = await devilFruitService.getFruitsByType(Number.parseInt(typeId), {
       page: pageNum,
       limit: limitNum,
       sortBy,

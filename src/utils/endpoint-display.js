@@ -29,25 +29,25 @@ function extractRoutes(app) {
       } else if (layer.name === 'router' && layer.regexp) {
         // This is a router
         const routerPath = layer.regexp.source
-          .replace('\\/?', '')
-          .replace('(?=\\/|$)', '')
-          .replace(/\\\//g, '/')
-          .replace(/\^/g, '')
-          .replace(/\$/g, '')
-          .replace(/\\/g, '')
-          .replace(/\?/g, '');
+          .replace(String.raw`\/?`, '')
+          .replace(String.raw`(?=\/|$)`, '')
+          .replaceAll(String.raw`\/`, '/')
+          .replaceAll('^', '')
+          .replaceAll(String.raw`\$`, '$')
+          .replaceAll(String.raw`\\`, '')
+          .replaceAll(String.raw`\?`, '');
         
         const cleanPath = routerPath === '^/$' ? '' : routerPath;
         const newBasePath = basePath + cleanPath;
         
-        if (layer.handle && layer.handle.stack) {
+        if (layer.handle?.stack) {
           processStack(layer.handle.stack, newBasePath);
         }
       }
     });
   }
   
-  if (app._router && app._router.stack) {
+  if (app._router?.stack) {
     processStack(app._router.stack);
   }
   
@@ -77,7 +77,7 @@ function formatRoutesForDisplay(routes) {
   display += '═'.repeat(60) + '\n';
   
   // Sort routes by path
-  const sortedPaths = Object.keys(groupedRoutes).sort();
+  const sortedPaths = Object.keys(groupedRoutes).sort((a, b) => a.localeCompare(b));
   
   sortedPaths.forEach(path => {
     const methods = groupedRoutes[path];

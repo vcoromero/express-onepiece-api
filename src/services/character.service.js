@@ -10,6 +10,78 @@ const serializeBigInt = (obj) => {
 };
 
 class CharacterService {
+  validateCharacterUpdateInput(id, updateData) {
+    const parsedId = Number.parseInt(id);
+    if (!id || Number.isNaN(parsedId) || parsedId <= 0) {
+      return {
+        success: false,
+        message: 'Invalid character ID',
+        error: 'INVALID_ID'
+      };
+    }
+
+    if (!updateData || Object.keys(updateData).length === 0) {
+      return {
+        success: false,
+        message: 'At least one field must be provided for update',
+        error: 'NO_FIELDS_PROVIDED'
+      };
+    }
+
+    return null;
+  }
+
+  async validateCharacterNameUpdate(updateData, currentName) {
+    if (updateData.name !== undefined && (!updateData.name || updateData.name.trim() === '')) {
+      return {
+        success: false,
+        message: 'Name cannot be empty',
+        error: 'INVALID_NAME'
+      };
+    }
+
+    if (updateData.name !== undefined && updateData.name !== currentName) {
+      const existingCharacter = await prisma.character.findUnique({
+        where: { name: updateData.name.trim() }
+      });
+
+      if (existingCharacter) {
+        return {
+          success: false,
+          message: 'A character with this name already exists',
+          error: 'DUPLICATE_NAME'
+        };
+      }
+    }
+
+    return null;
+  }
+
+  async validateCharacterRaceUpdate(updateData) {
+    if (
+      updateData.raceId !== undefined
+      && updateData.raceId !== null
+      && !(await this.raceExists(updateData.raceId))
+    ) {
+      return {
+        success: false,
+        message: 'Invalid race ID',
+        error: 'INVALID_RACE'
+      };
+    }
+
+    return null;
+  }
+
+  buildCharacterUpdatePayload(updateData) {
+    const dataToUpdate = { ...updateData };
+    if (dataToUpdate.bounty !== undefined) {
+      dataToUpdate.bounty = Number.BigInt(dataToUpdate.bounty);
+    }
+
+    return dataToUpdate;
+  }
+
   async getAllCharacters(options = {}) {
     try {
       const {
@@ -24,8 +96,8 @@ class CharacterService {
         sortOrder = 'asc'
       } = options;
 
-      const pageNum = Math.max(1, Number.parseInt(page));
-      const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit)));
+      const pageNum = Math.max(1, Number.Number.parseInt(page));
+      const limitNum = Math.min(100, Math.max(1, Number.Number.parseInt(limit)));
       const offset = (pageNum - 1) * limitNum;
 
       const where = {};
@@ -39,7 +111,7 @@ class CharacterService {
       }
 
       if (race_id) {
-        where.raceId = Number.parseInt(race_id);
+        where.raceId = Number.Number.parseInt(race_id);
       }
 
       if (status) {
@@ -117,7 +189,7 @@ class CharacterService {
 
   async getCharacterById(id) {
     try {
-      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
+      if (!id || Number.Number.isNaN(id) || Number.Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid character ID',
@@ -126,7 +198,7 @@ class CharacterService {
       }
 
       const character = await prisma.character.findUnique({
-        where: { id: Number.parseInt(id) },
+        where: { id: Number.Number.parseInt(id) },
         include: {
           race: { select: { id: true, name: true, description: true } },
           hakiTypes: {
@@ -254,16 +326,13 @@ class CharacterService {
 
   async updateCharacter(id, updateData) {
     try {
-      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
-        return {
-          success: false,
-          message: 'Invalid character ID',
-          error: 'INVALID_ID'
-        };
-      }
+      const validationError = this.validateCharacterUpdateInput(id, updateData);
+      if (validationError) return validationError;
+
+      const parsedId = Number.parseInt(id);
 
       const character = await prisma.character.findUnique({
-        where: { id: Number.parseInt(id) }
+        where: { id: parsedId }
       });
 
       if (!character) {
@@ -274,55 +343,16 @@ class CharacterService {
         };
       }
 
-      if (!updateData || Object.keys(updateData).length === 0) {
-        return {
-          success: false,
-          message: 'At least one field must be provided for update',
-          error: 'NO_FIELDS_PROVIDED'
-        };
-      }
+      const nameValidationError = await this.validateCharacterNameUpdate(updateData, character.name);
+      if (nameValidationError) return nameValidationError;
 
-      if (updateData.name !== undefined) {
-        if (!updateData.name || updateData.name.trim() === '') {
-          return {
-            success: false,
-            message: 'Name cannot be empty',
-            error: 'INVALID_NAME'
-          };
-        }
+      const raceValidationError = await this.validateCharacterRaceUpdate(updateData);
+      if (raceValidationError) return raceValidationError;
 
-        if (updateData.name !== character.name) {
-          const existingCharacter = await prisma.character.findUnique({
-            where: { name: updateData.name.trim() }
-          });
-
-          if (existingCharacter) {
-            return {
-              success: false,
-              message: 'A character with this name already exists',
-              error: 'DUPLICATE_NAME'
-            };
-          }
-        }
-      }
-
-      if (updateData.raceId !== undefined && updateData.raceId !== null) {
-        if (!(await this.raceExists(updateData.raceId))) {
-          return {
-            success: false,
-            message: 'Invalid race ID',
-            error: 'INVALID_RACE'
-          };
-        }
-      }
-
-      const dataToUpdate = { ...updateData };
-      if (dataToUpdate.bounty !== undefined) {
-        dataToUpdate.bounty = Number.BigInt(dataToUpdate.bounty);
-      }
+      const dataToUpdate = this.buildCharacterUpdatePayload(updateData);
 
       const updatedCharacter = await prisma.character.update({
-        where: { id: Number.parseInt(id) },
+        where: { id: parsedId },
         data: dataToUpdate,
         include: {
           race: { select: { id: true, name: true } }
@@ -346,7 +376,7 @@ class CharacterService {
 
   async deleteCharacter(id) {
     try {
-      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
+      if (!id || Number.Number.isNaN(id) || Number.Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid character ID',
@@ -355,7 +385,7 @@ class CharacterService {
       }
 
       const character = await prisma.character.findUnique({
-        where: { id: Number.parseInt(id) }
+        where: { id: Number.Number.parseInt(id) }
       });
 
       if (!character) {
@@ -367,7 +397,7 @@ class CharacterService {
       }
 
       const hasDevilFruits = await prisma.characterDevilFruit.count({
-        where: { characterId: Number.parseInt(id), isCurrent: true }
+        where: { characterId: Number.Number.parseInt(id), isCurrent: true }
       });
 
       if (hasDevilFruits > 0) {
@@ -379,7 +409,7 @@ class CharacterService {
       }
 
       await prisma.character.delete({
-        where: { id: Number.parseInt(id) }
+        where: { id: Number.Number.parseInt(id) }
       });
 
       return {
@@ -399,7 +429,7 @@ class CharacterService {
   async raceExists(raceId) {
     try {
       const race = await prisma.race.findUnique({
-        where: { id: Number.parseInt(raceId) }
+        where: { id: Number.Number.parseInt(raceId) }
       });
       return !!race;
     } catch (error) {

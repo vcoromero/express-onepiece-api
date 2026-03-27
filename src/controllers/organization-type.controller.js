@@ -49,7 +49,7 @@ class OrganizationTypeController {
       const { id } = req.params;
 
       // Validate ID is a valid number
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid organization type ID',
@@ -57,7 +57,7 @@ class OrganizationTypeController {
         });
       }
 
-      const result = await organizationTypeService.getOrganizationTypeById(parseInt(id));
+      const result = await organizationTypeService.getOrganizationTypeById(Number.parseInt(id));
 
       if (!result.success) {
         if (result.error === 'NOT_FOUND') {
@@ -93,7 +93,7 @@ class OrganizationTypeController {
       const updateData = req.body;
 
       // Validate ID is a valid number
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid organization type ID',
@@ -110,7 +110,7 @@ class OrganizationTypeController {
         });
       }
 
-      const result = await organizationTypeService.updateOrganizationType(parseInt(id), updateData);
+      const result = await organizationTypeService.updateOrganizationType(Number.parseInt(id), updateData);
 
       if (!result.success) {
         switch (result.error) {

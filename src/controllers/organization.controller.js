@@ -10,6 +10,122 @@ const { createPaginatedResponse, createItemResponse, createListResponse } = requ
  * @version 1.0.0
  */
 class OrganizationController {
+  static buildValidationError(message) {
+    return {
+      success: false,
+      message,
+      error: 'VALIDATION_ERROR'
+    };
+  }
+
+  static validateOrganizationData(data, options = {}) {
+    const { requireNameAndType = false } = options;
+    const hasValue = (value) => value !== undefined && value !== null && value !== '';
+    const statusValues = ['active', 'disbanded', 'destroyed'];
+
+    if (requireNameAndType && (!data.name || !hasValue(data.organizationTypeId))) {
+      return this.buildValidationError('Name and organization type are required');
+    }
+
+    const parsedOrganizationTypeId = Number.parseInt(data.organizationTypeId);
+    const parsedLeaderId = Number.parseInt(data.leaderId);
+    const parsedShipId = Number.parseInt(data.shipId);
+    const parsedBounty = Number.parseInt(data.totalBounty);
+    const validationRules = [
+      {
+        condition: data.name && data.name.length > 100,
+        message: 'Organization name must be 100 characters or less'
+      },
+      {
+        condition: hasValue(data.organizationTypeId) && Number.isNaN(parsedOrganizationTypeId),
+        message: 'Valid organization type ID is required'
+      },
+      {
+        condition: hasValue(data.leaderId) && Number.isNaN(parsedLeaderId),
+        message: 'Valid leader ID is required'
+      },
+      {
+        condition: hasValue(data.shipId) && Number.isNaN(parsedShipId),
+        message: 'Valid ship ID is required'
+      },
+      {
+        condition: hasValue(data.status) && !statusValues.includes(data.status),
+        message: 'Invalid status. Must be active, disbanded, or destroyed'
+      },
+      {
+        condition: hasValue(data.totalBounty) && (Number.isNaN(parsedBounty) || parsedBounty < 0),
+        message: 'Total bounty must be a non-negative number'
+      }
+    ];
+
+    for (const rule of validationRules) {
+      if (rule.condition) {
+        return this.buildValidationError(rule.message);
+      }
+    }
+
+    if (data.jollyRogerUrl) {
+      try {
+        new URL(data.jollyRogerUrl);
+      } catch (urlError) {
+        return this.buildValidationError(`Invalid Jolly Roger URL format: ${urlError.message}`);
+      }
+    }
+
+    return null;
+  }
+
+  static getOrganizationErrorResponse(error) {
+    if (error.message.includes('not found')) {
+      return {
+        status: 404,
+        body: {
+          success: false,
+          message: 'Organization not found',
+          error: 'NOT_FOUND'
+        }
+      };
+    }
+
+    if (error.message.includes('already exists')) {
+      return {
+        status: 409,
+        body: {
+          success: false,
+          message: error.message,
+          error: 'DUPLICATE_ERROR'
+        }
+      };
+    }
+
+    if (error.message.includes('Invalid') || error.message.includes('required')) {
+      return {
+        status: 400,
+        body: {
+          success: false,
+          message: error.message,
+          error: 'VALIDATION_ERROR'
+        }
+      };
+    }
+
+    return null;
+  }
+
+  static validateOrganizationListQuery(query) {
+    const { status, organizationTypeId } = query;
+
+    if (status && !['active', 'disbanded', 'destroyed'].includes(status)) {
+      return this.buildValidationError('Invalid status. Must be active, disbanded, or destroyed');
+    }
+
+    if (organizationTypeId && Number.isNaN(Number.parseInt(organizationTypeId))) {
+      return this.buildValidationError('Invalid organization type ID');
+    }
+
+    return null;
+  }
+
   /**
      * Get all organizations with pagination and filtering
      * @route GET /api/organizations
@@ -31,31 +147,18 @@ class OrganizationController {
       } = req.query;
 
       // Validate pagination parameters
-      const pageNum = page ? Math.max(1, parseInt(page)) : 1;
-      const limitNum = limit ? Math.min(100, Math.max(1, parseInt(limit))) : 10;
+      const pageNum = page ? Math.max(1, Number.parseInt(page)) : 1;
+      const limitNum = limit ? Math.min(100, Math.max(1, Number.parseInt(limit))) : 10;
 
-      // Validate status if provided
-      if (status && !['active', 'disbanded', 'destroyed'].includes(status)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid status. Must be active, disbanded, or destroyed',
-          error: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate organization type ID if provided
-      if (organizationTypeId && isNaN(parseInt(organizationTypeId))) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid organization type ID',
-          error: 'VALIDATION_ERROR'
-        });
+      const validationError = this.validateOrganizationListQuery({ status, organizationTypeId });
+      if (validationError) {
+        return res.status(400).json(validationError);
       }
 
       // Validate sort parameters
       const allowedSortFields = ['name', 'totalBounty', 'status', 'createdAt'];
       const sortField = sortBy && allowedSortFields.includes(sortBy) ? sortBy : 'name';
-      const sortDirection = sortOrder && sortOrder.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+      const sortDirection = sortOrder?.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
       // Call service
       const result = await OrganizationService.getAllOrganizations({
@@ -63,7 +166,7 @@ class OrganizationController {
         limit: limitNum,
         search,
         status,
-        organizationTypeId: organizationTypeId ? parseInt(organizationTypeId) : undefined,
+        organizationTypeId: organizationTypeId ? Number.parseInt(organizationTypeId) : undefined,
         sortBy: sortField,
         sortOrder: sortDirection
       });
@@ -95,7 +198,7 @@ class OrganizationController {
       const { id } = req.params;
 
       // Validate ID parameter
-      if (!id || isNaN(parseInt(id))) {
+      if (!id || Number.isNaN(Number.parseInt(id))) {
         return res.status(400).json({
           success: false,
           message: 'Valid organization ID is required',
@@ -104,7 +207,7 @@ class OrganizationController {
       }
 
       // Call service
-      const result = await OrganizationService.getOrganizationById(parseInt(id));
+      const result = await OrganizationService.getOrganizationById(Number.parseInt(id));
 
       res.status(200).json(createItemResponse(
         result.data,
@@ -140,83 +243,11 @@ class OrganizationController {
     try {
       const organizationData = req.body;
 
-      // Validate required fields
-      if (!organizationData.name || !organizationData.organizationTypeId) {
-        return res.status(400).json({
-          success: false,
-          message: 'Name and organization type are required',
-          error: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate name length
-      if (organizationData.name.length > 100) {
-        return res.status(400).json({
-          success: false,
-          message: 'Organization name must be 100 characters or less',
-          error: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate organization type ID
-      if (isNaN(parseInt(organizationData.organizationTypeId))) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid organization type ID is required',
-          error: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate leader ID if provided
-      if (organizationData.leaderId && isNaN(parseInt(organizationData.leaderId))) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid leader ID is required',
-          error: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate ship ID if provided
-      if (organizationData.shipId && isNaN(parseInt(organizationData.shipId))) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid ship ID is required',
-          error: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate status if provided
-      if (organizationData.status && !['active', 'disbanded', 'destroyed'].includes(organizationData.status)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid status. Must be active, disbanded, or destroyed',
-          error: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate total bounty if provided
-      if (organizationData.totalBounty !== undefined) {
-        const bounty = parseInt(organizationData.totalBounty);
-        if (isNaN(bounty) || bounty < 0) {
-          return res.status(400).json({
-            success: false,
-            message: 'Total bounty must be a non-negative number',
-            error: 'VALIDATION_ERROR'
-          });
-        }
-      }
-
-      // Validate URL if provided
-      if (organizationData.jollyRogerUrl) {
-        try {
-          new URL(organizationData.jollyRogerUrl);
-        } catch (urlError) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid Jolly Roger URL format',
-            error: 'VALIDATION_ERROR'
-          });
-        }
+      const validationError = this.validateOrganizationData(organizationData, {
+        requireNameAndType: true
+      });
+      if (validationError) {
+        return res.status(400).json(validationError);
       }
 
       // Call service
@@ -226,20 +257,9 @@ class OrganizationController {
     } catch (error) {
       console.error('Error in createOrganization:', error);
             
-      if (error.message.includes('already exists')) {
-        return res.status(409).json({
-          success: false,
-          message: error.message,
-          error: 'DUPLICATE_ERROR'
-        });
-      }
-
-      if (error.message.includes('Invalid') || error.message.includes('required')) {
-        return res.status(400).json({
-          success: false,
-          message: error.message,
-          error: 'VALIDATION_ERROR'
-        });
+      const knownError = this.getOrganizationErrorResponse(error);
+      if (knownError) {
+        return res.status(knownError.status).json(knownError.body);
       }
 
       res.status(500).json({
@@ -263,7 +283,7 @@ class OrganizationController {
       const updateData = req.body;
 
       // Validate ID parameter
-      if (!id || isNaN(parseInt(id))) {
+      if (!id || Number.isNaN(Number.parseInt(id))) {
         return res.status(400).json({
           success: false,
           message: 'Valid organization ID is required',
@@ -271,78 +291,13 @@ class OrganizationController {
         });
       }
 
-      // Validate name length if provided
-      if (updateData.name && updateData.name.length > 100) {
-        return res.status(400).json({
-          success: false,
-          message: 'Organization name must be 100 characters or less',
-          error: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate organization type ID if provided
-      if (updateData.organizationTypeId && isNaN(parseInt(updateData.organizationTypeId))) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid organization type ID is required',
-          error: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate leader ID if provided
-      if (updateData.leaderId && isNaN(parseInt(updateData.leaderId))) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid leader ID is required',
-          error: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate ship ID if provided
-      if (updateData.shipId && isNaN(parseInt(updateData.shipId))) {
-        return res.status(400).json({
-          success: false,
-          message: 'Valid ship ID is required',
-          error: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate status if provided
-      if (updateData.status && !['active', 'disbanded', 'destroyed'].includes(updateData.status)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid status. Must be active, disbanded, or destroyed',
-          error: 'VALIDATION_ERROR'
-        });
-      }
-
-      // Validate total bounty if provided
-      if (updateData.totalBounty !== undefined) {
-        const bounty = parseInt(updateData.totalBounty);
-        if (isNaN(bounty) || bounty < 0) {
-          return res.status(400).json({
-            success: false,
-            message: 'Total bounty must be a non-negative number',
-            error: 'VALIDATION_ERROR'
-          });
-        }
-      }
-
-      // Validate URL if provided
-      if (updateData.jollyRogerUrl) {
-        try {
-          new URL(updateData.jollyRogerUrl);
-        } catch (urlError) {
-          return res.status(400).json({
-            success: false,
-            message: 'Invalid Jolly Roger URL format',
-            error: 'VALIDATION_ERROR'
-          });
-        }
+      const validationError = this.validateOrganizationData(updateData);
+      if (validationError) {
+        return res.status(400).json(validationError);
       }
 
       // Call service
-      const result = await OrganizationService.updateOrganization(parseInt(id), updateData);
+      const result = await OrganizationService.updateOrganization(Number.parseInt(id), updateData);
 
       res.status(200).json(createItemResponse(
         result.data,
@@ -351,28 +306,9 @@ class OrganizationController {
     } catch (error) {
       console.error('Error in updateOrganization:', error);
             
-      if (error.message.includes('not found')) {
-        return res.status(404).json({
-          success: false,
-          message: 'Organization not found',
-          error: 'NOT_FOUND'
-        });
-      }
-
-      if (error.message.includes('already exists')) {
-        return res.status(409).json({
-          success: false,
-          message: error.message,
-          error: 'DUPLICATE_ERROR'
-        });
-      }
-
-      if (error.message.includes('Invalid') || error.message.includes('required')) {
-        return res.status(400).json({
-          success: false,
-          message: error.message,
-          error: 'VALIDATION_ERROR'
-        });
+      const knownError = this.getOrganizationErrorResponse(error);
+      if (knownError) {
+        return res.status(knownError.status).json(knownError.body);
       }
 
       res.status(500).json({
@@ -395,7 +331,7 @@ class OrganizationController {
       const { id } = req.params;
 
       // Validate ID parameter
-      if (!id || isNaN(parseInt(id))) {
+      if (!id || Number.isNaN(Number.parseInt(id))) {
         return res.status(400).json({
           success: false,
           message: 'Valid organization ID is required',
@@ -404,7 +340,7 @@ class OrganizationController {
       }
 
       // Call service
-      const result = await OrganizationService.deleteOrganization(parseInt(id));
+      const result = await OrganizationService.deleteOrganization(Number.parseInt(id));
 
       res.status(200).json(createItemResponse(
         result.data,
@@ -449,7 +385,7 @@ class OrganizationController {
       const { organizationTypeId } = req.params;
 
       // Validate organization type ID
-      if (!organizationTypeId || isNaN(parseInt(organizationTypeId))) {
+      if (!organizationTypeId || Number.isNaN(Number.parseInt(organizationTypeId))) {
         return res.status(400).json({
           success: false,
           message: 'Valid organization type ID is required',
@@ -458,7 +394,7 @@ class OrganizationController {
       }
 
       // Call service
-      const result = await OrganizationService.getOrganizationsByType(parseInt(organizationTypeId));
+      const result = await OrganizationService.getOrganizationsByType(Number.parseInt(organizationTypeId));
 
       res.status(200).json(createListResponse(
         result.data,
@@ -495,7 +431,7 @@ class OrganizationController {
       const { id } = req.params;
 
       // Validate ID parameter
-      if (!id || isNaN(parseInt(id))) {
+      if (!id || Number.isNaN(Number.parseInt(id))) {
         return res.status(400).json({
           success: false,
           message: 'Valid organization ID is required',
@@ -504,7 +440,7 @@ class OrganizationController {
       }
 
       // Call service
-      const result = await OrganizationService.getOrganizationMembers(parseInt(id));
+      const result = await OrganizationService.getOrganizationMembers(Number.parseInt(id));
 
       res.status(200).json(createItemResponse(
         result.data,

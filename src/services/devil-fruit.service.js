@@ -1,6 +1,18 @@
 const prisma = require('../config/prisma.config');
 
 class DevilFruitService {
+  buildUpdateFruitPayload(data) {
+    const updates = {};
+
+    if (data.name !== undefined) updates.name = data.name.trim();
+    if (data.typeId !== undefined) updates.typeId = Number.parseInt(data.typeId);
+    if (data.japaneseName !== undefined) updates.japaneseName = data.japaneseName ? data.japaneseName.trim() : null;
+    if (data.description !== undefined) updates.description = data.description ? data.description.trim() : null;
+    if (data.currentUserId !== undefined) updates.currentUserId = data.currentUserId ? Number.parseInt(data.currentUserId) : null;
+
+    return updates;
+  }
+
   async getAllFruits(options = {}) {
     try {
       const {
@@ -12,8 +24,8 @@ class DevilFruitService {
         sortOrder = 'asc'
       } = options;
 
-      const pageNum = Math.max(1, parseInt(page));
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+      const pageNum = Math.max(1, Number.parseInt(page));
+      const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit)));
       const offset = (pageNum - 1) * limitNum;
 
       const where = {};
@@ -25,7 +37,7 @@ class DevilFruitService {
       }
 
       if (type_id) {
-        where.typeId = parseInt(type_id);
+        where.typeId = Number.parseInt(type_id);
       }
 
       const validSortFields = ['name', 'createdAt', 'updatedAt'];
@@ -71,12 +83,12 @@ class DevilFruitService {
 
   async getFruitById(id) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return null;
       }
 
       const fruit = await prisma.devilFruit.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         include: {
           fruitType: { select: { id: true, name: true, description: true } }
         }
@@ -93,7 +105,7 @@ class DevilFruitService {
     try {
       const where = { name: name.trim() };
       if (excludeId) {
-        where.id = { not: parseInt(excludeId) };
+        where.id = { not: Number.parseInt(excludeId) };
       }
 
       const existing = await prisma.devilFruit.findFirst({ where });
@@ -107,7 +119,7 @@ class DevilFruitService {
   async typeExists(typeId) {
     try {
       const type = await prisma.fruitType.findUnique({
-        where: { id: parseInt(typeId) }
+        where: { id: Number.parseInt(typeId) }
       });
       return !!type;
     } catch (error) {
@@ -143,10 +155,10 @@ class DevilFruitService {
       const newFruit = await prisma.devilFruit.create({
         data: {
           name: name.trim(),
-          typeId: parseInt(typeId),
+          typeId: Number.parseInt(typeId),
           japaneseName: japaneseName ? japaneseName.trim() : null,
           description: description ? description.trim() : null,
-          currentUserId: currentUserId ? parseInt(currentUserId) : null
+          currentUserId: currentUserId ? Number.parseInt(currentUserId) : null
         }
       });
 
@@ -166,33 +178,22 @@ class DevilFruitService {
         throw error;
       }
 
-      if (data.name !== undefined) {
-        const exists = await this.nameExists(data.name, id);
-        if (exists) {
-          const error = new Error('Another devil fruit with this name already exists');
-          error.code = 'DUPLICATE_NAME';
-          throw error;
-        }
+      if (data.name !== undefined && await this.nameExists(data.name, id)) {
+        const error = new Error('Another devil fruit with this name already exists');
+        error.code = 'DUPLICATE_NAME';
+        throw error;
       }
 
-      if (data.typeId !== undefined) {
-        const typeValid = await this.typeExists(data.typeId);
-        if (!typeValid) {
-          const error = new Error('Invalid type ID');
-          error.code = 'INVALID_TYPE';
-          throw error;
-        }
+      if (data.typeId !== undefined && !(await this.typeExists(data.typeId))) {
+        const error = new Error('Invalid type ID');
+        error.code = 'INVALID_TYPE';
+        throw error;
       }
 
-      const updates = {};
-      if (data.name !== undefined) updates.name = data.name.trim();
-      if (data.typeId !== undefined) updates.typeId = parseInt(data.typeId);
-      if (data.japaneseName !== undefined) updates.japaneseName = data.japaneseName ? data.japaneseName.trim() : null;
-      if (data.description !== undefined) updates.description = data.description ? data.description.trim() : null;
-      if (data.currentUserId !== undefined) updates.currentUserId = data.currentUserId ? parseInt(data.currentUserId) : null;
+      const updates = this.buildUpdateFruitPayload(data);
 
       await prisma.devilFruit.update({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         data: updates
       });
 
@@ -213,7 +214,7 @@ class DevilFruitService {
       }
 
       await prisma.devilFruit.delete({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       return {
@@ -235,8 +236,8 @@ class DevilFruitService {
         sortOrder = 'asc'
       } = options;
 
-      const pageNum = Math.max(1, parseInt(page));
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+      const pageNum = Math.max(1, Number.parseInt(page));
+      const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit)));
       const offset = (pageNum - 1) * limitNum;
 
       const validSortFields = ['name', 'createdAt', 'updatedAt'];
@@ -245,7 +246,7 @@ class DevilFruitService {
 
       const [fruits, total] = await Promise.all([
         prisma.devilFruit.findMany({
-          where: { typeId: parseInt(typeId) },
+          where: { typeId: Number.parseInt(typeId) },
           include: {
             fruitType: { select: { id: true, name: true, description: true } }
           },
@@ -253,7 +254,7 @@ class DevilFruitService {
           skip: offset,
           take: limitNum
         }),
-        prisma.devilFruit.count({ where: { typeId: parseInt(typeId) } })
+        prisma.devilFruit.count({ where: { typeId: Number.parseInt(typeId) } })
       ]);
 
       const totalPages = Math.ceil(total / limitNum);

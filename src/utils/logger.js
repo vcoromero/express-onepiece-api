@@ -1,5 +1,5 @@
 const winston = require('winston');
-const path = require('path');
+const path = require('node:path');
 
 /**
  * Logger configuration using Winston

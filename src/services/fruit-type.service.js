@@ -24,7 +24,7 @@ class FruitTypeService {
 
   async getTypeById(id) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid fruit type ID',
@@ -33,7 +33,7 @@ class FruitTypeService {
       }
 
       const fruitType = await prisma.fruitType.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!fruitType) {
@@ -62,7 +62,7 @@ class FruitTypeService {
     try {
       const where = { name: name.trim() };
       if (excludeId) {
-        where.id = { not: parseInt(excludeId) };
+        where.id = { not: Number.parseInt(excludeId) };
       }
 
       const existing = await prisma.fruitType.findFirst({ where });
@@ -76,7 +76,7 @@ class FruitTypeService {
   async hasAssociatedFruits(id) {
     try {
       const count = await prisma.devilFruit.count({
-        where: { typeId: parseInt(id) }
+        where: { typeId: Number.parseInt(id) }
       });
       return count > 0;
     } catch (error) {
@@ -88,7 +88,7 @@ class FruitTypeService {
   async getAssociatedFruitsCount(id) {
     try {
       return await prisma.devilFruit.count({
-        where: { typeId: parseInt(id) }
+        where: { typeId: Number.parseInt(id) }
       });
     } catch (error) {
       console.error('Error in getAssociatedFruitsCount:', error);
@@ -141,13 +141,10 @@ class FruitTypeService {
         throw error;
       }
 
-      if (name !== undefined) {
-        const exists = await this.nameExists(name, id);
-        if (exists) {
-          const error = new Error('Another fruit type with this name already exists');
-          error.code = 'DUPLICATE_NAME';
-          throw error;
-        }
+      if (name !== undefined && await this.nameExists(name, id)) {
+        const error = new Error('Another fruit type with this name already exists');
+        error.code = 'DUPLICATE_NAME';
+        throw error;
       }
 
       const updates = {};
@@ -158,7 +155,7 @@ class FruitTypeService {
       }
 
       await prisma.fruitType.update({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         data: updates
       });
 
@@ -188,7 +185,7 @@ class FruitTypeService {
       }
 
       await prisma.fruitType.delete({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       return {

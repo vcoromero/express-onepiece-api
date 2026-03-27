@@ -6,6 +6,138 @@ const { createPaginatedResponse, createItemResponse } = require('../utils/respon
  * @description Controller for Character HTTP requests
  */
 class CharacterController {
+  buildValidationError(message, error) {
+    return {
+      success: false,
+      message,
+      error
+    };
+  }
+
+  validateCharacterListQuery(query) {
+    const { pageNum, limitNum, race_id, character_type_id, min_bounty, max_bounty } = query;
+
+    if (pageNum < 1 || limitNum < 1 || limitNum > 100) {
+      return this.buildValidationError(
+        'Invalid pagination parameters. Page must be >= 1, limit must be between 1 and 100',
+        'INVALID_PAGINATION'
+      );
+    }
+
+    if (race_id && (Number.isNaN(race_id) || Number.parseInt(race_id) <= 0)) {
+      return this.buildValidationError('Invalid race_id parameter', 'INVALID_RACE_ID');
+    }
+
+    if (character_type_id && (Number.isNaN(character_type_id) || Number.parseInt(character_type_id) <= 0)) {
+      return this.buildValidationError('Invalid character_type_id parameter', 'INVALID_CHARACTER_TYPE_ID');
+    }
+
+    if (min_bounty && (Number.isNaN(min_bounty) || Number.parseInt(min_bounty) < 0)) {
+      return this.buildValidationError('Invalid min_bounty parameter', 'INVALID_MIN_BOUNTY');
+    }
+
+    if (max_bounty && (Number.isNaN(max_bounty) || Number.parseInt(max_bounty) < 0)) {
+      return this.buildValidationError('Invalid max_bounty parameter', 'INVALID_MAX_BOUNTY');
+    }
+
+    if (min_bounty && max_bounty && Number.parseInt(min_bounty) > Number.parseInt(max_bounty)) {
+      return this.buildValidationError('min_bounty cannot be greater than max_bounty', 'INVALID_BOUNTY_RANGE');
+    }
+
+    return null;
+  }
+
+  validateCreateCharacterPayload(payload) {
+    const { name, race_id, character_type_id, bounty, age, height } = payload;
+
+    if (!name || name.trim() === '') {
+      return this.buildValidationError('Name is required', 'MISSING_NAME');
+    }
+
+    if (race_id && (Number.isNaN(race_id) || Number.parseInt(race_id) <= 0)) {
+      return this.buildValidationError('Invalid race_id', 'INVALID_RACE_ID');
+    }
+
+    if (character_type_id && (Number.isNaN(character_type_id) || Number.parseInt(character_type_id) <= 0)) {
+      return this.buildValidationError('Invalid character_type_id', 'INVALID_CHARACTER_TYPE_ID');
+    }
+
+    if (bounty && (Number.isNaN(bounty) || Number.parseInt(bounty) < 0)) {
+      return this.buildValidationError('Invalid bounty value', 'INVALID_BOUNTY');
+    }
+
+    if (age && (Number.isNaN(age) || Number.parseInt(age) < 0 || Number.parseInt(age) > 1000)) {
+      return this.buildValidationError('Invalid age value (must be between 0 and 1000)', 'INVALID_AGE');
+    }
+
+    if (height && (Number.isNaN(height) || Number.parseFloat(height) < 0 || Number.parseFloat(height) > 1000)) {
+      return this.buildValidationError(
+        'Invalid height value (must be between 0 and 1000 cm)',
+        'INVALID_HEIGHT'
+      );
+    }
+
+    return null;
+  }
+
+  validateUpdateCharacterPayload(updateData) {
+    if (!updateData || typeof updateData !== 'object') {
+      return this.buildValidationError(
+        'Request body must be a valid JSON object',
+        'INVALID_BODY'
+      );
+    }
+
+    if (updateData.race_id && (Number.isNaN(updateData.race_id) || Number.parseInt(updateData.race_id) <= 0)) {
+      return this.buildValidationError('Invalid race_id', 'INVALID_RACE_ID');
+    }
+
+    if (
+      updateData.character_type_id
+      && (Number.isNaN(updateData.character_type_id) || Number.parseInt(updateData.character_type_id) <= 0)
+    ) {
+      return this.buildValidationError('Invalid character_type_id', 'INVALID_CHARACTER_TYPE_ID');
+    }
+
+    if (updateData.bounty && (Number.isNaN(updateData.bounty) || Number.parseInt(updateData.bounty) < 0)) {
+      return this.buildValidationError('Invalid bounty value', 'INVALID_BOUNTY');
+    }
+
+    if (updateData.age && (Number.isNaN(updateData.age) || Number.parseInt(updateData.age) < 0 || Number.parseInt(updateData.age) > 1000)) {
+      return this.buildValidationError('Invalid age value (must be between 0 and 1000)', 'INVALID_AGE');
+    }
+
+    if (
+      updateData.height
+      && (Number.isNaN(updateData.height) || Number.parseFloat(updateData.height) < 0 || Number.parseFloat(updateData.height) > 1000)
+    ) {
+      return this.buildValidationError(
+        'Invalid height value (must be between 0 and 1000 cm)',
+        'INVALID_HEIGHT'
+      );
+    }
+
+    return null;
+  }
+
+  normalizeCharacterNumericFields(payload) {
+    if (payload.race_id) {
+      payload.race_id = Number.parseInt(payload.race_id);
+    }
+    if (payload.character_type_id) {
+      payload.character_type_id = Number.parseInt(payload.character_type_id);
+    }
+    if (payload.bounty) {
+      payload.bounty = Number.parseInt(payload.bounty);
+    }
+    if (payload.age) {
+      payload.age = Number.parseInt(payload.age);
+    }
+    if (payload.height) {
+      payload.height = Number.parseFloat(payload.height);
+    }
+  }
+
   /**
    * Get all characters with pagination and filtering
    * @route GET /api/characters
@@ -29,66 +161,29 @@ class CharacterController {
       } = req.query;
 
       // Validate pagination parameters
-      const pageNum = parseInt(page);
-      const limitNum = parseInt(limit);
+      const pageNum = Number.parseInt(page);
+      const limitNum = Number.parseInt(limit);
 
-      if (pageNum < 1 || limitNum < 1 || limitNum > 100) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid pagination parameters. Page must be >= 1, limit must be between 1 and 100',
-          error: 'INVALID_PAGINATION'
-        });
-      }
-
-      // Validate numeric filters
-      if (race_id && (isNaN(race_id) || parseInt(race_id) <= 0)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid race_id parameter',
-          error: 'INVALID_RACE_ID'
-        });
-      }
-
-      if (character_type_id && (isNaN(character_type_id) || parseInt(character_type_id) <= 0)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid character_type_id parameter',
-          error: 'INVALID_CHARACTER_TYPE_ID'
-        });
-      }
-
-      if (min_bounty && (isNaN(min_bounty) || parseInt(min_bounty) < 0)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid min_bounty parameter',
-          error: 'INVALID_MIN_BOUNTY'
-        });
-      }
-
-      if (max_bounty && (isNaN(max_bounty) || parseInt(max_bounty) < 0)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid max_bounty parameter',
-          error: 'INVALID_MAX_BOUNTY'
-        });
-      }
-
-      if (min_bounty && max_bounty && parseInt(min_bounty) > parseInt(max_bounty)) {
-        return res.status(400).json({
-          success: false,
-          message: 'min_bounty cannot be greater than max_bounty',
-          error: 'INVALID_BOUNTY_RANGE'
-        });
+      const listValidationError = this.validateCharacterListQuery({
+        pageNum,
+        limitNum,
+        race_id,
+        character_type_id,
+        min_bounty,
+        max_bounty
+      });
+      if (listValidationError) {
+        return res.status(400).json(listValidationError);
       }
 
       const result = await characterService.getAllCharacters({
         page: pageNum,
         limit: limitNum,
         search,
-        race_id: race_id ? parseInt(race_id) : undefined,
-        character_type_id: character_type_id ? parseInt(character_type_id) : undefined,
-        min_bounty: min_bounty ? parseInt(min_bounty) : undefined,
-        max_bounty: max_bounty ? parseInt(max_bounty) : undefined,
+        race_id: race_id ? Number.parseInt(race_id) : undefined,
+        character_type_id: character_type_id ? Number.parseInt(character_type_id) : undefined,
+        min_bounty: min_bounty ? Number.parseInt(min_bounty) : undefined,
+        max_bounty: max_bounty ? Number.parseInt(max_bounty) : undefined,
         is_alive,
         sortBy,
         sortOrder
@@ -125,7 +220,7 @@ class CharacterController {
       const { id } = req.params;
 
       // Validate ID is a valid number
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid character ID',
@@ -133,13 +228,10 @@ class CharacterController {
         });
       }
 
-      const result = await characterService.getCharacterById(parseInt(id));
+      const result = await characterService.getCharacterById(Number.parseInt(id));
 
       if (!result.success) {
-        if (result.error === 'NOT_FOUND') {
-          return res.status(404).json(result);
-        }
-        return res.status(500).json(result);
+        return res.status(result.error === 'NOT_FOUND' ? 404 : 500).json(result);
       }
 
       res.status(200).json(createItemResponse(
@@ -180,68 +272,30 @@ class CharacterController {
         first_appearance
       } = req.body;
 
-      // Validate required fields
-      if (!name || name.trim() === '') {
-        return res.status(400).json({
-          success: false,
-          message: 'Name is required',
-          error: 'MISSING_NAME'
-        });
-      }
-
-      // Validate numeric fields
-      if (race_id && (isNaN(race_id) || parseInt(race_id) <= 0)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid race_id',
-          error: 'INVALID_RACE_ID'
-        });
-      }
-
-      if (character_type_id && (isNaN(character_type_id) || parseInt(character_type_id) <= 0)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid character_type_id',
-          error: 'INVALID_CHARACTER_TYPE_ID'
-        });
-      }
-
-      if (bounty && (isNaN(bounty) || parseInt(bounty) < 0)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid bounty value',
-          error: 'INVALID_BOUNTY'
-        });
-      }
-
-      if (age && (isNaN(age) || parseInt(age) < 0 || parseInt(age) > 1000)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid age value (must be between 0 and 1000)',
-          error: 'INVALID_AGE'
-        });
-      }
-
-      if (height && (isNaN(height) || parseFloat(height) < 0 || parseFloat(height) > 1000)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid height value (must be between 0 and 1000 cm)',
-          error: 'INVALID_HEIGHT'
-        });
+      const createValidationError = this.validateCreateCharacterPayload({
+        name,
+        race_id,
+        character_type_id,
+        bounty,
+        age,
+        height
+      });
+      if (createValidationError) {
+        return res.status(400).json(createValidationError);
       }
 
       const result = await characterService.createCharacter({
         name,
         japanese_name,
-        race_id: race_id ? parseInt(race_id) : undefined,
-        character_type_id: character_type_id ? parseInt(character_type_id) : undefined,
-        bounty: bounty ? parseInt(bounty) : undefined,
-        age: age ? parseInt(age) : undefined,
-        height: height ? parseFloat(height) : undefined,
+        race_id: race_id ? Number.parseInt(race_id) : undefined,
+        character_type_id: character_type_id ? Number.parseInt(character_type_id) : undefined,
+        bounty: bounty ? Number.parseInt(bounty) : undefined,
+        age: age ? Number.parseInt(age) : undefined,
+        height: height ? Number.parseFloat(height) : undefined,
         description,
         abilities,
         image_url,
-        is_alive: is_alive !== undefined ? is_alive : true,
+        is_alive: is_alive === undefined ? true : is_alive,
         first_appearance
       });
 
@@ -283,7 +337,7 @@ class CharacterController {
       const updateData = req.body;
 
       // Validate ID is a valid number
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid character ID',
@@ -291,74 +345,15 @@ class CharacterController {
         });
       }
 
-      // Validate request body
-      if (!updateData || typeof updateData !== 'object') {
-        return res.status(400).json({
-          success: false,
-          message: 'Request body must be a valid JSON object',
-          error: 'INVALID_BODY'
-        });
-      }
-
-      // Validate numeric fields if provided
-      if (updateData.race_id && (isNaN(updateData.race_id) || parseInt(updateData.race_id) <= 0)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid race_id',
-          error: 'INVALID_RACE_ID'
-        });
-      }
-
-      if (updateData.character_type_id && (isNaN(updateData.character_type_id) || parseInt(updateData.character_type_id) <= 0)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid character_type_id',
-          error: 'INVALID_CHARACTER_TYPE_ID'
-        });
-      }
-
-      if (updateData.bounty && (isNaN(updateData.bounty) || parseInt(updateData.bounty) < 0)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid bounty value',
-          error: 'INVALID_BOUNTY'
-        });
-      }
-
-      if (updateData.age && (isNaN(updateData.age) || parseInt(updateData.age) < 0 || parseInt(updateData.age) > 1000)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid age value (must be between 0 and 1000)',
-          error: 'INVALID_AGE'
-        });
-      }
-
-      if (updateData.height && (isNaN(updateData.height) || parseFloat(updateData.height) < 0 || parseFloat(updateData.height) > 1000)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid height value (must be between 0 and 1000 cm)',
-          error: 'INVALID_HEIGHT'
-        });
+      const updateValidationError = this.validateUpdateCharacterPayload(updateData);
+      if (updateValidationError) {
+        return res.status(400).json(updateValidationError);
       }
 
       // Convert numeric fields
-      if (updateData.race_id) {
-        updateData.race_id = parseInt(updateData.race_id);
-      }
-      if (updateData.character_type_id) {
-        updateData.character_type_id = parseInt(updateData.character_type_id);
-      }
-      if (updateData.bounty) {
-        updateData.bounty = parseInt(updateData.bounty);
-      }
-      if (updateData.age) {
-        updateData.age = parseInt(updateData.age);
-      }
-      if (updateData.height) {
-        updateData.height = parseFloat(updateData.height);
-      }
+      this.normalizeCharacterNumericFields(updateData);
 
-      const result = await characterService.updateCharacter(parseInt(id), updateData);
+      const result = await characterService.updateCharacter(Number.parseInt(id), updateData);
 
       if (!result.success) {
         switch (result.error) {
@@ -403,7 +398,7 @@ class CharacterController {
       const { id } = req.params;
 
       // Validate ID is a valid number
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid character ID',
@@ -411,7 +406,7 @@ class CharacterController {
         });
       }
 
-      const result = await characterService.deleteCharacter(parseInt(id));
+      const result = await characterService.deleteCharacter(Number.parseInt(id));
 
       if (!result.success) {
         switch (result.error) {
@@ -462,10 +457,7 @@ class CharacterController {
       const result = await characterService.searchCharacters(q.trim(), otherParams);
 
       if (!result.success) {
-        if (result.error === 'MISSING_SEARCH_TERM') {
-          return res.status(400).json(result);
-        }
-        return res.status(500).json(result);
+        return res.status(result.error === 'MISSING_SEARCH_TERM' ? 400 : 500).json(result);
       }
 
       res.status(200).json(createPaginatedResponse(

@@ -39,7 +39,7 @@ class HakiTypeService {
 
   async getHakiTypeById(id) {
     try {
-      if (!id || isNaN(parseInt(id)) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(Number.parseInt(id)) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid Haki type ID',
@@ -48,7 +48,7 @@ class HakiTypeService {
       }
 
       const hakiType = await prisma.hakiType.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!hakiType) {
@@ -75,7 +75,7 @@ class HakiTypeService {
 
   async updateHakiType(id, updateData) {
     try {
-      if (!id || isNaN(parseInt(id)) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(Number.parseInt(id)) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid Haki type ID',
@@ -86,7 +86,7 @@ class HakiTypeService {
       const { name, description, color } = updateData;
 
       const hakiType = await prisma.hakiType.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!hakiType) {
@@ -97,21 +97,21 @@ class HakiTypeService {
         };
       }
 
-      if (name && name.trim() !== hakiType.name) {
-        const existing = await prisma.hakiType.findFirst({
+      if (
+        name
+        && name.trim() !== hakiType.name
+        && await prisma.hakiType.findFirst({
           where: {
             name: name.trim(),
-            id: { not: parseInt(id) }
+            id: { not: Number.parseInt(id) }
           }
-        });
-
-        if (existing) {
-          return {
-            success: false,
-            message: 'A Haki type with this name already exists',
-            error: 'DUPLICATE_NAME'
-          };
-        }
+        })
+      ) {
+        return {
+          success: false,
+          message: 'A Haki type with this name already exists',
+          error: 'DUPLICATE_NAME'
+        };
       }
 
       const updates = {};
@@ -120,7 +120,7 @@ class HakiTypeService {
       if (color !== undefined) updates.color = color?.trim() || null;
 
       const updatedHakiType = await prisma.hakiType.update({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         data: updates
       });
 

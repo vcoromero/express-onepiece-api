@@ -49,7 +49,7 @@ class RaceController {
       const { id } = req.params;
 
       // Validate ID is a valid number
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid race ID',
@@ -57,7 +57,7 @@ class RaceController {
         });
       }
 
-      const result = await raceService.getRaceById(parseInt(id));
+      const result = await raceService.getRaceById(Number.parseInt(id));
 
       if (!result.success) {
         if (result.error === 'NOT_FOUND') {
@@ -93,7 +93,7 @@ class RaceController {
       const updateData = req.body;
 
       // Validate ID is a valid number
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid race ID',
@@ -110,7 +110,7 @@ class RaceController {
         });
       }
 
-      const result = await raceService.updateRace(parseInt(id), updateData);
+      const result = await raceService.updateRace(Number.parseInt(id), updateData);
 
       if (!result.success) {
         switch (result.error) {
