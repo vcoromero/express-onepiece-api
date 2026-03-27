@@ -1,159 +1,157 @@
-# 📚 API Documentation
+# API Documentation
 
-## Overview
+## Base URLs
 
-The One Piece API provides comprehensive access to the One Piece universe data through RESTful endpoints. All endpoints return JSON responses and support pagination, filtering, and search functionality.
-
-## Base URL
-
-- **Production**: `d1lu4jq11jb97o.cloudfront.net`
-- **Local Development**: `http://localhost:3000`
+- Local: `http://localhost:3000`
+- AWS API Gateway (Lambda): set after deployment
 
 ## Authentication
 
-**GET endpoints are public** and don't require authentication. **POST, PUT, and DELETE endpoints require JWT authentication**.
+- Public endpoints: most `GET` routes.
+- Protected endpoints: `POST`, `PUT`, `DELETE` routes that modify data.
+- Auth type: `Bearer` JWT token.
 
-Include the token in the Authorization header for protected endpoints:
-
-```bash
-Authorization: Bearer YOUR_JWT_TOKEN
-```
-
-### Getting a Token
-
-```bash
-curl -X POST https://d1lu4jq11jb97o.cloudfront.net/api/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "admin123"}'
-```
-
-## Core Endpoints
-
-### Health Check
 ```http
-GET /api/health
-```
-Returns API status and basic information. **Public endpoint - no authentication required**.
-
-### Authentication
-```http
-POST /api/auth/login          # Public - no auth required
-GET /api/auth/verify          # Protected - requires JWT token
+Authorization: Bearer <token>
 ```
 
-### Characters
-```http
-GET /api/characters           # Public - no auth required
-GET /api/characters/:id       # Public - no auth required
-POST /api/characters          # Protected - requires JWT token
-PUT /api/characters/:id       # Protected - requires JWT token
-DELETE /api/characters/:id    # Protected - requires JWT token
-```
+### Auth Endpoints
 
-### Organizations
-```http
-GET /api/organizations        # Public - no auth required
-GET /api/organizations/:id    # Public - no auth required
-POST /api/organizations       # Protected - requires JWT token
-PUT /api/organizations/:id    # Protected - requires JWT token
-DELETE /api/organizations/:id # Protected - requires JWT token
-```
-
-### Ships
-```http
-GET /api/ships               # Public - no auth required
-GET /api/ships/:id           # Public - no auth required
-POST /api/ships              # Protected - requires JWT token
-PUT /api/ships/:id           # Protected - requires JWT token
-DELETE /api/ships/:id        # Protected - requires JWT token
-```
-
-### Devil Fruits
-```http
-GET /api/devil-fruits        # Public - no auth required
-GET /api/devil-fruits/:id    # Public - no auth required
-POST /api/devil-fruits       # Protected - requires JWT token
-PUT /api/devil-fruits/:id    # Protected - requires JWT token
-DELETE /api/devil-fruits/:id # Protected - requires JWT token
-```
-
-## Query Parameters
-
-### Pagination
-- `page`: Page number (default: 1)
-- `limit`: Items per page (default: 10, max: 100)
-
-### Search & Filtering
-- `search`: Full-text search across relevant fields
-- `status`: Filter by status (alive, deceased, unknown)
-- `type_id`: Filter by type ID
-- `organization_id`: Filter by organization
-
-### Sorting
-- `sort`: Field to sort by
-- `order`: Sort order (asc, desc)
-
-## Response Format
-
-### Success Response
-```json
-{
-  "success": true,
-  "data": [...],
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "total": 100,
-    "totalPages": 10,
-    "hasNext": true,
-    "hasPrev": false
-  },
-  "message": "Data retrieved successfully"
-}
-```
-
-### Error Response
-```json
-{
-  "success": false,
-  "message": "Error description",
-  "error": "ERROR_CODE"
-}
-```
+- `POST /api/auth/login`
+- `GET /api/auth/verify`
+- `POST /api/auth/generate-hash` (only in `development` and `test`)
 
 ## Rate Limiting
 
-- **General endpoints**: 100 requests per 15 minutes
-- **Sensitive endpoints**: 50 requests per 15 minutes
+- Global limiter on all API routes: default `100 requests / 15 min` (`RATE_LIMIT_MAX_REQUESTS`, `RATE_LIMIT_WINDOW_MS`).
+- Auth login limiter: default `5 failed attempts / 15 min` (`RATE_LIMIT_LOGIN_MAX`).
+- Sensitive operation limiter: default `50 requests / 15 min` for write operations.
 
-## Examples
+## Endpoints
 
-### Get All Characters (Public - No Auth Required)
-```bash
-curl -X GET "https://d1lu4jq11jb97o.cloudfront.net/api/characters?page=1&limit=10"
+## Health
+
+- `GET /api/health`
+
+## Characters
+
+- `GET /api/characters`
+- `GET /api/characters/search`
+- `GET /api/characters/:id`
+- `POST /api/characters`
+- `PUT /api/characters/:id`
+- `DELETE /api/characters/:id`
+
+`GET /api/characters` query params:
+
+- `page`, `limit`
+- `search`
+- `race_id`
+- `character_type_id`
+- `min_bounty`, `max_bounty`
+- `is_alive`
+- `sortBy`, `sortOrder`
+
+## Devil Fruits
+
+- `GET /api/devil-fruits`
+- `GET /api/devil-fruits/type/:typeId`
+- `GET /api/devil-fruits/:id`
+- `POST /api/devil-fruits`
+- `PUT /api/devil-fruits/:id`
+- `DELETE /api/devil-fruits/:id`
+
+`GET /api/devil-fruits` query params:
+
+- `page`, `limit`
+- `search`
+- `type_id`
+- `sortBy`, `sortOrder`
+
+## Organizations
+
+- `GET /api/organizations`
+- `GET /api/organizations/:id`
+- `GET /api/organizations/type/:organizationTypeId`
+- `GET /api/organizations/:id/members`
+- `POST /api/organizations`
+- `PUT /api/organizations/:id`
+- `DELETE /api/organizations/:id`
+
+`GET /api/organizations` query params:
+
+- `page`, `limit`
+- `search`
+- `status`
+- `organizationTypeId`
+- `sortBy`, `sortOrder`
+
+## Ships
+
+- `GET /api/ships`
+- `GET /api/ships/status/:status`
+- `GET /api/ships/:id`
+- `POST /api/ships`
+- `PUT /api/ships/:id`
+- `DELETE /api/ships/:id`
+
+`GET /api/ships` query params:
+
+- `page`, `limit`
+- `status`
+- `search`
+
+## Reference Resources
+
+### Races
+
+- `GET /api/races`
+- `GET /api/races/:id`
+- `PUT /api/races/:id`
+
+### Character Types
+
+- `GET /api/character-types`
+- `GET /api/character-types/:id`
+- `PUT /api/character-types/:id`
+
+### Organization Types
+
+- `GET /api/organization-types`
+- `GET /api/organization-types/:id`
+- `PUT /api/organization-types/:id`
+
+### Haki Types
+
+- `GET /api/haki-types`
+- `GET /api/haki-types/:id`
+- `PUT /api/haki-types/:id`
+
+### Fruit Types
+
+- `GET /api/fruit-types`
+- `GET /api/fruit-types/:id`
+- `PUT /api/fruit-types/:id`
+
+## Response Format
+
+Most endpoints return:
+
+```json
+{
+  "success": true,
+  "message": "Descriptive message",
+  "data": {}
+}
 ```
 
-### Search Characters (Public - No Auth Required)
-```bash
-curl -X GET "https://d1lu4jq11jb97o.cloudfront.net/api/characters?search=luffy&status=alive"
-```
+Paginated endpoints include `pagination`.
 
-### Create New Character (Protected - Requires JWT Token)
-```bash
-curl -X POST "https://d1lu4jq11jb97o.cloudfront.net/api/characters" \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
-  -d '{
-    "name": "Monkey D. Luffy",
-    "alias": "Straw Hat Luffy",
-    "bounty": 3000000000,
-    "status": "alive",
-    "race_id": 1
-  }'
-```
+## Manual Testing with Bruno
 
-## Postman Collection
+Bruno is the official manual API testing tool for this project. Keep request collections under `bruno/` at repository root.
 
-Import the provided Postman collection for easy API testing:
+## Future GraphQL Plan
 
-- `onepiece-api-get-only.postman_collection.json`
+A GraphQL layer is planned for future phases. Current REST endpoints remain the source of truth until GraphQL is introduced.
+

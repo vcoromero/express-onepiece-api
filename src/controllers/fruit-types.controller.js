@@ -36,7 +36,7 @@ const getFruitTypeById = async (req, res) => {
     const { id } = req.params;
 
     // Validate ID is a valid number
-    if (!id || isNaN(id)) {
+    if (!id || Number.isNaN(id)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid ID'
@@ -76,7 +76,7 @@ const updateFruitType = async (req, res) => {
     const { name, description } = req.body;
 
     // Validate ID
-    if (!id || isNaN(id)) {
+    if (!id || Number.isNaN(id)) {
       return res.status(400).json({
         success: false,
         message: 'Invalid ID'

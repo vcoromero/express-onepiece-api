@@ -56,7 +56,7 @@ class HakiTypeController {
     try {
       const { id } = req.params;
 
-      if (!id || isNaN(parseInt(id)) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(Number.parseInt(id)) || Number.parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid Haki type ID',
@@ -67,10 +67,7 @@ class HakiTypeController {
       const result = await hakiTypeService.getHakiTypeById(id);
 
       if (!result.success) {
-        if (result.error === 'NOT_FOUND') {
-          return res.status(404).json(result);
-        }
-        return res.status(500).json(result);
+        return res.status(result.error === 'NOT_FOUND' ? 404 : 500).json(result);
       }
 
       res.status(200).json(createItemResponse(
@@ -99,7 +96,7 @@ class HakiTypeController {
       const { id } = req.params;
       const { name, description, color } = req.body;
 
-      if (!id || isNaN(parseInt(id)) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(Number.parseInt(id)) || Number.parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid Haki type ID',
@@ -148,16 +145,12 @@ class HakiTypeController {
       });
 
       if (!result.success) {
-        if (result.error === 'NOT_FOUND') {
-          return res.status(404).json(result);
-        }
-        if (result.error === 'DUPLICATE_NAME') {
-          return res.status(409).json(result);
-        }
-        if (result.error === 'VALIDATION_ERROR') {
-          return res.status(400).json(result);
-        }
-        return res.status(500).json(result);
+        const errorStatusMap = {
+          NOT_FOUND: 404,
+          DUPLICATE_NAME: 409,
+          VALIDATION_ERROR: 400
+        };
+        return res.status(errorStatusMap[result.error] || 500).json(result);
       }
 
       res.status(200).json(createItemResponse(

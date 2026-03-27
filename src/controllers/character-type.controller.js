@@ -49,7 +49,7 @@ class CharacterTypeController {
       const { id } = req.params;
 
       // Validate ID is a valid number
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid character type ID',
@@ -57,7 +57,7 @@ class CharacterTypeController {
         });
       }
 
-      const result = await characterTypeService.getCharacterTypeById(parseInt(id));
+      const result = await characterTypeService.getCharacterTypeById(Number.parseInt(id));
 
       if (!result.success) {
         if (result.error === 'NOT_FOUND') {
@@ -93,7 +93,7 @@ class CharacterTypeController {
       const updateData = req.body;
 
       // Validate ID is a valid number
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return res.status(400).json({
           success: false,
           message: 'Invalid character type ID',
@@ -110,7 +110,7 @@ class CharacterTypeController {
         });
       }
 
-      const result = await characterTypeService.updateCharacterType(parseInt(id), updateData);
+      const result = await characterTypeService.updateCharacterType(Number.parseInt(id), updateData);
 
       if (!result.success) {
         switch (result.error) {

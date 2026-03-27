@@ -39,7 +39,7 @@ class RaceService {
 
   async getRaceById(id) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid race ID',
@@ -48,7 +48,7 @@ class RaceService {
       }
 
       const race = await prisma.race.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!race) {
@@ -75,7 +75,7 @@ class RaceService {
 
   async updateRace(id, updateData) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid race ID',
@@ -84,7 +84,7 @@ class RaceService {
       }
 
       const race = await prisma.race.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!race) {
@@ -103,38 +103,36 @@ class RaceService {
         };
       }
 
-      if (updateData.name !== undefined) {
-        if (!updateData.name || updateData.name.trim() === '') {
-          return {
-            success: false,
-            message: 'Name cannot be empty',
-            error: 'INVALID_NAME'
-          };
-        }
-        if (updateData.name.length > 50) {
-          return {
-            success: false,
-            message: 'Name cannot exceed 50 characters',
-            error: 'INVALID_NAME'
-          };
-        }
+      if (updateData.name !== undefined && (!updateData.name || updateData.name.trim() === '')) {
+        return {
+          success: false,
+          message: 'Name cannot be empty',
+          error: 'INVALID_NAME'
+        };
+      }
+      if (updateData.name !== undefined && updateData.name.length > 50) {
+        return {
+          success: false,
+          message: 'Name cannot exceed 50 characters',
+          error: 'INVALID_NAME'
+        };
+      }
 
-        if (updateData.name !== race.name) {
-          const existingRace = await prisma.race.findUnique({
-            where: { name: updateData.name }
-          });
-          if (existingRace) {
-            return {
-              success: false,
-              message: 'A race with this name already exists',
-              error: 'DUPLICATE_NAME'
-            };
-          }
+      if (updateData.name !== undefined && updateData.name !== race.name) {
+        const existingRace = await prisma.race.findUnique({
+          where: { name: updateData.name }
+        });
+        if (existingRace) {
+          return {
+            success: false,
+            message: 'A race with this name already exists',
+            error: 'DUPLICATE_NAME'
+          };
         }
       }
 
       const updatedRace = await prisma.race.update({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         data: updateData
       });
 
@@ -157,7 +155,7 @@ class RaceService {
     try {
       const where = { name };
       if (excludeId) {
-        where.id = { not: parseInt(excludeId) };
+        where.id = { not: Number.parseInt(excludeId) };
       }
 
       const race = await prisma.race.findFirst({ where });
@@ -171,7 +169,7 @@ class RaceService {
   async idExists(id) {
     try {
       const race = await prisma.race.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
       return !!race;
     } catch (error) {
@@ -183,7 +181,7 @@ class RaceService {
   async isRaceInUse(id) {
     try {
       const count = await prisma.character.count({
-        where: { raceId: parseInt(id) }
+        where: { raceId: Number.parseInt(id) }
       });
       return count > 0;
     } catch (error) {

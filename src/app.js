@@ -3,7 +3,6 @@ const helmet = require('helmet');
 const cors = require('cors');
 const healthRoutes = require('./routes/health.routes');
 const authRoutes = require('./routes/auth.routes');
-const dbRoutes = require('./routes/db.routes');
 const fruitTypesRoutes = require('./routes/fruit-types.routes');
 const devilFruitRoutes = require('./routes/devil-fruit.routes');
 const hakiTypeRoutes = require('./routes/haki-type.routes');
@@ -44,7 +43,6 @@ if (process.env.LOG_HTTP_REQUESTS === 'true') {
 // Routes
 app.use('/api', healthRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/db', dbRoutes);
 app.use('/api', fruitTypesRoutes);
 app.use('/api', devilFruitRoutes);
 app.use('/api', hakiTypeRoutes);

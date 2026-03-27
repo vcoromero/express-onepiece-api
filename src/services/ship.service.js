@@ -19,8 +19,8 @@ class ShipService {
         search
       } = options;
 
-      const pageNum = Math.max(1, parseInt(page));
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+      const pageNum = Math.max(1, Number.parseInt(page));
+      const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit)));
       const offset = (pageNum - 1) * limitNum;
 
       const where = {};
@@ -75,7 +75,7 @@ class ShipService {
 
   async getShipById(id) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid ship ID',
@@ -84,7 +84,7 @@ class ShipService {
       }
 
       const ship = await prisma.ship.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         include: {
           organization: { select: { id: true, name: true, status: true, totalBounty: true } }
         }
@@ -151,14 +151,14 @@ class ShipService {
 
   async updateShip(id, updateData) {
     try {
-      if (!id || isNaN(id) || id <= 0) {
+      if (!id || Number.isNaN(id) || id <= 0) {
         throw new Error('SHIP_INVALID_ID');
       }
 
       const { name, description, status } = updateData;
 
       const existingShip = await prisma.ship.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!existingShip) {
@@ -169,17 +169,17 @@ class ShipService {
         throw new Error('SHIP_INVALID_STATUS');
       }
 
-      if (name && name.trim() !== existingShip.name) {
-        const duplicateShip = await prisma.ship.findFirst({
+      if (
+        name
+        && name.trim() !== existingShip.name
+        && await prisma.ship.findFirst({
           where: {
             name: name.trim(),
-            id: { not: parseInt(id) }
+            id: { not: Number.parseInt(id) }
           }
-        });
-
-        if (duplicateShip) {
-          throw new Error('SHIP_NAME_EXISTS');
-        }
+        })
+      ) {
+        throw new Error('SHIP_NAME_EXISTS');
       }
 
       const updateFields = {};
@@ -188,7 +188,7 @@ class ShipService {
       if (status !== undefined) updateFields.status = status;
 
       await prisma.ship.update({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         data: updateFields
       });
 
@@ -203,12 +203,12 @@ class ShipService {
 
   async deleteShip(id) {
     try {
-      if (!id || isNaN(id) || id <= 0) {
+      if (!id || Number.isNaN(id) || id <= 0) {
         throw new Error('SHIP_INVALID_ID');
       }
 
       const ship = await prisma.ship.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!ship) {
@@ -216,7 +216,7 @@ class ShipService {
       }
 
       const organizationsUsingShip = await prisma.organization.count({
-        where: { shipId: parseInt(id) }
+        where: { shipId: Number.parseInt(id) }
       });
 
       if (organizationsUsingShip > 0) {
@@ -224,7 +224,7 @@ class ShipService {
       }
 
       await prisma.ship.delete({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       return {

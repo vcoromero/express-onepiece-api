@@ -39,7 +39,7 @@ class OrganizationTypeService {
 
   async getOrganizationTypeById(id) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid organization type ID',
@@ -48,7 +48,7 @@ class OrganizationTypeService {
       }
 
       const organizationType = await prisma.organizationType.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!organizationType) {
@@ -75,7 +75,7 @@ class OrganizationTypeService {
 
   async updateOrganizationType(id, updateData) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid organization type ID',
@@ -84,7 +84,7 @@ class OrganizationTypeService {
       }
 
       const organizationType = await prisma.organizationType.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!organizationType) {
@@ -103,38 +103,36 @@ class OrganizationTypeService {
         };
       }
 
-      if (updateData.name !== undefined) {
-        if (!updateData.name || updateData.name.trim() === '') {
-          return {
-            success: false,
-            message: 'Name cannot be empty',
-            error: 'INVALID_NAME'
-          };
-        }
-        if (updateData.name.length > 50) {
-          return {
-            success: false,
-            message: 'Name cannot exceed 50 characters',
-            error: 'INVALID_NAME'
-          };
-        }
+      if (updateData.name !== undefined && (!updateData.name || updateData.name.trim() === '')) {
+        return {
+          success: false,
+          message: 'Name cannot be empty',
+          error: 'INVALID_NAME'
+        };
+      }
+      if (updateData.name !== undefined && updateData.name.length > 50) {
+        return {
+          success: false,
+          message: 'Name cannot exceed 50 characters',
+          error: 'INVALID_NAME'
+        };
+      }
 
-        if (updateData.name !== organizationType.name) {
-          const existing = await prisma.organizationType.findUnique({
-            where: { name: updateData.name }
-          });
-          if (existing) {
-            return {
-              success: false,
-              message: 'An organization type with this name already exists',
-              error: 'DUPLICATE_NAME'
-            };
-          }
+      if (updateData.name !== undefined && updateData.name !== organizationType.name) {
+        const existing = await prisma.organizationType.findUnique({
+          where: { name: updateData.name }
+        });
+        if (existing) {
+          return {
+            success: false,
+            message: 'An organization type with this name already exists',
+            error: 'DUPLICATE_NAME'
+          };
         }
       }
 
       const updated = await prisma.organizationType.update({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         data: updateData
       });
 
@@ -157,7 +155,7 @@ class OrganizationTypeService {
     try {
       const where = { name };
       if (excludeId) {
-        where.id = { not: parseInt(excludeId) };
+        where.id = { not: Number.parseInt(excludeId) };
       }
 
       const organizationType = await prisma.organizationType.findFirst({ where });
@@ -171,7 +169,7 @@ class OrganizationTypeService {
   async idExists(id) {
     try {
       const organizationType = await prisma.organizationType.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
       return !!organizationType;
     } catch (error) {
@@ -183,7 +181,7 @@ class OrganizationTypeService {
   async isOrganizationTypeInUse(id) {
     try {
       const count = await prisma.organization.count({
-        where: { organizationTypeId: parseInt(id) }
+        where: { organizationTypeId: Number.parseInt(id) }
       });
       return count > 0;
     } catch (error) {

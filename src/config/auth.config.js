@@ -10,7 +10,7 @@ const getAdminCredentials = () => {
   // Handle escaped $ characters for AWS deployment
   if (adminPasswordHash && !adminPasswordHash.startsWith('$2b$')) {
     // If hash doesn't start with $2b$, it might be escaped
-    adminPasswordHash = adminPasswordHash.replace(/\\\$/g, '$');
+    adminPasswordHash = adminPasswordHash.replaceAll(String.raw`\$`, '$');
   }
   
   return {

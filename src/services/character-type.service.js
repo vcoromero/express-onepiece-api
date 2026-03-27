@@ -39,7 +39,7 @@ class CharacterTypeService {
 
   async getCharacterTypeById(id) {
     try {
-      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
+      if (!id || Number.Number.isNaN(id) || Number.Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid character type ID',
@@ -48,7 +48,7 @@ class CharacterTypeService {
       }
 
       const characterType = await prisma.characterType.findUnique({
-        where: { id: Number.parseInt(id) }
+        where: { id: Number.Number.parseInt(id) }
       });
 
       if (!characterType) {
@@ -75,7 +75,7 @@ class CharacterTypeService {
 
   async updateCharacterType(id, updateData) {
     try {
-      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
+      if (!id || Number.Number.isNaN(id) || Number.Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid character type ID',
@@ -84,7 +84,7 @@ class CharacterTypeService {
       }
 
       const characterType = await prisma.characterType.findUnique({
-        where: { id: Number.parseInt(id) }
+        where: { id: Number.Number.parseInt(id) }
       });
 
       if (!characterType) {
@@ -103,38 +103,36 @@ class CharacterTypeService {
         };
       }
 
-      if (updateData.name !== undefined) {
-        if (!updateData.name || updateData.name.trim() === '') {
-          return {
-            success: false,
-            message: 'Name cannot be empty',
-            error: 'INVALID_NAME'
-          };
-        }
-        if (updateData.name.length > 50) {
-          return {
-            success: false,
-            message: 'Name cannot exceed 50 characters',
-            error: 'INVALID_NAME'
-          };
-        }
+      if (updateData.name !== undefined && (!updateData.name || updateData.name.trim() === '')) {
+        return {
+          success: false,
+          message: 'Name cannot be empty',
+          error: 'INVALID_NAME'
+        };
+      }
+      if (updateData.name !== undefined && updateData.name.length > 50) {
+        return {
+          success: false,
+          message: 'Name cannot exceed 50 characters',
+          error: 'INVALID_NAME'
+        };
+      }
 
-        if (updateData.name !== characterType.name) {
-          const existing = await prisma.characterType.findUnique({
-            where: { name: updateData.name }
-          });
-          if (existing) {
-            return {
-              success: false,
-              message: 'A character type with this name already exists',
-              error: 'DUPLICATE_NAME'
-            };
-          }
+      if (updateData.name !== undefined && updateData.name !== characterType.name) {
+        const existing = await prisma.characterType.findUnique({
+          where: { name: updateData.name }
+        });
+        if (existing) {
+          return {
+            success: false,
+            message: 'A character type with this name already exists',
+            error: 'DUPLICATE_NAME'
+          };
         }
       }
 
       const updated = await prisma.characterType.update({
-        where: { id: Number.parseInt(id) },
+        where: { id: Number.Number.parseInt(id) },
         data: updateData
       });
 
@@ -157,7 +155,7 @@ class CharacterTypeService {
     try {
       const where = { name };
       if (excludeId) {
-        where.id = { not: Number.parseInt(excludeId) };
+        where.id = { not: Number.Number.parseInt(excludeId) };
       }
 
       const characterType = await prisma.characterType.findFirst({ where });
@@ -171,7 +169,7 @@ class CharacterTypeService {
   async idExists(id) {
     try {
       const characterType = await prisma.characterType.findUnique({
-        where: { id: Number.parseInt(id) }
+        where: { id: Number.Number.parseInt(id) }
       });
       return !!characterType;
     } catch (error) {
@@ -183,7 +181,7 @@ class CharacterTypeService {
   async isCharacterTypeInUse(id) {
     try {
       const count = await prisma.characterCharacterType.count({
-        where: { characterTypeId: Number.parseInt(id) }
+        where: { characterTypeId: Number.Number.parseInt(id) }
       });
       return count > 0;
     } catch (error) {

@@ -10,6 +10,19 @@ const serializeBigInt = (obj) => {
 };
 
 class OrganizationService {
+  buildUpdateOrganizationPayload(updateData) {
+    const dataToUpdate = { ...updateData };
+
+    if (dataToUpdate.totalBounty !== undefined) {
+      dataToUpdate.totalBounty = BigInt(dataToUpdate.totalBounty);
+    }
+    if (dataToUpdate.name) dataToUpdate.name = dataToUpdate.name.trim();
+    if (dataToUpdate.baseLocation) dataToUpdate.baseLocation = dataToUpdate.baseLocation.trim();
+    if (dataToUpdate.description) dataToUpdate.description = dataToUpdate.description.trim();
+
+    return dataToUpdate;
+  }
+
   async getAllOrganizations(options = {}) {
     try {
       const {
@@ -22,8 +35,8 @@ class OrganizationService {
         sortOrder = 'asc'
       } = options;
 
-      const pageNum = Math.max(1, parseInt(page));
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+      const pageNum = Math.max(1, Number.parseInt(page));
+      const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit)));
       const offset = (pageNum - 1) * limitNum;
 
       const allowedSortFields = ['name', 'totalBounty', 'status', 'createdAt'];
@@ -41,7 +54,7 @@ class OrganizationService {
       }
 
       if (organizationTypeId) {
-        where.organizationTypeId = parseInt(organizationTypeId);
+        where.organizationTypeId = Number.parseInt(organizationTypeId);
       }
 
       const [organizations, total] = await Promise.all([
@@ -85,7 +98,7 @@ class OrganizationService {
 
   async getOrganizationById(id) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid organization ID',
@@ -94,7 +107,7 @@ class OrganizationService {
       }
 
       const organization = await prisma.organization.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         include: {
           organizationType: { select: { id: true, name: true, description: true } },
           leader: { select: { id: true, name: true, alias: true, bounty: true } },
@@ -198,7 +211,7 @@ class OrganizationService {
 
   async updateOrganization(id, updateData) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid organization ID',
@@ -207,7 +220,7 @@ class OrganizationService {
       }
 
       const organization = await prisma.organization.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!organization) {
@@ -226,40 +239,32 @@ class OrganizationService {
         };
       }
 
-      if (updateData.name !== undefined) {
-        if (!updateData.name || updateData.name.trim() === '') {
+      if (updateData.name !== undefined && (!updateData.name || updateData.name.trim() === '')) {
+        return {
+          success: false,
+          message: 'Name cannot be empty',
+          error: 'INVALID_NAME'
+        };
+      }
+
+      if (updateData.name !== undefined && updateData.name !== organization.name) {
+        const existing = await prisma.organization.findUnique({
+          where: { name: updateData.name.trim() }
+        });
+
+        if (existing) {
           return {
             success: false,
-            message: 'Name cannot be empty',
-            error: 'INVALID_NAME'
+            message: 'An organization with this name already exists',
+            error: 'DUPLICATE_NAME'
           };
         }
-
-        if (updateData.name !== organization.name) {
-          const existing = await prisma.organization.findUnique({
-            where: { name: updateData.name.trim() }
-          });
-
-          if (existing) {
-            return {
-              success: false,
-              message: 'An organization with this name already exists',
-              error: 'DUPLICATE_NAME'
-            };
-          }
-        }
       }
 
-      const dataToUpdate = { ...updateData };
-      if (dataToUpdate.totalBounty !== undefined) {
-        dataToUpdate.totalBounty = BigInt(dataToUpdate.totalBounty);
-      }
-      if (dataToUpdate.name) dataToUpdate.name = dataToUpdate.name.trim();
-      if (dataToUpdate.baseLocation) dataToUpdate.baseLocation = dataToUpdate.baseLocation.trim();
-      if (dataToUpdate.description) dataToUpdate.description = dataToUpdate.description.trim();
+      const dataToUpdate = this.buildUpdateOrganizationPayload(updateData);
 
       const updatedOrganization = await prisma.organization.update({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         data: dataToUpdate,
         include: {
           organizationType: { select: { id: true, name: true } },
@@ -285,7 +290,7 @@ class OrganizationService {
 
   async deleteOrganization(id) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid organization ID',
@@ -294,7 +299,7 @@ class OrganizationService {
       }
 
       const organization = await prisma.organization.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!organization) {
@@ -306,7 +311,7 @@ class OrganizationService {
       }
 
       const memberCount = await prisma.characterOrganization.count({
-        where: { organizationId: parseInt(id), isCurrent: true }
+        where: { organizationId: Number.parseInt(id), isCurrent: true }
       });
 
       if (memberCount > 0) {
@@ -318,7 +323,7 @@ class OrganizationService {
       }
 
       await prisma.organization.delete({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       return {
