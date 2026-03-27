@@ -1,6 +1,8 @@
 # Automated tests (Postgres + Redis) and optional Serverless deploy to AWS.
 # Deploy requires GitHub secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, DATABASE_URL, JWT_SECRET.
 # Optional repo variables: SERVERLESS_DEPLOY_STAGE (default dev), AWS_REGION (default us-east-1).
+#
+# Secrets cannot be used in `if:` expressions (GitHub restriction). Map them to job `env` and use `env.*` in `if`.
 
 name: Test and Serverless deploy
 
@@ -90,9 +92,13 @@ jobs:
 
   deploy:
     needs: test
-    # `secrets` is not allowed in job-level `if` (GitHub Actions). Gate deploy steps individually instead.
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
+    env:
+      DEPLOY_AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      DEPLOY_AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      DEPLOY_DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      DEPLOY_JWT_SECRET: ${{ secrets.JWT_SECRET }}
     concurrency:
       group: serverless-deploy-${{ github.ref }}
       cancel-in-progress: false
@@ -111,11 +117,11 @@ jobs:
         run: npm ci --legacy-peer-deps
 
       - name: Skip deploy notice (missing secrets)
-        if: ${{ secrets.AWS_ACCESS_KEY_ID == '' || secrets.AWS_SECRET_ACCESS_KEY == '' || secrets.DATABASE_URL == '' || secrets.JWT_SECRET == '' }}
+        if: ${{ env.DEPLOY_AWS_ACCESS_KEY_ID == '' || env.DEPLOY_AWS_SECRET_ACCESS_KEY == '' || env.DEPLOY_DATABASE_URL == '' || env.DEPLOY_JWT_SECRET == '' }}
         run: echo "::notice::Serverless deploy skipped — add AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, DATABASE_URL, and JWT_SECRET to repository secrets."
 
       - name: Write .env for Serverless (from secrets)
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.DATABASE_URL != '' && secrets.JWT_SECRET != '' }}
+        if: ${{ env.DEPLOY_AWS_ACCESS_KEY_ID != '' && env.DEPLOY_AWS_SECRET_ACCESS_KEY != '' && env.DEPLOY_DATABASE_URL != '' && env.DEPLOY_JWT_SECRET != '' }}
         run: |
           {
             echo "DATABASE_URL=${DATABASE_URL}"
@@ -126,7 +132,7 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
 
       - name: Configure AWS credentials
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.DATABASE_URL != '' && secrets.JWT_SECRET != '' }}
+        if: ${{ env.DEPLOY_AWS_ACCESS_KEY_ID != '' && env.DEPLOY_AWS_SECRET_ACCESS_KEY != '' && env.DEPLOY_DATABASE_URL != '' && env.DEPLOY_JWT_SECRET != '' }}
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -134,7 +140,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
 
       - name: Generate Prisma client and deploy
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' && secrets.DATABASE_URL != '' && secrets.JWT_SECRET != '' }}
+        if: ${{ env.DEPLOY_AWS_ACCESS_KEY_ID != '' && env.DEPLOY_AWS_SECRET_ACCESS_KEY != '' && env.DEPLOY_DATABASE_URL != '' && env.DEPLOY_JWT_SECRET != '' }}
         env:
           SERVERLESS_DEPLOY_STAGE: ${{ vars.SERVERLESS_DEPLOY_STAGE || 'dev' }}
         run: |
