@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma.config');
+const { serviceSuccess, serviceFailure } = require('../utils/service-result.helper');
 
 class OrganizationTypeService {
   async getAllOrganizationTypes(options = {}) {
@@ -22,29 +23,19 @@ class OrganizationTypeService {
         orderBy: { [sortField]: orderDirection }
       });
 
-      return {
-        success: true,
+      return serviceSuccess({
         organizationTypes,
         total: organizationTypes.length
-      };
+      });
     } catch (error) {
-      console.error('Error in getAllOrganizationTypes:', error);
-      return {
-        success: false,
-        message: 'Failed to fetch organization types',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to fetch organization types', 'INTERNAL_ERROR', error, 'organizationType.getAll');
     }
   }
 
   async getOrganizationTypeById(id) {
     try {
       if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
-        return {
-          success: false,
-          message: 'Invalid organization type ID',
-          error: 'INVALID_ID'
-        };
+        return serviceFailure('Invalid organization type ID', 'INVALID_ID');
       }
 
       const organizationType = await prisma.organizationType.findUnique({
@@ -52,35 +43,19 @@ class OrganizationTypeService {
       });
 
       if (!organizationType) {
-        return {
-          success: false,
-          message: `Organization type with ID ${id} not found`,
-          error: 'NOT_FOUND'
-        };
+        return serviceFailure(`Organization type with ID ${id} not found`, 'NOT_FOUND');
       }
 
-      return {
-        success: true,
-        data: organizationType
-      };
+      return serviceSuccess({ data: organizationType });
     } catch (error) {
-      console.error('Error in getOrganizationTypeById:', error);
-      return {
-        success: false,
-        message: 'Failed to fetch organization type',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to fetch organization type', 'INTERNAL_ERROR', error, 'organizationType.getById');
     }
   }
 
   async updateOrganizationType(id, updateData) {
     try {
       if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
-        return {
-          success: false,
-          message: 'Invalid organization type ID',
-          error: 'INVALID_ID'
-        };
+        return serviceFailure('Invalid organization type ID', 'INVALID_ID');
       }
 
       const organizationType = await prisma.organizationType.findUnique({
@@ -88,34 +63,18 @@ class OrganizationTypeService {
       });
 
       if (!organizationType) {
-        return {
-          success: false,
-          message: `Organization type with ID ${id} not found`,
-          error: 'NOT_FOUND'
-        };
+        return serviceFailure(`Organization type with ID ${id} not found`, 'NOT_FOUND');
       }
 
       if (!updateData || Object.keys(updateData).length === 0) {
-        return {
-          success: false,
-          message: 'At least one field must be provided for update',
-          error: 'NO_FIELDS_PROVIDED'
-        };
+        return serviceFailure('At least one field must be provided for update', 'NO_FIELDS_PROVIDED');
       }
 
       if (updateData.name !== undefined && (!updateData.name || updateData.name.trim() === '')) {
-        return {
-          success: false,
-          message: 'Name cannot be empty',
-          error: 'INVALID_NAME'
-        };
+        return serviceFailure('Name cannot be empty', 'INVALID_NAME');
       }
       if (updateData.name !== undefined && updateData.name.length > 50) {
-        return {
-          success: false,
-          message: 'Name cannot exceed 50 characters',
-          error: 'INVALID_NAME'
-        };
+        return serviceFailure('Name cannot exceed 50 characters', 'INVALID_NAME');
       }
 
       if (updateData.name !== undefined && updateData.name !== organizationType.name) {
@@ -123,11 +82,7 @@ class OrganizationTypeService {
           where: { name: updateData.name }
         });
         if (existing) {
-          return {
-            success: false,
-            message: 'An organization type with this name already exists',
-            error: 'DUPLICATE_NAME'
-          };
+          return serviceFailure('An organization type with this name already exists', 'DUPLICATE_NAME');
         }
       }
 
@@ -136,18 +91,12 @@ class OrganizationTypeService {
         data: updateData
       });
 
-      return {
-        success: true,
+      return serviceSuccess({
         data: updated,
         message: 'Organization type updated successfully'
-      };
+      });
     } catch (error) {
-      console.error('Error in updateOrganizationType:', error);
-      return {
-        success: false,
-        message: 'Failed to update organization type',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to update organization type', 'INTERNAL_ERROR', error, 'organizationType.update');
     }
   }
 
@@ -161,7 +110,7 @@ class OrganizationTypeService {
       const organizationType = await prisma.organizationType.findFirst({ where });
       return !!organizationType;
     } catch (error) {
-      console.error('Error in nameExists:', error);
+      serviceFailure('Failed to check organization type name', 'INTERNAL_ERROR', error, 'organizationType.nameExists');
       return false;
     }
   }
@@ -173,7 +122,7 @@ class OrganizationTypeService {
       });
       return !!organizationType;
     } catch (error) {
-      console.error('Error in idExists:', error);
+      serviceFailure('Failed to check organization type id', 'INTERNAL_ERROR', error, 'organizationType.idExists');
       return false;
     }
   }
@@ -185,7 +134,7 @@ class OrganizationTypeService {
       });
       return count > 0;
     } catch (error) {
-      console.error('Error in isOrganizationTypeInUse:', error);
+      serviceFailure('Failed to check organization type usage', 'INTERNAL_ERROR', error, 'organizationType.isInUse');
       return false;
     }
   }

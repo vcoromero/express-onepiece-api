@@ -1,5 +1,10 @@
 const characterTypeService = require('../services/character-type.service');
 const { createListResponse, createItemResponse } = require('../utils/response.helper');
+const {
+  buildValidationError,
+  sendServiceResultError,
+  sendUnexpectedError
+} = require('../utils/http-response.helper');
 
 /**
  * @class CharacterTypeController
@@ -20,7 +25,7 @@ class CharacterTypeController {
       const result = await characterTypeService.getAllCharacterTypes({ search, sortBy, sortOrder });
       
       if (!result.success) {
-        return res.status(500).json(result);
+        return sendServiceResultError(res, result);
       }
 
       res.status(200).json(createListResponse(
@@ -28,12 +33,7 @@ class CharacterTypeController {
         'Character types retrieved successfully'
       ));
     } catch (error) {
-      console.error('Error in getAllCharacterTypes controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'characterType.getAllCharacterTypes');
     }
   }
 
@@ -50,20 +50,13 @@ class CharacterTypeController {
 
       // Validate ID is a valid number
       if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid character type ID',
-          error: 'INVALID_ID'
-        });
+        return res.status(400).json(buildValidationError('Invalid character type ID', 'INVALID_ID'));
       }
 
       const result = await characterTypeService.getCharacterTypeById(Number.parseInt(id));
 
       if (!result.success) {
-        if (result.error === 'NOT_FOUND') {
-          return res.status(404).json(result);
-        }
-        return res.status(500).json(result);
+        return sendServiceResultError(res, result);
       }
 
       res.status(200).json(createItemResponse(
@@ -71,12 +64,7 @@ class CharacterTypeController {
         'Character type retrieved successfully'
       ));
     } catch (error) {
-      console.error('Error in getCharacterTypeById controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'characterType.getCharacterTypeById');
     }
   }
 
@@ -94,37 +82,18 @@ class CharacterTypeController {
 
       // Validate ID is a valid number
       if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid character type ID',
-          error: 'INVALID_ID'
-        });
+        return res.status(400).json(buildValidationError('Invalid character type ID', 'INVALID_ID'));
       }
 
       // Validate request body
       if (!updateData || typeof updateData !== 'object') {
-        return res.status(400).json({
-          success: false,
-          message: 'Request body must be a valid JSON object',
-          error: 'INVALID_BODY'
-        });
+        return res.status(400).json(buildValidationError('Request body must be a valid JSON object', 'INVALID_BODY'));
       }
 
       const result = await characterTypeService.updateCharacterType(Number.parseInt(id), updateData);
 
       if (!result.success) {
-        switch (result.error) {
-        case 'NOT_FOUND':
-          return res.status(404).json(result);
-        case 'INVALID_ID':
-        case 'NO_FIELDS_PROVIDED':
-        case 'INVALID_NAME':
-          return res.status(400).json(result);
-        case 'DUPLICATE_NAME':
-          return res.status(409).json(result);
-        default:
-          return res.status(500).json(result);
-        }
+        return sendServiceResultError(res, result);
       }
 
       res.status(200).json(createItemResponse(
@@ -132,12 +101,7 @@ class CharacterTypeController {
         'Character type updated successfully'
       ));
     } catch (error) {
-      console.error('Error in updateCharacterType controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'characterType.updateCharacterType');
     }
   }
 }

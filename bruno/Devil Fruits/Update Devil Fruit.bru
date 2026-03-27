@@ -1,0 +1,22 @@
+meta {
+  name: Update Devil Fruit
+  type: http
+  seq: 34
+}
+
+put {
+  url: {{base_url}}/api/devil-fruits/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "description": "Updated devil fruit description",
+    "abilities": "Updated abilities"
+  }
+}

@@ -1,0 +1,9 @@
+meta {
+  name: Get All Organizations
+  type: http
+  seq: 24
+}
+
+get {
+  url: {{base_url}}/api/organizations?page=1&limit=10&sortBy=name&sortOrder=ASC
+}

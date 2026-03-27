@@ -1,0 +1,31 @@
+meta {
+  name: Create Organization
+  type: http
+  seq: 36
+}
+
+post {
+  url: {{base_url}}/api/organizations
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "name": "Revolutionary Army East",
+    "organizationTypeId": 2,
+    "leaderId": 1,
+    "shipId": 1,
+    "flagDescription": "Dragon emblem",
+    "jollyRogerUrl": "https://example.com/revolutionary-jolly-roger.png",
+    "baseLocation": "Baltigo",
+    "totalBounty": 1200000000,
+    "status": "active",
+    "description": "Regional branch of the Revolutionary Army",
+    "foundedDate": "2000-01-01"
+  }
+}

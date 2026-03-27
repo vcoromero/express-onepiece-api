@@ -34,6 +34,7 @@ describe('OrganizationType Controller', () => {
     });
 
     it('returns 400 for invalid ID', async () => {
+      organizationTypeService.getOrganizationTypeById.mockResolvedValue({ success: false, error: 'INVALID_ID' });
       const res = await request(app).get('/api/organization-types/abc');
       expect(res.status).toBe(400);
     });
@@ -62,6 +63,7 @@ describe('OrganizationType Controller', () => {
     });
 
     it('returns 400 for invalid ID', async () => {
+      organizationTypeService.updateOrganizationType.mockResolvedValue({ success: false, error: 'INVALID_ID' });
       const res = await request(app)
         .put('/api/organization-types/abc')
         .set('Authorization', `Bearer ${token}`)

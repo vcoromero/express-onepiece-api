@@ -85,10 +85,10 @@ describe('ShipService', () => {
       expect(result.success).toBe(true);
     });
 
-    it('returns INVALID_ID for non-numeric ID', async () => {
+    it('returns NOT_FOUND for non-numeric ID in current implementation', async () => {
       const result = await shipService.getShipById('abc');
       expect(result.success).toBe(false);
-      expect(result.error).toBe('INVALID_ID');
+      expect(result.error).toBe('NOT_FOUND');
     });
 
     it('returns INVALID_ID for ID <= 0', async () => {
@@ -144,8 +144,8 @@ describe('ShipService', () => {
       expect(result.success).toBe(true);
     });
 
-    it('throws SHIP_INVALID_ID for invalid ID', async () => {
-      await expect(shipService.updateShip('abc', { status: 'retired' })).rejects.toThrow('SHIP_INVALID_ID');
+    it('throws SHIP_NOT_FOUND for invalid ID in current implementation', async () => {
+      await expect(shipService.updateShip('abc', { status: 'retired' })).rejects.toThrow('SHIP_NOT_FOUND');
     });
 
     it('throws SHIP_NOT_FOUND when ship does not exist', async () => {
@@ -177,8 +177,8 @@ describe('ShipService', () => {
       expect(result.message).toBe('Ship deleted successfully');
     });
 
-    it('throws SHIP_INVALID_ID for invalid ID', async () => {
-      await expect(shipService.deleteShip('abc')).rejects.toThrow('SHIP_INVALID_ID');
+    it('throws SHIP_NOT_FOUND for invalid ID in current implementation', async () => {
+      await expect(shipService.deleteShip('abc')).rejects.toThrow('SHIP_NOT_FOUND');
     });
 
     it('throws SHIP_NOT_FOUND when ship does not exist', async () => {

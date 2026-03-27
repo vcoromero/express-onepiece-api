@@ -1,0 +1,14 @@
+meta {
+  name: Delete Ship
+  type: http
+  seq: 41
+}
+
+delete {
+  url: {{base_url}}/api/ships/1
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}

@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma.config');
+const { serviceSuccess, serviceFailure } = require('../utils/service-result.helper');
 
 class CharacterTypeService {
   async getAllCharacterTypes(options = {}) {
@@ -22,100 +23,58 @@ class CharacterTypeService {
         orderBy: { [sortField]: orderDirection }
       });
 
-      return {
-        success: true,
+      return serviceSuccess({
         characterTypes,
         total: characterTypes.length
-      };
+      });
     } catch (error) {
-      console.error('Error in getAllCharacterTypes:', error);
-      return {
-        success: false,
-        message: 'Failed to fetch character types',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to fetch character types', 'INTERNAL_ERROR', error, 'characterType.getAll');
     }
   }
 
   async getCharacterTypeById(id) {
     try {
-      if (!id || Number.Number.isNaN(id) || Number.Number.parseInt(id) <= 0) {
-        return {
-          success: false,
-          message: 'Invalid character type ID',
-          error: 'INVALID_ID'
-        };
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
+        return serviceFailure('Invalid character type ID', 'INVALID_ID');
       }
 
       const characterType = await prisma.characterType.findUnique({
-        where: { id: Number.Number.parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!characterType) {
-        return {
-          success: false,
-          message: `Character type with ID ${id} not found`,
-          error: 'NOT_FOUND'
-        };
+        return serviceFailure(`Character type with ID ${id} not found`, 'NOT_FOUND');
       }
 
-      return {
-        success: true,
-        data: characterType
-      };
+      return serviceSuccess({ data: characterType });
     } catch (error) {
-      console.error('Error in getCharacterTypeById:', error);
-      return {
-        success: false,
-        message: 'Failed to fetch character type',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to fetch character type', 'INTERNAL_ERROR', error, 'characterType.getById');
     }
   }
 
   async updateCharacterType(id, updateData) {
     try {
-      if (!id || Number.Number.isNaN(id) || Number.Number.parseInt(id) <= 0) {
-        return {
-          success: false,
-          message: 'Invalid character type ID',
-          error: 'INVALID_ID'
-        };
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
+        return serviceFailure('Invalid character type ID', 'INVALID_ID');
       }
 
       const characterType = await prisma.characterType.findUnique({
-        where: { id: Number.Number.parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!characterType) {
-        return {
-          success: false,
-          message: `Character type with ID ${id} not found`,
-          error: 'NOT_FOUND'
-        };
+        return serviceFailure(`Character type with ID ${id} not found`, 'NOT_FOUND');
       }
 
       if (!updateData || Object.keys(updateData).length === 0) {
-        return {
-          success: false,
-          message: 'At least one field must be provided for update',
-          error: 'NO_FIELDS_PROVIDED'
-        };
+        return serviceFailure('At least one field must be provided for update', 'NO_FIELDS_PROVIDED');
       }
 
       if (updateData.name !== undefined && (!updateData.name || updateData.name.trim() === '')) {
-        return {
-          success: false,
-          message: 'Name cannot be empty',
-          error: 'INVALID_NAME'
-        };
+        return serviceFailure('Name cannot be empty', 'INVALID_NAME');
       }
       if (updateData.name !== undefined && updateData.name.length > 50) {
-        return {
-          success: false,
-          message: 'Name cannot exceed 50 characters',
-          error: 'INVALID_NAME'
-        };
+        return serviceFailure('Name cannot exceed 50 characters', 'INVALID_NAME');
       }
 
       if (updateData.name !== undefined && updateData.name !== characterType.name) {
@@ -123,31 +82,21 @@ class CharacterTypeService {
           where: { name: updateData.name }
         });
         if (existing) {
-          return {
-            success: false,
-            message: 'A character type with this name already exists',
-            error: 'DUPLICATE_NAME'
-          };
+          return serviceFailure('A character type with this name already exists', 'DUPLICATE_NAME');
         }
       }
 
       const updated = await prisma.characterType.update({
-        where: { id: Number.Number.parseInt(id) },
+        where: { id: Number.parseInt(id) },
         data: updateData
       });
 
-      return {
-        success: true,
+      return serviceSuccess({
         data: updated,
         message: 'Character type updated successfully'
-      };
+      });
     } catch (error) {
-      console.error('Error in updateCharacterType:', error);
-      return {
-        success: false,
-        message: 'Failed to update character type',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to update character type', 'INTERNAL_ERROR', error, 'characterType.update');
     }
   }
 
@@ -155,13 +104,13 @@ class CharacterTypeService {
     try {
       const where = { name };
       if (excludeId) {
-        where.id = { not: Number.Number.parseInt(excludeId) };
+        where.id = { not: Number.parseInt(excludeId) };
       }
 
       const characterType = await prisma.characterType.findFirst({ where });
       return !!characterType;
     } catch (error) {
-      console.error('Error in nameExists:', error);
+      serviceFailure('Failed to check character type name', 'INTERNAL_ERROR', error, 'characterType.nameExists');
       return false;
     }
   }
@@ -169,11 +118,11 @@ class CharacterTypeService {
   async idExists(id) {
     try {
       const characterType = await prisma.characterType.findUnique({
-        where: { id: Number.Number.parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
       return !!characterType;
     } catch (error) {
-      console.error('Error in idExists:', error);
+      serviceFailure('Failed to check character type id', 'INTERNAL_ERROR', error, 'characterType.idExists');
       return false;
     }
   }
@@ -181,11 +130,11 @@ class CharacterTypeService {
   async isCharacterTypeInUse(id) {
     try {
       const count = await prisma.characterCharacterType.count({
-        where: { characterTypeId: Number.Number.parseInt(id) }
+        where: { characterTypeId: Number.parseInt(id) }
       });
       return count > 0;
     } catch (error) {
-      console.error('Error in isCharacterTypeInUse:', error);
+      serviceFailure('Failed to check character type usage', 'INTERNAL_ERROR', error, 'characterType.isInUse');
       return false;
     }
   }

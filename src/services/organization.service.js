@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma.config');
+const { serviceFailure, serviceSuccess } = require('../utils/service-result.helper');
 
 const serializeBigInt = (obj) => {
   return JSON.parse(JSON.stringify(obj, (key, value) => {
@@ -63,7 +64,7 @@ class OrganizationService {
           include: {
             organizationType: { select: { id: true, name: true, description: true } },
             leader: { select: { id: true, name: true, alias: true, bounty: true } },
-            ship: { select: { id: true, name: true, status: true } }
+            ships: { select: { id: true, name: true, status: true } }
           },
           orderBy: { [sortField]: orderDirection },
           skip: offset,
@@ -74,8 +75,7 @@ class OrganizationService {
 
       const totalPages = Math.ceil(total / limitNum);
 
-      return {
-        success: true,
+      return serviceSuccess({
         organizations: serializeBigInt(organizations),
         pagination: {
           page: pageNum,
@@ -85,25 +85,16 @@ class OrganizationService {
           hasNext: pageNum < totalPages,
           hasPrev: pageNum > 1
         }
-      };
+      });
     } catch (error) {
-      console.error('Error in getAllOrganizations:', error);
-      return {
-        success: false,
-        message: 'Failed to fetch organizations',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to fetch organizations', 'INTERNAL_ERROR', error, 'organization.getAll');
     }
   }
 
   async getOrganizationById(id) {
     try {
       if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
-        return {
-          success: false,
-          message: 'Invalid organization ID',
-          error: 'INVALID_ID'
-        };
+        return serviceFailure('Invalid organization ID', 'INVALID_ID');
       }
 
       const organization = await prisma.organization.findUnique({
@@ -111,7 +102,7 @@ class OrganizationService {
         include: {
           organizationType: { select: { id: true, name: true, description: true } },
           leader: { select: { id: true, name: true, alias: true, bounty: true } },
-          ship: { select: { id: true, name: true, status: true } },
+          ships: { select: { id: true, name: true, status: true } },
           members: {
             where: { isCurrent: true },
             include: {
@@ -122,24 +113,12 @@ class OrganizationService {
       });
 
       if (!organization) {
-        return {
-          success: false,
-          message: `Organization with ID ${id} not found`,
-          error: 'NOT_FOUND'
-        };
+        return serviceFailure(`Organization with ID ${id} not found`, 'NOT_FOUND');
       }
 
-      return {
-        success: true,
-        data: serializeBigInt(organization)
-      };
+      return serviceSuccess({ data: serializeBigInt(organization) });
     } catch (error) {
-      console.error('Error in getOrganizationById:', error);
-      return {
-        success: false,
-        message: 'Failed to fetch organization',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to fetch organization', 'INTERNAL_ERROR', error, 'organization.getById');
     }
   }
 
@@ -157,11 +136,7 @@ class OrganizationService {
       } = data;
 
       if (!name || name.trim() === '') {
-        return {
-          success: false,
-          message: 'Name is required',
-          error: 'MISSING_NAME'
-        };
+        return serviceFailure('Name is required', 'MISSING_NAME');
       }
 
       const existing = await prisma.organization.findUnique({
@@ -169,11 +144,7 @@ class OrganizationService {
       });
 
       if (existing) {
-        return {
-          success: false,
-          message: 'An organization with this name already exists',
-          error: 'DUPLICATE_NAME'
-        };
+        return serviceFailure('An organization with this name already exists', 'DUPLICATE_NAME');
       }
 
       const newOrganization = await prisma.organization.create({
@@ -190,33 +161,23 @@ class OrganizationService {
         include: {
           organizationType: { select: { id: true, name: true } },
           leader: { select: { id: true, name: true } },
-          ship: { select: { id: true, name: true } }
+          ships: { select: { id: true, name: true } }
         }
       });
 
-      return {
-        success: true,
+      return serviceSuccess({
         data: newOrganization,
         message: 'Organization created successfully'
-      };
+      });
     } catch (error) {
-      console.error('Error in createOrganization:', error);
-      return {
-        success: false,
-        message: 'Failed to create organization',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to create organization', 'INTERNAL_ERROR', error, 'organization.create');
     }
   }
 
   async updateOrganization(id, updateData) {
     try {
       if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
-        return {
-          success: false,
-          message: 'Invalid organization ID',
-          error: 'INVALID_ID'
-        };
+        return serviceFailure('Invalid organization ID', 'INVALID_ID');
       }
 
       const organization = await prisma.organization.findUnique({
@@ -224,27 +185,15 @@ class OrganizationService {
       });
 
       if (!organization) {
-        return {
-          success: false,
-          message: `Organization with ID ${id} not found`,
-          error: 'NOT_FOUND'
-        };
+        return serviceFailure(`Organization with ID ${id} not found`, 'NOT_FOUND');
       }
 
       if (!updateData || Object.keys(updateData).length === 0) {
-        return {
-          success: false,
-          message: 'At least one field must be provided for update',
-          error: 'NO_FIELDS_PROVIDED'
-        };
+        return serviceFailure('At least one field must be provided for update', 'NO_FIELDS_PROVIDED');
       }
 
       if (updateData.name !== undefined && (!updateData.name || updateData.name.trim() === '')) {
-        return {
-          success: false,
-          message: 'Name cannot be empty',
-          error: 'INVALID_NAME'
-        };
+        return serviceFailure('Name cannot be empty', 'INVALID_NAME');
       }
 
       if (updateData.name !== undefined && updateData.name !== organization.name) {
@@ -253,11 +202,7 @@ class OrganizationService {
         });
 
         if (existing) {
-          return {
-            success: false,
-            message: 'An organization with this name already exists',
-            error: 'DUPLICATE_NAME'
-          };
+          return serviceFailure('An organization with this name already exists', 'DUPLICATE_NAME');
         }
       }
 
@@ -269,33 +214,91 @@ class OrganizationService {
         include: {
           organizationType: { select: { id: true, name: true } },
           leader: { select: { id: true, name: true } },
-          ship: { select: { id: true, name: true } }
+          ships: { select: { id: true, name: true } }
         }
       });
 
-      return {
-        success: true,
+      return serviceSuccess({
         data: updatedOrganization,
         message: 'Organization updated successfully'
-      };
+      });
     } catch (error) {
-      console.error('Error in updateOrganization:', error);
-      return {
-        success: false,
-        message: 'Failed to update organization',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to update organization', 'INTERNAL_ERROR', error, 'organization.update');
+    }
+  }
+
+  async getOrganizationsByType(organizationTypeId) {
+    try {
+      if (!organizationTypeId || Number.isNaN(Number.parseInt(organizationTypeId)) || Number.parseInt(organizationTypeId) <= 0) {
+        return serviceFailure('Invalid organization type ID', 'INVALID_ID');
+      }
+
+      const organizations = await prisma.organization.findMany({
+        where: { organizationTypeId: Number.parseInt(organizationTypeId) },
+        include: {
+          organizationType: { select: { id: true, name: true, description: true } },
+          leader: { select: { id: true, name: true, alias: true, bounty: true } },
+          ships: { select: { id: true, name: true, status: true } }
+        },
+        orderBy: { name: 'asc' }
+      });
+
+      return serviceSuccess({
+        data: serializeBigInt(organizations),
+        message: 'Organizations by type retrieved successfully'
+      });
+    } catch (error) {
+      return serviceFailure('Failed to fetch organizations by type', 'INTERNAL_ERROR', error, 'organization.getByType');
+    }
+  }
+
+  async getOrganizationMembers(id) {
+    try {
+      if (!id || Number.isNaN(Number.parseInt(id)) || Number.parseInt(id) <= 0) {
+        return serviceFailure('Invalid organization ID', 'INVALID_ID');
+      }
+
+      const organization = await prisma.organization.findUnique({
+        where: { id: Number.parseInt(id) },
+        select: { id: true, name: true }
+      });
+
+      if (!organization) {
+        return serviceFailure(`Organization with ID ${id} not found`, 'NOT_FOUND');
+      }
+
+      const members = await prisma.characterOrganization.findMany({
+        where: { organizationId: Number.parseInt(id), isCurrent: true },
+        include: {
+          character: {
+            select: {
+              id: true,
+              name: true,
+              alias: true,
+              bounty: true,
+              status: true
+            }
+          }
+        },
+        orderBy: { createdAt: 'asc' }
+      });
+
+      return serviceSuccess({
+        data: {
+          organization,
+          members: serializeBigInt(members)
+        },
+        message: 'Organization members retrieved successfully'
+      });
+    } catch (error) {
+      return serviceFailure('Failed to fetch organization members', 'INTERNAL_ERROR', error, 'organization.getMembers');
     }
   }
 
   async deleteOrganization(id) {
     try {
       if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
-        return {
-          success: false,
-          message: 'Invalid organization ID',
-          error: 'INVALID_ID'
-        };
+        return serviceFailure('Invalid organization ID', 'INVALID_ID');
       }
 
       const organization = await prisma.organization.findUnique({
@@ -303,11 +306,7 @@ class OrganizationService {
       });
 
       if (!organization) {
-        return {
-          success: false,
-          message: `Organization with ID ${id} not found`,
-          error: 'NOT_FOUND'
-        };
+        return serviceFailure(`Organization with ID ${id} not found`, 'NOT_FOUND');
       }
 
       const memberCount = await prisma.characterOrganization.count({
@@ -315,28 +314,16 @@ class OrganizationService {
       });
 
       if (memberCount > 0) {
-        return {
-          success: false,
-          message: 'Cannot delete organization with active members',
-          error: 'HAS_MEMBERS'
-        };
+        return serviceFailure('Cannot delete organization with active members', 'HAS_MEMBERS');
       }
 
       await prisma.organization.delete({
         where: { id: Number.parseInt(id) }
       });
 
-      return {
-        success: true,
-        message: 'Organization deleted successfully'
-      };
+      return serviceSuccess({ message: 'Organization deleted successfully' });
     } catch (error) {
-      console.error('Error in deleteOrganization:', error);
-      return {
-        success: false,
-        message: 'Failed to delete organization',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to delete organization', 'INTERNAL_ERROR', error, 'organization.delete');
     }
   }
 }

@@ -1,0 +1,24 @@
+meta {
+  name: Create Ship
+  type: http
+  seq: 39
+}
+
+post {
+  url: {{base_url}}/api/ships
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "name": "Red Force II",
+    "description": "Updated flagship of the Red Hair Pirates",
+    "status": "active",
+    "image_url": "https://example.com/red-force-ii.png"
+  }
+}

@@ -1,0 +1,14 @@
+meta {
+  name: Delete Devil Fruit
+  type: http
+  seq: 35
+}
+
+delete {
+  url: {{base_url}}/api/devil-fruits/1
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
