@@ -315,15 +315,15 @@ async function main() {
     console.log('✅ Database seeded successfully!');
     console.log('========================================');
     console.log('Summary:');
-    console.log(`  - Races: 12`);
-    console.log(`  - Character Types: 21`);
-    console.log(`  - Fruit Types: 3`);
-    console.log(`  - Organization Types: 8`);
-    console.log(`  - Haki Types: 3`);
-    console.log(`  - Ships: 10`);
-    console.log(`  - Characters: 22`);
-    console.log(`  - Devil Fruits: 16`);
-    console.log(`  - Organizations: 12`);
+    console.log('  - Races: 12');
+    console.log('  - Character Types: 21');
+    console.log('  - Fruit Types: 3');
+    console.log('  - Organization Types: 8');
+    console.log('  - Haki Types: 3');
+    console.log('  - Ships: 10');
+    console.log('  - Characters: 22');
+    console.log('  - Devil Fruits: 16');
+    console.log('  - Organizations: 12');
     console.log('========================================');
 
   } catch (error) {
@@ -334,4 +334,4 @@ async function main() {
   }
 }
 
-main();
+await main();

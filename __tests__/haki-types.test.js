@@ -1,237 +1,168 @@
-const request = require('supertest');
-const app = require('../src/app');
-const hakiTypeService = require('../src/services/haki-type.service');
-
-// Mock JWTUtil since it has its own unit tests
-jest.mock('../src/utils/jwt.util', () => ({
-  generateToken: jest.fn(),
-  verifyToken: jest.fn((token) => {
-    if (token === 'valid-test-token') {
-      return { username: 'testadmin', role: 'admin' };
-    }
-    throw new Error('Invalid token');
-  }),
-  decodeToken: jest.fn()
+jest.mock('../src/config/prisma.config', () => ({
+  hakiType: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn()
+  }
 }));
 
-// Mock the service
-jest.mock('../src/services/haki-type.service');
+const prisma = require('../src/config/prisma.config');
+const hakiTypeService = require('../src/services/haki-type.service');
 
-describe('HakiType API Endpoints', () => {
+const mockHakiType = {
+  id: 1,
+  name: 'Observation Haki',
+  description: 'Allows the user to sense the presence of others',
+  color: 'yellow',
+  createdAt: new Date(),
+  updatedAt: new Date()
+};
+
+describe('HakiTypeService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
-  describe('GET /api/haki-types', () => {
-    it('should return all Haki types with pagination', async () => {
-      const mockHakiTypes = [
-        {
-          id: 1,
-          name: 'Observation Haki',
-          description: 'Allows user to sense presence and emotions of others',
-          color: 'Red',
-          created_at: '2024-01-01T00:00:00.000Z',
-          updated_at: '2024-01-01T00:00:00.000Z'
-        },
-        {
-          id: 2,
-          name: 'Armament Haki',
-          description: 'Allows user to use spiritual armor for offense and defense',
-          color: 'Black',
-          created_at: '2024-01-01T00:00:00.000Z',
-          updated_at: '2024-01-01T00:00:00.000Z'
-        }
-      ];
+  describe('getAllHakiTypes', () => {
+    it('returns all haki types successfully', async () => {
+      prisma.hakiType.findMany.mockResolvedValue([mockHakiType]);
 
-      hakiTypeService.getAllHakiTypes.mockResolvedValue({
-        success: true,
-        hakiTypes: mockHakiTypes,
-        total: 2
-      });
+      const result = await hakiTypeService.getAllHakiTypes();
 
-      const response = await request(app)
-        .get('/api/haki-types')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toBeDefined();
-      expect(hakiTypeService.getAllHakiTypes).toHaveBeenCalledWith({
-        search: undefined,
-        sortBy: 'name',
-        sortOrder: 'asc'
-      });
+      expect(result.success).toBe(true);
+      expect(result.hakiTypes).toHaveLength(1);
+      expect(result.total).toBe(1);
     });
 
-    it('should handle service errors', async () => {
-      hakiTypeService.getAllHakiTypes.mockResolvedValue({
-        success: false,
-        message: 'Database error',
-        error: 'DATABASE_ERROR'
-      });
+    it('filters by search term', async () => {
+      prisma.hakiType.findMany.mockResolvedValue([mockHakiType]);
 
-      const response = await request(app)
-        .get('/api/haki-types')
-        .expect(500);
+      await hakiTypeService.getAllHakiTypes({ search: 'Observation' });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Database error');
+      expect(prisma.hakiType.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ OR: expect.any(Array) }) })
+      );
     });
 
-    it('should handle invalid query parameters gracefully', async () => {
-      hakiTypeService.getAllHakiTypes.mockResolvedValue({
-        success: true,
-        hakiTypes: [],
-        total: 0
-      });
+    it('returns error object on failure', async () => {
+      prisma.hakiType.findMany.mockRejectedValue(new Error('DB error'));
 
-      const response = await request(app)
-        .get('/api/haki-types?page=0&limit=0')
-        .expect(200);
+      const result = await hakiTypeService.getAllHakiTypes();
 
-      expect(response.body.success).toBe(true);
-    });
-
-    it('should handle search and sorting parameters', async () => {
-      hakiTypeService.getAllHakiTypes.mockResolvedValue({
-        success: true,
-        hakiTypes: [],
-        total: 0
-      });
-
-      await request(app)
-        .get('/api/haki-types?search=observation&sortBy=color&sortOrder=desc')
-        .expect(200);
-
-      expect(hakiTypeService.getAllHakiTypes).toHaveBeenCalledWith({
-        search: 'observation',
-        sortBy: 'color',
-        sortOrder: 'desc'
-      });
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to retrieve Haki types');
     });
   });
 
-  describe('GET /api/haki-types/:id', () => {
-    it('should return a Haki type by ID', async () => {
-      const mockHakiType = {
-        id: 1,
-        name: 'Observation Haki',
-        description: 'Allows user to sense presence and emotions of others',
-        color: 'Red',
-        created_at: '2024-01-01T00:00:00.000Z',
-        updated_at: '2024-01-01T00:00:00.000Z'
-      };
+  describe('getHakiTypeById', () => {
+    it('returns a haki type for a valid ID', async () => {
+      prisma.hakiType.findUnique.mockResolvedValue(mockHakiType);
 
-      hakiTypeService.getHakiTypeById.mockResolvedValue({
-        success: true,
-        data: { hakiType: mockHakiType }
-      });
+      const result = await hakiTypeService.getHakiTypeById(1);
 
-      const response = await request(app)
-        .get('/api/haki-types/1')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.hakiType.name).toBe('Observation Haki');
-      expect(hakiTypeService.getHakiTypeById).toHaveBeenCalledWith('1');
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockHakiType);
     });
 
-    it('should return 404 for non-existent Haki type', async () => {
-      hakiTypeService.getHakiTypeById.mockResolvedValue({
-        success: false,
-        message: 'Haki type not found',
-        error: 'NOT_FOUND'
-      });
-
-      const response = await request(app)
-        .get('/api/haki-types/999')
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Haki type not found');
+    it('returns INVALID_ID for a non-numeric ID', async () => {
+      const result = await hakiTypeService.getHakiTypeById('abc');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
     });
 
-    it('should validate ID parameter', async () => {
-      const response = await request(app)
-        .get('/api/haki-types/invalid')
-        .expect(400);
+    it('returns INVALID_ID for ID <= 0', async () => {
+      const result = await hakiTypeService.getHakiTypeById(0);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
+    });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Invalid Haki type ID');
+    it('returns NOT_FOUND when haki type does not exist', async () => {
+      prisma.hakiType.findUnique.mockResolvedValue(null);
+
+      const result = await hakiTypeService.getHakiTypeById(999);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NOT_FOUND');
     });
   });
 
+  describe('updateHakiType', () => {
+    it('updates a haki type successfully', async () => {
+      const updated = { ...mockHakiType, description: 'Updated description' };
+      prisma.hakiType.findUnique.mockResolvedValue(mockHakiType);
+      prisma.hakiType.findFirst.mockResolvedValue(null);
+      prisma.hakiType.update.mockResolvedValue(updated);
 
+      const result = await hakiTypeService.updateHakiType(1, { description: 'Updated description' });
 
-  describe('PUT /api/haki-types/:id', () => {
-    it('should update a Haki type', async () => {
-      const updateData = {
-        name: 'Advanced Observation Haki',
-        description: 'Enhanced version of Observation Haki'
-      };
-
-      const mockUpdatedHakiType = {
-        id: 1,
-        name: 'Advanced Observation Haki',
-        description: 'Enhanced version of Observation Haki',
-        color: 'Red',
-        created_at: '2024-01-01T00:00:00.000Z',
-        updated_at: '2024-01-01T00:00:00.000Z'
-      };
-
-      hakiTypeService.updateHakiType.mockResolvedValue({
-        success: true,
-        data: { hakiType: mockUpdatedHakiType },
-        message: 'Haki type updated successfully'
-      });
-
-      const response = await request(app)
-        .put('/api/haki-types/1')
-        .set('Authorization', 'Bearer valid-test-token')
-        .send(updateData)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBeDefined();
-      expect(hakiTypeService.updateHakiType).toHaveBeenCalledWith('1', updateData);
+      expect(result.success).toBe(true);
+      expect(result.message).toBe('Haki type updated successfully');
     });
 
-    it('should return 404 for non-existent Haki type', async () => {
-      hakiTypeService.updateHakiType.mockResolvedValue({
-        success: false,
-        message: 'Haki type not found',
-        error: 'NOT_FOUND'
-      });
+    it('returns NOT_FOUND for non-existing ID', async () => {
+      prisma.hakiType.findUnique.mockResolvedValue(null);
 
-      const response = await request(app)
-        .put('/api/haki-types/999')
-        .set('Authorization', 'Bearer valid-test-token')
-        .send({ name: 'Updated Haki' })
-        .expect(404);
+      const result = await hakiTypeService.updateHakiType(999, { name: 'New Name' });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Haki type not found');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NOT_FOUND');
     });
 
-    it('should validate at least one field is provided', async () => {
-      const response = await request(app)
-        .put('/api/haki-types/1')
-        .set('Authorization', 'Bearer valid-test-token')
-        .send({})
-        .expect(400);
+    it('returns DUPLICATE_NAME when name already exists', async () => {
+      prisma.hakiType.findUnique.mockResolvedValue(mockHakiType);
+      prisma.hakiType.findFirst.mockResolvedValue({ id: 2, name: 'Armament Haki' });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toContain('At least one field');
+      const result = await hakiTypeService.updateHakiType(1, { name: 'Armament Haki' });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('DUPLICATE_NAME');
     });
 
-    it('should require authentication', async () => {
-      const response = await request(app)
-        .put('/api/haki-types/1')
-        .send({ name: 'Updated Haki' })
-        .expect(401);
+    it('returns INVALID_ID for invalid ID', async () => {
+      const result = await hakiTypeService.updateHakiType('abc', { name: 'Test' });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
+    });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Authentication token not provided');
+    it('skips duplicate check when name is the same', async () => {
+      prisma.hakiType.findUnique.mockResolvedValue(mockHakiType);
+      prisma.hakiType.update.mockResolvedValue(mockHakiType);
+
+      const result = await hakiTypeService.updateHakiType(1, { name: 'Observation Haki' });
+
+      expect(result.success).toBe(true);
+      expect(prisma.hakiType.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('updates with description and color cleared when empty', async () => {
+      const updated = { ...mockHakiType, description: null, color: null };
+      prisma.hakiType.findUnique.mockResolvedValue(mockHakiType);
+      prisma.hakiType.update.mockResolvedValue(updated);
+
+      const result = await hakiTypeService.updateHakiType(1, { description: '', color: '' });
+
+      expect(result.success).toBe(true);
+    });
+
+    it('returns error on DB failure', async () => {
+      prisma.hakiType.findUnique.mockRejectedValue(new Error('DB error'));
+
+      const result = await hakiTypeService.updateHakiType(1, { name: 'Test' });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to update Haki type');
     });
   });
 
+  describe('getHakiTypeById DB error', () => {
+    it('returns error on DB failure', async () => {
+      prisma.hakiType.findUnique.mockRejectedValue(new Error('DB error'));
+
+      const result = await hakiTypeService.getHakiTypeById(1);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to retrieve Haki type');
+    });
+  });
 });

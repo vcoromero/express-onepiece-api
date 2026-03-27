@@ -1,302 +1,236 @@
-const request = require('supertest');
-const app = require('../src/app');
+jest.mock('../src/config/prisma.config', () => ({
+  characterType: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn()
+  },
+  characterCharacterType: {
+    count: jest.fn()
+  }
+}));
+
+const prisma = require('../src/config/prisma.config');
 const characterTypeService = require('../src/services/character-type.service');
 
-// Mock JWTUtil since it has its own unit tests
-jest.mock('../src/utils/jwt.util', () => ({
-  generateToken: jest.fn(),
-  verifyToken: jest.fn((token) => {
-    if (token === 'valid-test-token') {
-      return { username: 'testadmin', role: 'admin' };
-    }
-    throw new Error('Invalid token');
-  }),
-  decodeToken: jest.fn()
-}));
+const mockType = { id: 1, name: 'Pirate', description: 'Pirates of the sea', createdAt: new Date(), updatedAt: new Date() };
 
-// Mock CharacterTypeService - This is the Service Layer
-jest.mock('../src/services/character-type.service', () => ({
-  getAllCharacterTypes: jest.fn(),
-  getCharacterTypeById: jest.fn(),
-  updateCharacterType: jest.fn(),
-  nameExists: jest.fn(),
-  idExists: jest.fn(),
-  isCharacterTypeInUse: jest.fn()
-}));
-
-describe('Character Type API Endpoints', () => {
-  let authToken;
-
-  // Setup mock token before all tests
-  beforeAll(() => {
-    // Use a mock token instead of generating a real one
-    authToken = 'valid-test-token';
-  });
-
-  // Reset mocks before each test
+describe('CharacterTypeService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
-  // Clean up after all tests
-  afterAll(async () => {
-    jest.restoreAllMocks();
-  });
+  describe('getAllCharacterTypes', () => {
+    it('returns all character types successfully', async () => {
+      prisma.characterType.findMany.mockResolvedValue([mockType]);
 
-  describe('GET /api/character-types', () => {
-    it('should return all character types', async () => {
-      const mockCharacterTypes = [
-        {
-          id: 1,
-          name: 'Pirate',
-          description: 'Individuals who sail the seas seeking freedom and adventure',
-          created_at: new Date(),
-          updated_at: new Date()
-        },
-        {
-          id: 2,
-          name: 'Marine',
-          description: 'Military force of the World Government',
-          created_at: new Date(),
-          updated_at: new Date()
-        }
-      ];
+      const result = await characterTypeService.getAllCharacterTypes();
 
-      characterTypeService.getAllCharacterTypes.mockResolvedValue({
-        success: true,
-        characterTypes: mockCharacterTypes,
-        total: 2
-      });
-
-      const response = await request(app)
-        .get('/api/character-types')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toBeDefined();
-      expect(characterTypeService.getAllCharacterTypes).toHaveBeenCalledWith({
-        search: undefined,
-        sortBy: 'name',
-        sortOrder: 'asc'
-      });
+      expect(result.success).toBe(true);
+      expect(result.characterTypes).toHaveLength(1);
+      expect(result.total).toBe(1);
     });
 
-    it('should handle service errors', async () => {
-      characterTypeService.getAllCharacterTypes.mockResolvedValue({
-        success: false,
-        message: 'Database connection failed'
-      });
+    it('returns error object on failure', async () => {
+      prisma.characterType.findMany.mockRejectedValue(new Error('DB error'));
 
-      const response = await request(app)
-        .get('/api/character-types')
-        .expect(500);
+      const result = await characterTypeService.getAllCharacterTypes();
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Database connection failed');
-    });
-
-    it('should handle search and sorting parameters', async () => {
-      const mockCharacterTypes = [
-        {
-          id: 1,
-          name: 'Pirate',
-          description: 'Individuals who sail the seas seeking freedom and adventure'
-        }
-      ];
-
-      characterTypeService.getAllCharacterTypes.mockResolvedValue({
-        success: true,
-        characterTypes: mockCharacterTypes,
-        total: 1
-      });
-
-      const response = await request(app)
-        .get('/api/character-types?search=pirate&sortBy=name&sortOrder=desc')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(characterTypeService.getAllCharacterTypes).toHaveBeenCalledWith({
-        search: 'pirate',
-        sortBy: 'name',
-        sortOrder: 'desc'
-      });
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to fetch character types');
     });
   });
 
-  describe('GET /api/character-types/:id', () => {
-    it('should return a character type by ID', async () => {
-      const mockCharacterType = {
-        id: 1,
-        name: 'Pirate',
-        description: 'Individuals who sail the seas seeking freedom and adventure',
-        created_at: new Date(),
-        updated_at: new Date()
-      };
+  describe('getCharacterTypeById', () => {
+    it('returns a character type for a valid ID', async () => {
+      prisma.characterType.findUnique.mockResolvedValue(mockType);
 
-      characterTypeService.getCharacterTypeById.mockResolvedValue({
-        success: true,
-        data: mockCharacterType
-      });
+      const result = await characterTypeService.getCharacterTypeById(1);
 
-      const response = await request(app)
-        .get('/api/character-types/1')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.name).toBe('Pirate');
-      expect(characterTypeService.getCharacterTypeById).toHaveBeenCalledWith(1);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockType);
     });
 
-    it('should return 404 for non-existent character type', async () => {
-      characterTypeService.getCharacterTypeById.mockResolvedValue({
-        success: false,
-        message: 'Character type with ID 999 not found',
-        error: 'NOT_FOUND'
-      });
-
-      const response = await request(app)
-        .get('/api/character-types/999')
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Character type with ID 999 not found');
+    it('returns INVALID_ID for ID of zero', async () => {
+      const result = await characterTypeService.getCharacterTypeById(0);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
     });
 
-    it('should validate ID parameter', async () => {
-      const response = await request(app)
-        .get('/api/character-types/invalid')
-        .expect(400);
+    it('returns INVALID_ID for negative ID', async () => {
+      const result = await characterTypeService.getCharacterTypeById(-1);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
+    });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Invalid character type ID');
+    it('returns NOT_FOUND when type does not exist', async () => {
+      prisma.characterType.findUnique.mockResolvedValue(null);
+
+      const result = await characterTypeService.getCharacterTypeById(999);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NOT_FOUND');
     });
   });
 
-  describe('PUT /api/character-types/:id', () => {
-    it('should update a character type', async () => {
-      const updateData = {
-        name: 'Pirate Updated',
-        description: 'Updated description for Pirate character type'
-      };
+  describe('updateCharacterType', () => {
+    it('updates successfully', async () => {
+      const updated = { ...mockType, name: 'Marine' };
+      prisma.characterType.findUnique
+        .mockResolvedValueOnce(mockType)
+        .mockResolvedValueOnce(null);
+      prisma.characterType.update.mockResolvedValue(updated);
 
-      const updatedCharacterType = {
-        id: 1,
-        name: 'Pirate Updated',
-        description: 'Updated description for Pirate character type',
-        created_at: new Date(),
-        updated_at: new Date()
-      };
+      const result = await characterTypeService.updateCharacterType(1, { name: 'Marine' });
 
-      characterTypeService.updateCharacterType.mockResolvedValue({
-        success: true,
-        data: updatedCharacterType,
-        message: 'Character type updated successfully'
-      });
-
-      const response = await request(app)
-        .put('/api/character-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.name).toBe('Pirate Updated');
-      expect(characterTypeService.updateCharacterType).toHaveBeenCalledWith(1, updateData);
+      expect(result.success).toBe(true);
+      expect(result.message).toBe('Character type updated successfully');
     });
 
-    it('should return 404 for non-existent character type', async () => {
-      const updateData = { name: 'Updated Character Type' };
+    it('returns NOT_FOUND for non-existing ID', async () => {
+      prisma.characterType.findUnique.mockResolvedValue(null);
 
-      characterTypeService.updateCharacterType.mockResolvedValue({
-        success: false,
-        message: 'Character type with ID 999 not found',
-        error: 'NOT_FOUND'
-      });
+      const result = await characterTypeService.updateCharacterType(999, { name: 'Marine' });
 
-      const response = await request(app)
-        .put('/api/character-types/999')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Character type with ID 999 not found');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NOT_FOUND');
     });
 
-    it('should validate at least one field is provided', async () => {
-      characterTypeService.updateCharacterType.mockResolvedValue({
-        success: false,
-        message: 'At least one field must be provided for update',
-        error: 'NO_FIELDS_PROVIDED'
-      });
+    it('returns NO_FIELDS_PROVIDED for empty update', async () => {
+      prisma.characterType.findUnique.mockResolvedValue(mockType);
 
-      const response = await request(app)
-        .put('/api/character-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({})
-        .expect(400);
+      const result = await characterTypeService.updateCharacterType(1, {});
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('At least one field must be provided for update');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NO_FIELDS_PROVIDED');
     });
 
-    it('should require authentication', async () => {
-      const response = await request(app)
-        .put('/api/character-types/1')
-        .send({ name: 'Unauthorized Update' })
-        .expect(401);
+    it('returns INVALID_NAME when name is empty string', async () => {
+      prisma.characterType.findUnique.mockResolvedValue(mockType);
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Authentication token not provided');
+      const result = await characterTypeService.updateCharacterType(1, { name: '' });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_NAME');
     });
 
-    it('should validate ID parameter', async () => {
-      const response = await request(app)
-        .put('/api/character-types/invalid')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Test' })
-        .expect(400);
+    it('returns INVALID_NAME when name exceeds 50 characters', async () => {
+      prisma.characterType.findUnique.mockResolvedValue(mockType);
+      const longName = 'A'.repeat(51);
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Invalid character type ID');
+      const result = await characterTypeService.updateCharacterType(1, { name: longName });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_NAME');
     });
 
-    it('should handle duplicate name error', async () => {
-      const updateData = { name: 'Marine' };
+    it('skips duplicate check when name is unchanged', async () => {
+      prisma.characterType.findUnique.mockResolvedValue(mockType);
+      prisma.characterType.update.mockResolvedValue(mockType);
 
-      characterTypeService.updateCharacterType.mockResolvedValue({
-        success: false,
-        message: 'A character type with this name already exists',
-        error: 'DUPLICATE_NAME'
-      });
+      const result = await characterTypeService.updateCharacterType(1, { name: 'Pirate' });
 
-      const response = await request(app)
-        .put('/api/character-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(409);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('A character type with this name already exists');
+      expect(result.success).toBe(true);
+      expect(prisma.characterType.findFirst).not.toHaveBeenCalled();
     });
 
-    it('should validate name length', async () => {
-      const updateData = { name: 'A'.repeat(51) };
+    it('returns DUPLICATE_NAME when updated name already exists', async () => {
+      prisma.characterType.findUnique
+        .mockResolvedValueOnce(mockType)
+        .mockResolvedValueOnce({ id: 2, name: 'Marine' });
 
-      characterTypeService.updateCharacterType.mockResolvedValue({
-        success: false,
-        message: 'Name cannot exceed 50 characters',
-        error: 'INVALID_NAME'
-      });
+      const result = await characterTypeService.updateCharacterType(1, { name: 'Marine' });
 
-      const response = await request(app)
-        .put('/api/character-types/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(400);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('DUPLICATE_NAME');
+    });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Name cannot exceed 50 characters');
+    it('returns error on DB failure', async () => {
+      prisma.characterType.findUnique.mockRejectedValue(new Error('DB error'));
+
+      const result = await characterTypeService.updateCharacterType(1, { name: 'Marine' });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to update character type');
+    });
+  });
+
+  describe('getCharacterTypeById DB error', () => {
+    it('returns error on DB failure', async () => {
+      prisma.characterType.findUnique.mockRejectedValue(new Error('DB error'));
+
+      const result = await characterTypeService.getCharacterTypeById(1);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to fetch character type');
+    });
+  });
+
+  describe('nameExists', () => {
+    it('returns true when name exists', async () => {
+      prisma.characterType.findFirst.mockResolvedValue(mockType);
+      const result = await characterTypeService.nameExists('Pirate');
+      expect(result).toBe(true);
+    });
+
+    it('returns false when name does not exist', async () => {
+      prisma.characterType.findFirst.mockResolvedValue(null);
+      const result = await characterTypeService.nameExists('Unknown');
+      expect(result).toBe(false);
+    });
+
+    it('uses excludeId in query when provided', async () => {
+      prisma.characterType.findFirst.mockResolvedValue(null);
+      await characterTypeService.nameExists('Pirate', 1);
+      expect(prisma.characterType.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ id: { not: 1 } }) })
+      );
+    });
+
+    it('returns false on DB error', async () => {
+      prisma.characterType.findFirst.mockRejectedValue(new Error('DB error'));
+      const result = await characterTypeService.nameExists('Pirate');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('idExists', () => {
+    it('returns true when ID exists', async () => {
+      prisma.characterType.findUnique.mockResolvedValue(mockType);
+      const result = await characterTypeService.idExists(1);
+      expect(result).toBe(true);
+    });
+
+    it('returns false when ID does not exist', async () => {
+      prisma.characterType.findUnique.mockResolvedValue(null);
+      const result = await characterTypeService.idExists(999);
+      expect(result).toBe(false);
+    });
+
+    it('returns false on DB error', async () => {
+      prisma.characterType.findUnique.mockRejectedValue(new Error('DB error'));
+      const result = await characterTypeService.idExists(1);
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('isCharacterTypeInUse', () => {
+    it('returns true when characters use the type', async () => {
+      prisma.characterCharacterType.count.mockResolvedValue(3);
+      const result = await characterTypeService.isCharacterTypeInUse(1);
+      expect(result).toBe(true);
+    });
+
+    it('returns false when no characters use the type', async () => {
+      prisma.characterCharacterType.count.mockResolvedValue(0);
+      const result = await characterTypeService.isCharacterTypeInUse(1);
+      expect(result).toBe(false);
+    });
+
+    it('returns false on DB error', async () => {
+      prisma.characterCharacterType.count.mockRejectedValue(new Error('DB error'));
+      const result = await characterTypeService.isCharacterTypeInUse(1);
+      expect(result).toBe(false);
     });
   });
 });

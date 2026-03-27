@@ -1,169 +1,219 @@
-# 🗄️ Database Schema
+# Database Schema
 
 ## Overview
 
-The One Piece API uses a MySQL database with a well-structured schema that follows Third Normal Form (3NF) principles. The database is designed to handle complex relationships between One Piece universe entities.
+The One Piece API uses **PostgreSQL** with **Prisma ORM**. The schema follows Third Normal Form (3NF) principles and handles complex many-to-many relationships between One Piece universe entities.
 
 ## Database Structure
 
 ### Core Tables
 
 #### Characters
+
 - **Primary Key**: `id`
-- **Fields**: `name`, `alias`, `bounty`, `status`, `race_id`
-- **Relationships**: Many-to-many with organizations, devil fruits, haki types
+- **Fields**: `name`, `alias`, `bounty` (BigInt), `status`, `raceId`, `age`, `birthday`, `height`, `origin`, `description`, `debut`
+- **Relationships**: Many-to-many with organizations, devil fruits, haki types, character types
 
 #### Organizations
+
 - **Primary Key**: `id`
-- **Fields**: `name`, `type_id`, `status`, `leader_id`
+- **Fields**: `name`, `organizationTypeId`, `status`, `leaderId`, `description`
 - **Relationships**: One-to-many with ships, many-to-many with characters
 
 #### Ships
+
 - **Primary Key**: `id`
-- **Fields**: `name`, `organization_id`, `status`
+- **Fields**: `name`, `organizationId`, `status`, `description`
 - **Relationships**: Belongs to organization
 
 #### Devil Fruits
+
 - **Primary Key**: `id`
-- **Fields**: `name`, `type_id`, `abilities`, `rarity`
-- **Relationships**: Many-to-many with characters
+- **Fields**: `name`, `japaneseName`, `typeId`, `description`, `currentUserId`
+- **Relationships**: Many-to-many with characters via `CharacterDevilFruit`
 
 ### Reference Tables
 
 #### Races
-- Human, Fishman, Mink, Giant, etc.
 
-#### Character Types
-- Pirate, Marine, Captain, Yonko, etc.
+- Human, Fishman, Mink, Giant, Celestial Dragon, etc.
 
-#### Organization Types
-- Pirate Crew, Marine, Revolutionary Army, etc.
+#### CharacterTypes
 
-#### Haki Types
+- Pirate, Marine, Captain, Yonko, Warlord, Revolutionary, etc.
+
+#### OrganizationTypes
+
+- Pirate Crew, Marine, Revolutionary Army, World Government, etc.
+
+#### HakiTypes
+
 - Observation Haki, Armament Haki, Conqueror's Haki
 
-#### Devil Fruit Types
+#### FruitTypes
+
 - Paramecia, Zoan, Logia
 
 ### Relationship Tables
 
-#### Character-Organization
-- Links characters to organizations with roles
-- Fields: `character_id`, `organization_id`, `role`, `is_current`
+#### CharacterOrganization
 
-#### Character-Devil Fruit
+- Links characters to organizations with role and currency flag
+- Fields: `characterId`, `organizationId`, `role`, `isCurrent`
+
+#### CharacterDevilFruit
+
 - Links characters to devil fruits
-- Fields: `character_id`, `devil_fruit_id`, `is_current`
+- Fields: `characterId`, `devilFruitId`, `isCurrent`
 
-#### Character-Haki
+#### CharacterHaki
+
 - Links characters to haki types with mastery level
-- Fields: `character_id`, `haki_type_id`, `mastery_level`
+- Fields: `characterId`, `hakiTypeId`, `masteryLevel`
 
-## Database Views
+#### CharacterCharacterType
 
-### v_characters_complete
-Complete character profiles with all relationships:
-```sql
-SELECT * FROM v_characters_complete WHERE name LIKE '%Luffy%';
-```
+- Links characters to character types with currency flag
+- Fields: `characterId`, `characterTypeId`, `isCurrent`
 
-### v_organization_members
-Organization members with roles:
-```sql
-SELECT * FROM v_organization_members WHERE organization_name = 'Straw Hat Pirates';
-```
+---
 
-### v_devil_fruit_users
-Devil fruits and their users:
-```sql
-SELECT * FROM v_devil_fruit_users WHERE fruit_type = 'Logia';
-```
+## Prisma Setup
 
-## Setup Instructions
+The schema file is located at `prisma/schema.prisma`.
 
-### 1. Create Database
+### Generate Prisma Client
+
 ```bash
-mysql -u root -p -e "CREATE DATABASE onepiece_db;"
+npm run db:generate
+# Equivalent to: prisma generate
 ```
 
-### 2. Execute Schema Files
+### Push Schema to Database (development)
+
 ```bash
-# Execute files in order
-for file in database/schemas/*.sql; do
-  echo "Executing $file..."
-  mysql -u root -p onepiece_db < "$file"
-done
+npm run db:push
+# Equivalent to: prisma db push
 ```
 
-### 3. Verify Setup
+### Run Migrations (production)
+
 ```bash
-mysql -u root -p -e "USE onepiece_db; SHOW TABLES;"
+npm run db:migrate
+# Equivalent to: prisma migrate dev
 ```
 
-## Sample Data
+### Seed the Database
 
-The database includes comprehensive One Piece data:
+```bash
+npm run db:seed
+# Equivalent to: node prisma/seed.js
+```
 
-- **21 Characters**: Luffy, Zoro, Nami, Sanji, etc.
-- **16 Devil Fruits**: Gomu Gomu no Mi, Mera Mera no Mi, etc.
-- **10 Organizations**: Straw Hat Pirates, Heart Pirates, etc.
-- **Complex Relationships**: Character-organization, character-devil fruit, etc.
+### Open Prisma Studio
 
-## Performance Optimization
+```bash
+npm run db:studio
+# Equivalent to: prisma studio
+```
 
-### Indexes
-- Primary keys on all tables
-- Foreign key indexes
-- Search indexes on frequently queried fields
+---
 
-### Query Optimization
-- Strategic use of views for complex queries
-- Proper JOIN optimization
-- Pagination support for large datasets
+## Seed Data Summary
+
+| Table | Records |
+| ------- | --------- |
+| races | 12 |
+| character_types | 21 |
+| fruit_types | 3 |
+| organization_types | 8 |
+| haki_types | 3 |
+| ships | 10 |
+| characters | 22 |
+| devil_fruits | 16 |
+| organizations | 12 |
+
+---
+
+## Local Development Setup
+
+### Using Docker Compose (recommended)
+
+```bash
+# Start PostgreSQL and Redis
+docker-compose up -d
+
+# Generate Prisma Client
+npm run db:generate
+
+# Push schema to database
+npm run db:push
+
+# Seed database
+npm run db:seed
+```
+
+### Manual PostgreSQL Setup
+
+```bash
+# Create database and user
+psql -U postgres -c "CREATE USER onepiece_user WITH PASSWORD 'yourpassword';"
+psql -U postgres -c "CREATE DATABASE onepiece_db OWNER onepiece_user;"
+
+# Set DATABASE_URL in .env
+DATABASE_URL=postgresql://onepiece_user:yourpassword@localhost:5432/onepiece_db
+```
+
+---
 
 ## Environment Configuration
 
-### Local Development
 ```env
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=your-password
-DB_NAME=onepiece_db
-DB_PORT=3306
+# .env
+DATABASE_URL=postgresql://user:password@localhost:5432/onepiece_db
+
+# Redis (for future caching)
+REDIS_HOST=localhost
+REDIS_PORT=6379
 ```
 
-### AWS Production
-- **RDS MySQL**: Managed database service
-- **Connection Pooling**: Optimized for Lambda
-- **Backup**: Automated daily backups
-- **Monitoring**: CloudWatch integration
+---
 
 ## Troubleshooting
 
 ### Connection Issues
-```bash
-# Test MySQL connection
-mysql -u root -p -h localhost
 
-# Check database exists
-mysql -u root -p -e "SHOW DATABASES;"
+```bash
+# Test PostgreSQL connection
+psql $DATABASE_URL -c "SELECT 1;"
+
+# Check Prisma connection
+npx prisma db pull
 ```
 
-### Schema Issues
+### Prisma Client Out of Sync
+
 ```bash
-# Re-execute schema files
-for file in database/schemas/*.sql; do
-  mysql -u root -p onepiece_db < "$file"
-done
+# Regenerate client after schema changes
+npm run db:generate
 ```
 
-### Performance Issues
-```sql
--- Check table sizes
-SELECT 
-    table_name,
-    ROUND(((data_length + index_length) / 1024 / 1024), 2) AS 'Size (MB)'
-FROM information_schema.tables
-WHERE table_schema = 'onepiece_db'
-ORDER BY (data_length + index_length) DESC;
+### Reset Database (development only)
+
+```bash
+# Drop all tables and re-push schema
+npx prisma migrate reset
+npm run db:seed
+```
+
+### Performance
+
+Prisma automatically creates indexes for primary keys and foreign keys. For large datasets, consider adding custom indexes via migrations:
+
+```prisma
+model Character {
+  @@index([name])
+  @@index([status])
+  @@index([raceId])
+}
 ```

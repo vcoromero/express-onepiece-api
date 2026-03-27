@@ -39,7 +39,7 @@ class CharacterTypeService {
 
   async getCharacterTypeById(id) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid character type ID',
@@ -48,7 +48,7 @@ class CharacterTypeService {
       }
 
       const characterType = await prisma.characterType.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!characterType) {
@@ -75,7 +75,7 @@ class CharacterTypeService {
 
   async updateCharacterType(id, updateData) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid character type ID',
@@ -84,7 +84,7 @@ class CharacterTypeService {
       }
 
       const characterType = await prisma.characterType.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!characterType) {
@@ -134,7 +134,7 @@ class CharacterTypeService {
       }
 
       const updated = await prisma.characterType.update({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         data: updateData
       });
 
@@ -157,7 +157,7 @@ class CharacterTypeService {
     try {
       const where = { name };
       if (excludeId) {
-        where.id = { not: parseInt(excludeId) };
+        where.id = { not: Number.parseInt(excludeId) };
       }
 
       const characterType = await prisma.characterType.findFirst({ where });
@@ -171,7 +171,7 @@ class CharacterTypeService {
   async idExists(id) {
     try {
       const characterType = await prisma.characterType.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
       return !!characterType;
     } catch (error) {
@@ -183,7 +183,7 @@ class CharacterTypeService {
   async isCharacterTypeInUse(id) {
     try {
       const count = await prisma.characterCharacterType.count({
-        where: { characterTypeId: parseInt(id) }
+        where: { characterTypeId: Number.parseInt(id) }
       });
       return count > 0;
     } catch (error) {

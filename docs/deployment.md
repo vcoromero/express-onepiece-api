@@ -1,287 +1,212 @@
-# 🚀 Deployment Guide
+# Deployment Guide
 
-## AWS Lambda Deployment
+## Overview
 
-This API is designed for serverless deployment on AWS Lambda with API Gateway.
+This API is a standard Node.js Express application. It can be deployed on any platform that supports Node.js, including VPS servers, Docker containers, or managed PaaS providers.
 
 ## Prerequisites
 
-- AWS CLI configured
 - Node.js 18+
-- Serverless Framework
-- AWS Account with appropriate permissions
+- PostgreSQL 15+
+- Redis 7+ (optional, for future caching)
+- npm or yarn
 
-## Architecture
+## Environment Variables
 
-```
-Internet → API Gateway → Lambda Function → RDS MySQL
-```
+Copy `.env.example` to `.env` and fill in the required values:
 
-### Components
-- **API Gateway**: HTTP API management
-- **Lambda**: Serverless compute
-- **RDS MySQL**: Managed database
-- **Secrets Manager**: Secure configuration
-- **CloudWatch**: Monitoring and logging
-
-## Deployment Steps
-
-### 1. Install Dependencies
-
-```bash
-npm install -g serverless
-npm install
-```
-
-### 2. Configure AWS Credentials
-
-```bash
-aws configure
-# Enter your AWS Access Key ID
-# Enter your AWS Secret Access Key
-# Enter your default region (e.g., us-east-1)
-```
-
-### 3. Set Up RDS Database
-
-```bash
-# Create RDS MySQL instance
-aws rds create-db-instance \
-  --db-instance-identifier onepiece-api-db \
-  --db-instance-class db.t3.micro \
-  --engine mysql \
-  --master-username admin \
-  --master-user-password YourSecurePassword \
-  --allocated-storage 20
-```
-
-### 4. Configure Secrets Manager
-
-```bash
-# Store database credentials
-aws secretsmanager create-secret \
-  --name onepiece-api/database \
-  --secret-string '{
-    "DB_HOST": "your-rds-endpoint.amazonaws.com",
-    "DB_USER": "admin",
-    "DB_PASSWORD": "YourSecurePassword",
-    "DB_NAME": "onepiece_db",
-    "DB_PORT": "3306"
-  }'
-```
-
-### 5. Deploy to AWS
-
-```bash
-# Deploy the application
-serverless deploy
-
-# Deploy to specific stage
-serverless deploy --stage production
-```
-
-## Configuration Files
-
-### serverless.yml
-```yaml
-service: express-onepiece-api
-
-provider:
-  name: aws
-  runtime: nodejs18.x
-  region: us-east-1
-  stage: ${opt:stage, 'dev'}
-  
-  environment:
-    NODE_ENV: production
-    
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - secretsmanager:GetSecretValue
-      Resource: "*"
-
-functions:
-  api:
-    handler: src/lambda.handler
-    events:
-      - http:
-          path: /{proxy+}
-          method: ANY
-          cors: true
-```
-
-### Environment Variables
-
-#### Production (.env.aws)
 ```env
-NODE_ENV=production
-DB_HOST=your-rds-endpoint.amazonaws.com
-DB_USER=admin
-DB_PASSWORD=YourSecurePassword
-DB_NAME=onepiece_db
-DB_PORT=3306
-JWT_SECRET=your-production-secret
+# Database
+DATABASE_URL=postgresql://user:password@host:5432/dbname
+
+# Redis (optional)
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# JWT
+JWT_SECRET=your-strong-secret-key
 JWT_EXPIRES_IN=24h
+
+# Admin credentials
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD_HASH=$2b$10$...  # bcrypt hash
+
+# Server
+PORT=3000
+NODE_ENV=production
+
+# Rate limiting
+RATE_LIMIT_WINDOW_MS=900000
+RATE_LIMIT_MAX_REQUESTS=100
 ```
 
-## Database Setup on AWS
+---
 
-### 1. Connect to RDS Instance
+## Docker Deployment (Recommended)
+
+The project includes a `docker-compose.yml` for running the full stack locally or in production.
+
+### 1. Start all services
 
 ```bash
-mysql -h your-rds-endpoint.amazonaws.com -u admin -p
+docker-compose up -d
 ```
 
-### 2. Create Database
-
-```sql
-CREATE DATABASE onepiece_db;
-USE onepiece_db;
-```
-
-### 3. Execute Schema Files
+### 2. Run database migrations and seed
 
 ```bash
-# Upload and execute schema files
-for file in database/schemas/*.sql; do
-  mysql -h your-rds-endpoint.amazonaws.com -u admin -p onepiece_db < "$file"
-done
+npm run db:generate
+npm run db:push
+npm run db:seed
 ```
 
-## Monitoring and Logs
+### 3. Start the API
 
-### CloudWatch Logs
 ```bash
-# View Lambda logs
-aws logs describe-log-groups --log-group-name-prefix /aws/lambda/express-onepiece-api
-
-# View recent logs
-aws logs get-log-events --log-group-name /aws/lambda/express-onepiece-api-api --log-stream-name $(aws logs describe-log-streams --log-group-name /aws/lambda/express-onepiece-api-api --order-by LastEventTime --descending --max-items 1 --query 'logStreams[0].logStreamName' --output text)
+npm start
 ```
 
-### CloudWatch Metrics
-- **Invocations**: Number of function calls
-- **Duration**: Function execution time
-- **Errors**: Error rate and count
-- **Throttles**: Function throttling
+---
 
-## Security Considerations
+## Manual Deployment (VPS / Bare Metal)
 
-### 1. IAM Roles
-- Minimal permissions for Lambda function
-- Secrets Manager access only
-- No direct RDS access (use connection pooling)
+### 1. Install Node.js dependencies
 
-### 2. Network Security
-- VPC configuration for RDS
-- Security groups for database access
-- API Gateway throttling
-
-### 3. Secrets Management
-- Database credentials in Secrets Manager
-- JWT secrets in environment variables
-- No hardcoded credentials
-
-## Performance Optimization
-
-### 1. Connection Pooling
-```javascript
-// Configure connection pool
-const pool = mysql.createPool({
-  connectionLimit: 10,
-  acquireTimeout: 60000,
-  timeout: 60000
-});
-```
-
-### 2. Cold Start Mitigation
-- Keep connections alive
-- Optimize package size
-- Use provisioned concurrency for critical functions
-
-### 3. Caching
-- RDS Proxy for connection pooling
-- CloudFront for static content
-- Lambda@Edge for edge computing
-
-## Troubleshooting
-
-### Common Issues
-
-#### 1. Database Connection Timeout
 ```bash
-# Check RDS security groups
-aws ec2 describe-security-groups --group-ids sg-xxxxxxxxx
-
-# Verify Lambda VPC configuration
-aws lambda get-function-configuration --function-name express-onepiece-api-api
+npm install --omit=dev
 ```
 
-#### 2. Cold Start Issues
+### 2. Set up PostgreSQL
+
 ```bash
-# Monitor function duration
-aws cloudwatch get-metric-statistics \
-  --namespace AWS/Lambda \
-  --metric-name Duration \
-  --dimensions Name=FunctionName,Value=express-onepiece-api-api \
-  --start-time 2024-01-01T00:00:00Z \
-  --end-time 2024-01-02T00:00:00Z \
-  --period 3600 \
-  --statistics Average
+# Create user and database
+psql -U postgres -c "CREATE USER onepiece_user WITH PASSWORD 'yourpassword';"
+psql -U postgres -c "CREATE DATABASE onepiece_db OWNER onepiece_user;"
 ```
 
-#### 3. Memory Issues
+### 3. Configure environment
+
 ```bash
-# Check function memory usage
-aws lambda get-function-configuration --function-name express-onepiece-api-api --query 'MemorySize'
+cp .env.example .env
+# Edit .env with production values
+nano .env
 ```
 
-## Cost Optimization
+### 4. Generate Prisma client and push schema
 
-### 1. Lambda Configuration
-- Right-size memory allocation
-- Use appropriate timeout values
-- Monitor and optimize cold starts
-
-### 2. RDS Optimization
-- Use appropriate instance class
-- Enable automated backups
-- Monitor storage usage
-
-### 3. API Gateway
-- Use HTTP API instead of REST API for cost savings
-- Implement proper caching
-- Monitor request patterns
-
-## Rollback Procedures
-
-### 1. Function Rollback
 ```bash
-# List previous versions
-aws lambda list-versions-by-function --function-name express-onepiece-api-api
-
-# Rollback to previous version
-aws lambda update-alias --function-name express-onepiece-api-api --name LIVE --function-version 2
+npm run db:generate
+npm run db:push
+npm run db:seed
 ```
 
-### 2. Database Rollback
+### 5. Start the server
+
 ```bash
-# Restore from snapshot
-aws rds restore-db-instance-from-db-snapshot \
-  --db-instance-identifier onepiece-api-db-restored \
-  --db-snapshot-identifier your-snapshot-id
+npm start
 ```
+
+---
+
+## Process Management with PM2
+
+For production, use PM2 to keep the process running and auto-restart on failure.
+
+```bash
+# Install PM2 globally
+npm install -g pm2
+
+# Start the application
+pm2 start src/index.js --name onepiece-api
+
+# Save the process list for auto-restart on reboot
+pm2 save
+pm2 startup
+```
+
+### Useful PM2 commands
+
+```bash
+pm2 status            # View running processes
+pm2 logs onepiece-api # View logs
+pm2 restart onepiece-api
+pm2 stop onepiece-api
+pm2 delete onepiece-api
+```
+
+---
+
+## Nginx Reverse Proxy
+
+When running on a VPS, use Nginx as a reverse proxy in front of the Node.js app.
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+Enable HTTPS with Certbot:
+
+```bash
+sudo apt install certbot python3-certbot-nginx
+sudo certbot --nginx -d your-domain.com
+```
+
+---
 
 ## Production Checklist
 
-- [ ] RDS instance configured and accessible
-- [ ] Secrets Manager configured
-- [ ] Lambda function deployed
-- [ ] API Gateway configured
-- [ ] CloudWatch monitoring enabled
-- [ ] Security groups configured
-- [ ] SSL/TLS certificates configured
-- [ ] Backup strategy implemented
-- [ ] Monitoring alerts configured
-- [ ] Performance testing completed
+- [ ] `NODE_ENV=production` is set
+- [ ] `JWT_SECRET` is a strong random value
+- [ ] PostgreSQL is running and accessible
+- [ ] Database schema has been pushed and seed run
+- [ ] `ADMIN_PASSWORD_HASH` is a valid bcrypt hash
+- [ ] PM2 or equivalent process manager is configured
+- [ ] Nginx reverse proxy is configured
+- [ ] HTTPS certificate is installed
+- [ ] Rate limiting values are appropriate for traffic volume
+- [ ] Logs directory is writable
+
+---
+
+## Logging
+
+Logs are written to the `logs/` directory using Winston. In production, set `LOG_LEVEL=error` to reduce noise:
+
+```env
+LOG_LEVEL=error
+LOG_HTTP_REQUESTS=false
+```
+
+---
+
+## Health Check
+
+Verify the API is running:
+
+```bash
+curl http://localhost:3000/api/health
+```
+
+Expected response:
+
+```json
+{
+  "status": "OK",
+  "message": "One Piece API is running",
+  "timestamp": "2026-01-01T00:00:00.000Z"
+}
+```

@@ -24,8 +24,8 @@ class CharacterService {
         sortOrder = 'asc'
       } = options;
 
-      const pageNum = Math.max(1, parseInt(page));
-      const limitNum = Math.min(100, Math.max(1, parseInt(limit)));
+      const pageNum = Math.max(1, Number.parseInt(page));
+      const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit)));
       const offset = (pageNum - 1) * limitNum;
 
       const where = {};
@@ -39,7 +39,7 @@ class CharacterService {
       }
 
       if (race_id) {
-        where.raceId = parseInt(race_id);
+        where.raceId = Number.parseInt(race_id);
       }
 
       if (status) {
@@ -49,10 +49,10 @@ class CharacterService {
       if (min_bounty !== undefined || max_bounty !== undefined) {
         where.bounty = {};
         if (min_bounty !== undefined) {
-          where.bounty.gte = BigInt(min_bounty);
+          where.bounty.gte = Number.BigInt(min_bounty);
         }
         if (max_bounty !== undefined) {
-          where.bounty.lte = BigInt(max_bounty);
+          where.bounty.lte = Number.BigInt(max_bounty);
         }
       }
 
@@ -117,7 +117,7 @@ class CharacterService {
 
   async getCharacterById(id) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid character ID',
@@ -126,7 +126,7 @@ class CharacterService {
       }
 
       const character = await prisma.character.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         include: {
           race: { select: { id: true, name: true, description: true } },
           hakiTypes: {
@@ -223,7 +223,7 @@ class CharacterService {
           name: name.trim(),
           alias: alias ? alias.trim() : null,
           raceId: raceId || null,
-          bounty: bounty ? BigInt(bounty) : null,
+          bounty: bounty ? Number.BigInt(bounty) : null,
           age: age || null,
           birthday: birthday ? birthday.trim() : null,
           height: height ? height.trim() : null,
@@ -254,7 +254,7 @@ class CharacterService {
 
   async updateCharacter(id, updateData) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid character ID',
@@ -263,7 +263,7 @@ class CharacterService {
       }
 
       const character = await prisma.character.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!character) {
@@ -318,11 +318,11 @@ class CharacterService {
 
       const dataToUpdate = { ...updateData };
       if (dataToUpdate.bounty !== undefined) {
-        dataToUpdate.bounty = BigInt(dataToUpdate.bounty);
+        dataToUpdate.bounty = Number.BigInt(dataToUpdate.bounty);
       }
 
       const updatedCharacter = await prisma.character.update({
-        where: { id: parseInt(id) },
+        where: { id: Number.parseInt(id) },
         data: dataToUpdate,
         include: {
           race: { select: { id: true, name: true } }
@@ -346,7 +346,7 @@ class CharacterService {
 
   async deleteCharacter(id) {
     try {
-      if (!id || isNaN(id) || parseInt(id) <= 0) {
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
         return {
           success: false,
           message: 'Invalid character ID',
@@ -355,7 +355,7 @@ class CharacterService {
       }
 
       const character = await prisma.character.findUnique({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!character) {
@@ -367,7 +367,7 @@ class CharacterService {
       }
 
       const hasDevilFruits = await prisma.characterDevilFruit.count({
-        where: { characterId: parseInt(id), isCurrent: true }
+        where: { characterId: Number.parseInt(id), isCurrent: true }
       });
 
       if (hasDevilFruits > 0) {
@@ -379,7 +379,7 @@ class CharacterService {
       }
 
       await prisma.character.delete({
-        where: { id: parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       return {
@@ -399,7 +399,7 @@ class CharacterService {
   async raceExists(raceId) {
     try {
       const race = await prisma.race.findUnique({
-        where: { id: parseInt(raceId) }
+        where: { id: Number.parseInt(raceId) }
       });
       return !!race;
     } catch (error) {

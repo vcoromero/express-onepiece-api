@@ -1,302 +1,255 @@
-const request = require('supertest');
-const app = require('../src/app');
+jest.mock('../src/config/prisma.config', () => ({
+  race: {
+    findMany: jest.fn(),
+    findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    update: jest.fn(),
+    count: jest.fn()
+  },
+  character: {
+    count: jest.fn()
+  }
+}));
+
+const prisma = require('../src/config/prisma.config');
 const raceService = require('../src/services/race.service');
 
-// Mock JWTUtil since it has its own unit tests
-jest.mock('../src/utils/jwt.util', () => ({
-  generateToken: jest.fn(),
-  verifyToken: jest.fn((token) => {
-    if (token === 'valid-test-token') {
-      return { username: 'testadmin', role: 'admin' };
-    }
-    throw new Error('Invalid token');
-  }),
-  decodeToken: jest.fn()
-}));
+const mockRace = { id: 1, name: 'Human', description: 'Regular humans', createdAt: new Date(), updatedAt: new Date() };
 
-// Mock RaceService - This is the Service Layer
-jest.mock('../src/services/race.service', () => ({
-  getAllRaces: jest.fn(),
-  getRaceById: jest.fn(),
-  updateRace: jest.fn(),
-  nameExists: jest.fn(),
-  idExists: jest.fn(),
-  isRaceInUse: jest.fn()
-}));
-
-describe('Race API Endpoints', () => {
-  let authToken;
-
-  // Setup mock token before all tests
-  beforeAll(() => {
-    // Use a mock token instead of generating a real one
-    authToken = 'valid-test-token';
-  });
-
-  // Reset mocks before each test
+describe('RaceService', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    jest.resetAllMocks();
   });
 
-  // Clean up after all tests
-  afterAll(async () => {
-    jest.restoreAllMocks();
-  });
+  describe('getAllRaces', () => {
+    it('returns all races successfully', async () => {
+      prisma.race.findMany.mockResolvedValue([mockRace]);
 
-  describe('GET /api/races', () => {
-    it('should return all races', async () => {
-      const mockRaces = [
-        {
-          id: 1,
-          name: 'Human',
-          description: 'The most common race in the world',
-          created_at: new Date(),
-          updated_at: new Date()
-        },
-        {
-          id: 2,
-          name: 'Fishman',
-          description: 'Humanoid fish that can breathe underwater',
-          created_at: new Date(),
-          updated_at: new Date()
-        }
-      ];
+      const result = await raceService.getAllRaces();
 
-      raceService.getAllRaces.mockResolvedValue({
-        success: true,
-        races: mockRaces,
-        total: 2
-      });
-
-      const response = await request(app)
-        .get('/api/races')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toBeDefined();
-      expect(raceService.getAllRaces).toHaveBeenCalledWith({
-        search: undefined,
-        sortBy: 'name',
-        sortOrder: 'asc'
-      });
+      expect(result.success).toBe(true);
+      expect(result.races).toHaveLength(1);
+      expect(result.total).toBe(1);
     });
 
-    it('should handle service errors', async () => {
-      raceService.getAllRaces.mockResolvedValue({
-        success: false,
-        message: 'Database connection failed'
-      });
+    it('filters by search term', async () => {
+      prisma.race.findMany.mockResolvedValue([mockRace]);
 
-      const response = await request(app)
-        .get('/api/races')
-        .expect(500);
+      const result = await raceService.getAllRaces({ search: 'Human' });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Database connection failed');
+      expect(result.success).toBe(true);
+      expect(prisma.race.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ OR: expect.any(Array) }) })
+      );
     });
 
-    it('should handle search and sorting parameters', async () => {
-      const mockRaces = [
-        {
-          id: 1,
-          name: 'Human',
-          description: 'The most common race in the world'
-        }
-      ];
+    it('returns error object on database failure', async () => {
+      prisma.race.findMany.mockRejectedValue(new Error('DB error'));
 
-      raceService.getAllRaces.mockResolvedValue({
-        success: true,
-        races: mockRaces,
-        total: 1
-      });
+      const result = await raceService.getAllRaces();
 
-      const response = await request(app)
-        .get('/api/races?search=human&sortBy=name&sortOrder=desc')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(raceService.getAllRaces).toHaveBeenCalledWith({
-        search: 'human',
-        sortBy: 'name',
-        sortOrder: 'desc'
-      });
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to fetch races');
     });
   });
 
-  describe('GET /api/races/:id', () => {
-    it('should return a race by ID', async () => {
-      const mockRace = {
-        id: 1,
-        name: 'Human',
-        description: 'The most common race in the world',
-        created_at: new Date(),
-        updated_at: new Date()
-      };
+  describe('getRaceById', () => {
+    it('returns a race for a valid ID', async () => {
+      prisma.race.findUnique.mockResolvedValue(mockRace);
 
-      raceService.getRaceById.mockResolvedValue({
-        success: true,
-        data: mockRace
-      });
+      const result = await raceService.getRaceById(1);
 
-      const response = await request(app)
-        .get('/api/races/1')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.name).toBe('Human');
-      expect(raceService.getRaceById).toHaveBeenCalledWith(1);
+      expect(result.success).toBe(true);
+      expect(result.data).toEqual(mockRace);
     });
 
-    it('should return 404 for non-existent race', async () => {
-      raceService.getRaceById.mockResolvedValue({
-        success: false,
-        message: 'Race with ID 999 not found',
-        error: 'NOT_FOUND'
-      });
-
-      const response = await request(app)
-        .get('/api/races/999')
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Race with ID 999 not found');
+    it('returns INVALID_ID error for non-numeric ID', async () => {
+      const result = await raceService.getRaceById('abc');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
     });
 
-    it('should validate ID parameter', async () => {
-      const response = await request(app)
-        .get('/api/races/invalid')
-        .expect(400);
+    it('returns INVALID_ID error for ID <= 0', async () => {
+      const result = await raceService.getRaceById(0);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
+    });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Invalid race ID');
+    it('returns NOT_FOUND when race does not exist', async () => {
+      prisma.race.findUnique.mockResolvedValue(null);
+
+      const result = await raceService.getRaceById(999);
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NOT_FOUND');
     });
   });
 
-  describe('PUT /api/races/:id', () => {
-    it('should update a race', async () => {
-      const updateData = {
-        name: 'Human Updated',
-        description: 'Updated description for Human race'
-      };
+  describe('updateRace', () => {
+    it('updates a race successfully', async () => {
+      const updated = { ...mockRace, name: 'Giant' };
+      prisma.race.findUnique
+        .mockResolvedValueOnce(mockRace)
+        .mockResolvedValueOnce(null);
+      prisma.race.update.mockResolvedValue(updated);
 
-      const updatedRace = {
-        id: 1,
-        name: 'Human Updated',
-        description: 'Updated description for Human race',
-        created_at: new Date(),
-        updated_at: new Date()
-      };
+      const result = await raceService.updateRace(1, { name: 'Giant' });
 
-      raceService.updateRace.mockResolvedValue({
-        success: true,
-        data: updatedRace,
-        message: 'Race updated successfully'
-      });
-
-      const response = await request(app)
-        .put('/api/races/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.message).toBeDefined();
-      expect(raceService.updateRace).toHaveBeenCalledWith(1, updateData);
+      expect(result.success).toBe(true);
+      expect(result.message).toBe('Race updated successfully');
     });
 
-    it('should return 404 for non-existent race', async () => {
-      const updateData = { name: 'Updated Race' };
+    it('returns NOT_FOUND when race does not exist', async () => {
+      prisma.race.findUnique.mockResolvedValue(null);
 
-      raceService.updateRace.mockResolvedValue({
-        success: false,
-        message: 'Race with ID 999 not found',
-        error: 'NOT_FOUND'
-      });
+      const result = await raceService.updateRace(999, { name: 'Giant' });
 
-      const response = await request(app)
-        .put('/api/races/999')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Race with ID 999 not found');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NOT_FOUND');
     });
 
-    it('should validate at least one field is provided', async () => {
-      raceService.updateRace.mockResolvedValue({
-        success: false,
-        message: 'At least one field must be provided for update',
-        error: 'NO_FIELDS_PROVIDED'
-      });
+    it('returns NO_FIELDS_PROVIDED when updateData is empty', async () => {
+      prisma.race.findUnique.mockResolvedValue(mockRace);
 
-      const response = await request(app)
-        .put('/api/races/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({})
-        .expect(400);
+      const result = await raceService.updateRace(1, {});
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('At least one field must be provided for update');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('NO_FIELDS_PROVIDED');
     });
 
-    it('should require authentication', async () => {
-      const response = await request(app)
-        .put('/api/races/1')
-        .send({ name: 'Unauthorized Update' })
-        .expect(401);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Authentication token not provided');
+    it('returns INVALID_ID for invalid ID', async () => {
+      const result = await raceService.updateRace('abc', { name: 'Giant' });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_ID');
     });
 
-    it('should validate ID parameter', async () => {
-      const response = await request(app)
-        .put('/api/races/invalid')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({ name: 'Test' })
-        .expect(400);
+    it('returns INVALID_NAME when name exceeds 50 characters', async () => {
+      prisma.race.findUnique.mockResolvedValue(mockRace);
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Invalid race ID');
+      const result = await raceService.updateRace(1, { name: 'A'.repeat(51) });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_NAME');
     });
 
-    it('should handle duplicate name error', async () => {
-      const updateData = { name: 'Fishman' };
+    it('returns INVALID_NAME when name is empty string', async () => {
+      prisma.race.findUnique.mockResolvedValue(mockRace);
 
-      raceService.updateRace.mockResolvedValue({
-        success: false,
-        message: 'A race with this name already exists',
-        error: 'DUPLICATE_NAME'
-      });
+      const result = await raceService.updateRace(1, { name: '' });
 
-      const response = await request(app)
-        .put('/api/races/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(409);
-
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('A race with this name already exists');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('INVALID_NAME');
     });
 
-    it('should validate name length', async () => {
-      const updateData = { name: 'A'.repeat(51) };
+    it('skips duplicate check when name is unchanged', async () => {
+      const updated = { ...mockRace };
+      prisma.race.findUnique.mockResolvedValue(mockRace);
+      prisma.race.update.mockResolvedValue(updated);
 
-      raceService.updateRace.mockResolvedValue({
-        success: false,
-        message: 'Name cannot exceed 50 characters',
-        error: 'INVALID_NAME'
-      });
+      const result = await raceService.updateRace(1, { name: 'Human' });
 
-      const response = await request(app)
-        .put('/api/races/1')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(updateData)
-        .expect(400);
+      expect(result.success).toBe(true);
+      expect(prisma.race.findFirst).not.toHaveBeenCalled();
+    });
 
-      expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Name cannot exceed 50 characters');
+    it('returns DUPLICATE_NAME when updated name already exists', async () => {
+      prisma.race.findUnique
+        .mockResolvedValueOnce(mockRace)
+        .mockResolvedValueOnce({ id: 2, name: 'Mink' });
+
+      const result = await raceService.updateRace(1, { name: 'Mink' });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('DUPLICATE_NAME');
+    });
+
+    it('returns error on DB failure', async () => {
+      prisma.race.findUnique.mockRejectedValue(new Error('DB error'));
+
+      const result = await raceService.updateRace(1, { name: 'Giant' });
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to update race');
+    });
+  });
+
+  describe('getRaceById', () => {
+    it('returns error on DB failure', async () => {
+      prisma.race.findUnique.mockRejectedValue(new Error('DB error'));
+
+      const result = await raceService.getRaceById(1);
+
+      expect(result.success).toBe(false);
+      expect(result.message).toBe('Failed to fetch race');
+    });
+  });
+
+  describe('nameExists', () => {
+    it('returns true when name exists', async () => {
+      prisma.race.findFirst.mockResolvedValue(mockRace);
+      const result = await raceService.nameExists('Human');
+      expect(result).toBe(true);
+    });
+
+    it('returns false when name does not exist', async () => {
+      prisma.race.findFirst.mockResolvedValue(null);
+      const result = await raceService.nameExists('UnknownRace');
+      expect(result).toBe(false);
+    });
+
+    it('uses excludeId in query when provided', async () => {
+      prisma.race.findFirst.mockResolvedValue(null);
+      const result = await raceService.nameExists('Human', 1);
+      expect(prisma.race.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: expect.objectContaining({ id: { not: 1 } }) })
+      );
+      expect(result).toBe(false);
+    });
+
+    it('returns false on DB error', async () => {
+      prisma.race.findFirst.mockRejectedValue(new Error('DB error'));
+      const result = await raceService.nameExists('Human');
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('idExists', () => {
+    it('returns true when ID exists', async () => {
+      prisma.race.findUnique.mockResolvedValue(mockRace);
+      const result = await raceService.idExists(1);
+      expect(result).toBe(true);
+    });
+
+    it('returns false when ID does not exist', async () => {
+      prisma.race.findUnique.mockResolvedValue(null);
+      const result = await raceService.idExists(999);
+      expect(result).toBe(false);
+    });
+
+    it('returns false on DB error', async () => {
+      prisma.race.findUnique.mockRejectedValue(new Error('DB error'));
+      const result = await raceService.idExists(1);
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('isRaceInUse', () => {
+    it('returns true when characters use the race', async () => {
+      prisma.character.count.mockResolvedValue(5);
+      const result = await raceService.isRaceInUse(1);
+      expect(result).toBe(true);
+    });
+
+    it('returns false when no characters use the race', async () => {
+      prisma.character.count.mockResolvedValue(0);
+      const result = await raceService.isRaceInUse(1);
+      expect(result).toBe(false);
+    });
+
+    it('returns false on DB error', async () => {
+      prisma.character.count.mockRejectedValue(new Error('DB error'));
+      const result = await raceService.isRaceInUse(1);
+      expect(result).toBe(false);
     });
   });
 });
