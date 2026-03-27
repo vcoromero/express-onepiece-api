@@ -1,5 +1,7 @@
 # Deployment Guide (AWS Lambda + Serverless + Neon)
 
+**New to AWS?** Follow the step-by-step beginner guide (IAM user, what Serverless creates, VPC when you need it, deploy, verify): [aws-first-deployment-guide.md](./aws-first-deployment-guide.md).
+
 ## Target Architecture
 
 - Runtime: AWS Lambda
@@ -10,13 +12,8 @@
 
 ## Current Repository Status
 
-This repository currently runs with `node src/index.js` for local/server runtime.
-
-For Lambda deployment, add and maintain:
-
-- `serverless.yml`
-- Lambda handler file (for example `src/lambda.js`)
-- Serverless Express adapter dependency
+- **Local:** `npm run dev` / `npm start` → `src/index.js` (`dotenv` + `app.listen`).
+- **AWS Lambda:** `serverless.yml` + `src/lambda.js` (`@codegenie/serverless-express` wrapping `src/app.js`). Dev dependencies: `serverless` (v3), **`serverless-dotenv-plugin`**. The plugin reads **`.env`** (see `custom.dotenv.path` in `serverless.yml`) and injects the listed keys into Lambda `provider.environment`, so you do **not** need to `export` secrets before `serverless deploy`. Prisma client uses **`rhel-openssl-3.0.x`** for the Lambda/Linux runtime (see `prisma/schema.prisma` `binaryTargets`).
 
 ## Prerequisites
 
@@ -37,31 +34,11 @@ For Lambda deployment, add and maintain:
 - `RATE_LIMIT_LOGIN_MAX`
 - Redis variables if cache is enabled
 
-## Minimal Serverless Blueprint
+## Serverless configuration
 
-```yaml
-service: onepiece-api
+The canonical definition is **`serverless.yml`** at the repo root. **`serverless-dotenv-plugin`** loads `.env` and merges only keys listed in `custom.dotenv.include` into `provider.environment` (required keys are enforced via `custom.dotenv.required.env`). The deployment package excludes `.env` via `package.patterns`.
 
-provider:
-  name: aws
-  runtime: nodejs20.x
-  stage: dev
-  region: us-east-1
-  environment:
-    DATABASE_URL: ${env:DATABASE_URL}
-    JWT_SECRET: ${env:JWT_SECRET}
-    JWT_EXPIRES_IN: ${env:JWT_EXPIRES_IN}
-    ADMIN_USERNAME: ${env:ADMIN_USERNAME}
-    ADMIN_PASSWORD_HASH: ${env:ADMIN_PASSWORD_HASH}
-
-functions:
-  api:
-    handler: src/lambda.handler
-    events:
-      - httpApi:
-          path: /{proxy+}
-          method: ANY
-```
+**Do not** share or commit output of `serverless print` in public channels — it expands resolved environment values.
 
 ## Deployment Flow
 
@@ -69,11 +46,14 @@ functions:
 # 1) Install dependencies
 npm install
 
-# 2) Generate Prisma client
-npm run db:generate
+# 2) Ensure `.env` exists at the repo root with required variables (see Required Environment Variables)
 
-# 3) Deploy infrastructure and lambda
-serverless deploy
+# 3) Deploy (runs prisma generate, then serverless deploy)
+npm run deploy
+
+# Or step by step:
+npm run db:generate
+npx serverless deploy
 ```
 
 ## Database Migration Flow (Production)
