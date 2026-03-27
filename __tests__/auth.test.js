@@ -1,17 +1,41 @@
 const request = require('supertest');
-const bcrypt = require('bcryptjs');
 const app = require('../src/app');
+const authService = require('../src/services/auth.service');
 
 describe('Auth endpoints', () => {
   const validPassword = 'testpassword123';
-  let validHash;
 
-  beforeAll(async () => {
-    validHash = await bcrypt.hash(validPassword, 10);
-    process.env.ADMIN_USERNAME = 'testadmin';
-    process.env.ADMIN_PASSWORD_HASH = validHash;
+  beforeAll(() => {
     process.env.JWT_SECRET = 'test-secret-key-for-testing-only';
     process.env.JWT_EXPIRES_IN = '24h';
+  });
+
+  beforeEach(() => {
+    jest.spyOn(authService, 'loginWithCredentials').mockImplementation(async (username, password) => {
+      if (!username?.trim() || !password) {
+        return {
+          success: false,
+          message: 'Incomplete credentials',
+          error: 'MISSING_CREDENTIALS'
+        };
+      }
+      const u = username.trim();
+      if (u === 'testadmin' && password === validPassword) {
+        return {
+          success: true,
+          user: { id: 1, username: 'testadmin', role: 'admin' }
+        };
+      }
+      return {
+        success: false,
+        message: 'Invalid credentials',
+        error: 'INVALID_CREDENTIALS'
+      };
+    });
+  });
+
+  afterEach(() => {
+    authService.loginWithCredentials.mockRestore();
   });
 
   describe('POST /api/auth/login', () => {
@@ -25,12 +49,11 @@ describe('Auth endpoints', () => {
       expect(response.body.data.token).toBeDefined();
       expect(response.body.data.user.username).toBe('testadmin');
       expect(response.body.data.user.role).toBe('admin');
+      expect(response.body.data.user.id).toBe(1);
     });
 
     it('returns 400 when credentials are missing', async () => {
-      const response = await request(app)
-        .post('/api/auth/login')
-        .send({});
+      const response = await request(app).post('/api/auth/login').send({});
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);

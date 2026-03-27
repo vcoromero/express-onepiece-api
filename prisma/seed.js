@@ -1,9 +1,49 @@
+import 'dotenv/config';
 import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import bcrypt from 'bcryptjs';
 
-const prisma = new PrismaClient();
+const connectionString = process.env.DATABASE_URL;
+if (!connectionString) {
+  throw new Error('DATABASE_URL environment variable is not set');
+}
+
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
+
+/**
+ * Creates a first admin user when SEED_ADMIN_PASSWORD is set (does not run full reference data seed).
+ */
+async function ensureBootstrapAdmin() {
+  const username = process.env.SEED_ADMIN_USERNAME || 'admin';
+  const plain = process.env.SEED_ADMIN_PASSWORD;
+
+  if (!plain) {
+    console.log('⚠️  SEED_ADMIN_PASSWORD not set — skipping bootstrap admin user');
+    return;
+  }
+
+  const existing = await prisma.user.findUnique({ where: { username } });
+  if (existing) {
+    console.log(`✓ Bootstrap admin "${username}" already exists`);
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(plain, 10);
+  await prisma.user.create({
+    data: {
+      username,
+      passwordHash,
+      role: 'admin'
+    }
+  });
+  console.log(`✓ Created bootstrap admin user "${username}"`);
+}
 
 async function main() {
   console.log('🌱 Starting database seed...');
+
+  await ensureBootstrapAdmin();
 
   const existingRace = await prisma.race.findFirst();
   if (existingRace) {

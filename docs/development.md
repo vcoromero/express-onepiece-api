@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- Node.js 18+
+- Node.js 24 LTS (see `.nvmrc`; use `nvm use` or install the current Active LTS from [nodejs.org](https://nodejs.org/))
 - npm
 - Docker + Docker Compose (for local PostgreSQL/Redis)
 - Bruno (manual API testing)

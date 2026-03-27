@@ -17,6 +17,10 @@ datasource db {
 
 ## Main Data Model
 
+### Auth
+
+- **`users`** — `User` model: `username` (unique), `password_hash` (bcrypt), `role` (`admin` | `editor`), `is_active`. Used by `POST /api/auth/login`.
+
 ## Reference tables
 
 - `Race`

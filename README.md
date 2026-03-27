@@ -4,7 +4,7 @@ A REST API inspired by the One Piece universe, built with Express and Prisma.
 
 ## Stack
 
-- Node.js + Express
+- Node.js 24 LTS + Express (version pinned via `.nvmrc` and `package.json` `engines`)
 - PostgreSQL + Prisma
 - JWT authentication
 - Redis (infrastructure ready)
@@ -66,7 +66,6 @@ npm run dev
 - `GET /api/health`
 - `POST /api/auth/login`
 - `GET /api/auth/verify`
-- `POST /api/auth/generate-hash` (dev/test only)
 
 - Characters: `GET/POST/PUT/DELETE /api/characters`, `GET /api/characters/search`
 - Devil Fruits: `GET/POST/PUT/DELETE /api/devil-fruits`, `GET /api/devil-fruits/type/:typeId`
