@@ -1,0 +1,23 @@
+meta {
+  name: Update Organization
+  type: http
+  seq: 37
+}
+
+put {
+  url: {{base_url}}/api/organizations/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "baseLocation": "New World",
+    "status": "active",
+    "description": "Updated organization description"
+  }
+}

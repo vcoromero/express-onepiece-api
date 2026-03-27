@@ -1,0 +1,22 @@
+meta {
+  name: Update Character Type
+  type: http
+  seq: 43
+}
+
+put {
+  url: {{base_url}}/api/character-types/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "name": "Captain (Updated)",
+    "description": "Updated character type description"
+  }
+}

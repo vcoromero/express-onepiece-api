@@ -1,4 +1,5 @@
 const prisma = require('../config/prisma.config');
+const { serviceFailure, serviceSuccess } = require('../utils/service-result.helper');
 
 const serializeBigInt = (obj) => {
   return JSON.parse(JSON.stringify(obj, (key, value) => {
@@ -96,8 +97,8 @@ class CharacterService {
         sortOrder = 'asc'
       } = options;
 
-      const pageNum = Math.max(1, Number.Number.parseInt(page));
-      const limitNum = Math.min(100, Math.max(1, Number.Number.parseInt(limit)));
+      const pageNum = Math.max(1, Number.parseInt(page));
+      const limitNum = Math.min(100, Math.max(1, Number.parseInt(limit)));
       const offset = (pageNum - 1) * limitNum;
 
       const where = {};
@@ -111,7 +112,7 @@ class CharacterService {
       }
 
       if (race_id) {
-        where.raceId = Number.Number.parseInt(race_id);
+        where.raceId = Number.parseInt(race_id);
       }
 
       if (status) {
@@ -165,8 +166,7 @@ class CharacterService {
 
       const totalPages = Math.ceil(total / limitNum);
 
-      return {
-        success: true,
+      return serviceSuccess({
         characters: serializeBigInt(characters),
         pagination: {
           page: pageNum,
@@ -176,29 +176,20 @@ class CharacterService {
           hasNext: pageNum < totalPages,
           hasPrev: pageNum > 1
         }
-      };
+      });
     } catch (error) {
-      console.error('Error in getAllCharacters:', error);
-      return {
-        success: false,
-        message: 'Failed to fetch characters',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to fetch characters', 'INTERNAL_ERROR', error, 'character.getAll');
     }
   }
 
   async getCharacterById(id) {
     try {
-      if (!id || Number.Number.isNaN(id) || Number.Number.parseInt(id) <= 0) {
-        return {
-          success: false,
-          message: 'Invalid character ID',
-          error: 'INVALID_ID'
-        };
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
+        return serviceFailure('Invalid character ID', 'INVALID_ID');
       }
 
       const character = await prisma.character.findUnique({
-        where: { id: Number.Number.parseInt(id) },
+        where: { id: Number.parseInt(id) },
         include: {
           race: { select: { id: true, name: true, description: true } },
           hakiTypes: {
@@ -225,24 +216,12 @@ class CharacterService {
       });
 
       if (!character) {
-        return {
-          success: false,
-          message: `Character with ID ${id} not found`,
-          error: 'NOT_FOUND'
-        };
+        return serviceFailure(`Character with ID ${id} not found`, 'NOT_FOUND');
       }
 
-      return {
-        success: true,
-        data: serializeBigInt(character)
-      };
+      return serviceSuccess({ data: serializeBigInt(character) });
     } catch (error) {
-      console.error('Error in getCharacterById:', error);
-      return {
-        success: false,
-        message: 'Failed to fetch character',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to fetch character', 'INTERNAL_ERROR', error, 'character.getById');
     }
   }
 
@@ -263,11 +242,7 @@ class CharacterService {
       } = characterData;
 
       if (!name || name.trim() === '') {
-        return {
-          success: false,
-          message: 'Name is required',
-          error: 'MISSING_NAME'
-        };
+        return serviceFailure('Name is required', 'MISSING_NAME');
       }
 
       const existingCharacter = await prisma.character.findUnique({
@@ -275,19 +250,11 @@ class CharacterService {
       });
 
       if (existingCharacter) {
-        return {
-          success: false,
-          message: 'A character with this name already exists',
-          error: 'DUPLICATE_NAME'
-        };
+        return serviceFailure('A character with this name already exists', 'DUPLICATE_NAME');
       }
 
       if (raceId && !(await this.raceExists(raceId))) {
-        return {
-          success: false,
-          message: 'Invalid race ID',
-          error: 'INVALID_RACE'
-        };
+        return serviceFailure('Invalid race ID', 'INVALID_RACE');
       }
 
       const newCharacter = await prisma.character.create({
@@ -309,18 +276,12 @@ class CharacterService {
         }
       });
 
-      return {
-        success: true,
+      return serviceSuccess({
         data: serializeBigInt(newCharacter),
         message: 'Character created successfully'
-      };
+      });
     } catch (error) {
-      console.error('Error in createCharacter:', error);
-      return {
-        success: false,
-        message: 'Failed to create character',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to create character', 'INTERNAL_ERROR', error, 'character.create');
     }
   }
 
@@ -336,11 +297,7 @@ class CharacterService {
       });
 
       if (!character) {
-        return {
-          success: false,
-          message: `Character with ID ${id} not found`,
-          error: 'NOT_FOUND'
-        };
+        return serviceFailure(`Character with ID ${id} not found`, 'NOT_FOUND');
       }
 
       const nameValidationError = await this.validateCharacterNameUpdate(updateData, character.name);
@@ -359,81 +316,55 @@ class CharacterService {
         }
       });
 
-      return {
-        success: true,
+      return serviceSuccess({
         data: serializeBigInt(updatedCharacter),
         message: 'Character updated successfully'
-      };
+      });
     } catch (error) {
-      console.error('Error in updateCharacter:', error);
-      return {
-        success: false,
-        message: 'Failed to update character',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to update character', 'INTERNAL_ERROR', error, 'character.update');
     }
   }
 
   async deleteCharacter(id) {
     try {
-      if (!id || Number.Number.isNaN(id) || Number.Number.parseInt(id) <= 0) {
-        return {
-          success: false,
-          message: 'Invalid character ID',
-          error: 'INVALID_ID'
-        };
+      if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
+        return serviceFailure('Invalid character ID', 'INVALID_ID');
       }
 
       const character = await prisma.character.findUnique({
-        where: { id: Number.Number.parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
       if (!character) {
-        return {
-          success: false,
-          message: `Character with ID ${id} not found`,
-          error: 'NOT_FOUND'
-        };
+        return serviceFailure(`Character with ID ${id} not found`, 'NOT_FOUND');
       }
 
       const hasDevilFruits = await prisma.characterDevilFruit.count({
-        where: { characterId: Number.Number.parseInt(id), isCurrent: true }
+        where: { characterId: Number.parseInt(id), isCurrent: true }
       });
 
       if (hasDevilFruits > 0) {
-        return {
-          success: false,
-          message: 'Cannot delete character with associated devil fruits',
-          error: 'HAS_ASSOCIATIONS'
-        };
+        return serviceFailure('Cannot delete character with associated devil fruits', 'HAS_ASSOCIATIONS');
       }
 
       await prisma.character.delete({
-        where: { id: Number.Number.parseInt(id) }
+        where: { id: Number.parseInt(id) }
       });
 
-      return {
-        success: true,
-        message: 'Character deleted successfully'
-      };
+      return serviceSuccess({ message: 'Character deleted successfully' });
     } catch (error) {
-      console.error('Error in deleteCharacter:', error);
-      return {
-        success: false,
-        message: 'Failed to delete character',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to delete character', 'INTERNAL_ERROR', error, 'character.delete');
     }
   }
 
   async raceExists(raceId) {
     try {
       const race = await prisma.race.findUnique({
-        where: { id: Number.Number.parseInt(raceId) }
+        where: { id: Number.parseInt(raceId) }
       });
       return !!race;
     } catch (error) {
-      console.error('Error in raceExists:', error);
+      serviceFailure('Failed to validate race relation', 'INTERNAL_ERROR', error, 'character.raceExists');
       return false;
     }
   }
@@ -441,11 +372,7 @@ class CharacterService {
   async searchCharacters(searchTerm, options = {}) {
     try {
       if (!searchTerm || searchTerm.trim() === '') {
-        return {
-          success: false,
-          message: 'Search term is required',
-          error: 'MISSING_SEARCH_TERM'
-        };
+        return serviceFailure('Search term is required', 'MISSING_SEARCH_TERM');
       }
 
       const searchOptions = {
@@ -455,12 +382,7 @@ class CharacterService {
 
       return await this.getAllCharacters(searchOptions);
     } catch (error) {
-      console.error('Error in searchCharacters:', error);
-      return {
-        success: false,
-        message: 'Failed to search characters',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      };
+      return serviceFailure('Failed to search characters', 'INTERNAL_ERROR', error, 'character.search');
     }
   }
 }

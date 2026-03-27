@@ -1,0 +1,23 @@
+meta {
+  name: Update Haki Type
+  type: http
+  seq: 45
+}
+
+put {
+  url: {{base_url}}/api/haki-types/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "name": "Busoshoku Haki (Updated)",
+    "description": "Updated haki type description",
+    "color": "#111111"
+  }
+}

@@ -65,6 +65,24 @@ Services should not:
 - know route paths
 - format transport-level response payloads
 
+## Homogenized Controller-Service Contract
+
+To keep all modules consistent, controllers and services must follow one shared contract:
+
+- Services return a unified result object:
+  - success: `true` with payload data
+  - success: `false` with `message` + machine-readable `error` code
+- Controllers must not hardcode large switch/case blocks for status mapping.
+  - Use centralized HTTP mapping in `src/utils/http-response.helper.js`.
+- Unexpected controller exceptions must go through the same helper for logging and 500 payload shape.
+- Service-level failures must be created through `src/utils/service-result.helper.js` to keep error payload keys and logging behavior uniform.
+
+This creates one path for:
+
+```text
+Controller validation -> Service result (success/error code) -> Shared HTTP mapper -> Response
+```
+
 ## Prisma Service Example Pattern
 
 ```js

@@ -1,0 +1,14 @@
+meta {
+  name: Delete Character
+  type: http
+  seq: 32
+}
+
+delete {
+  url: {{base_url}}/api/characters/1
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}

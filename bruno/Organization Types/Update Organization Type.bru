@@ -1,0 +1,22 @@
+meta {
+  name: Update Organization Type
+  type: http
+  seq: 44
+}
+
+put {
+  url: {{base_url}}/api/organization-types/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "name": "Pirate Crew (Updated)",
+    "description": "Updated organization type description"
+  }
+}

@@ -1,5 +1,9 @@
 const OrganizationService = require('../services/organization.service');
 const { createPaginatedResponse, createItemResponse, createListResponse } = require('../utils/response.helper');
+const {
+  sendServiceResultError,
+  sendUnexpectedError
+} = require('../utils/http-response.helper');
 
 /**
  * Organization Controller
@@ -10,7 +14,7 @@ const { createPaginatedResponse, createItemResponse, createListResponse } = requ
  * @version 1.0.0
  */
 class OrganizationController {
-  static buildValidationError(message) {
+  buildValidationError(message) {
     return {
       success: false,
       message,
@@ -18,7 +22,7 @@ class OrganizationController {
     };
   }
 
-  static validateOrganizationData(data, options = {}) {
+  validateOrganizationData(data, options = {}) {
     const { requireNameAndType = false } = options;
     const hasValue = (value) => value !== undefined && value !== null && value !== '';
     const statusValues = ['active', 'disbanded', 'destroyed'];
@@ -75,7 +79,7 @@ class OrganizationController {
     return null;
   }
 
-  static getOrganizationErrorResponse(error) {
+  getOrganizationErrorResponse(error) {
     if (error.message.includes('not found')) {
       return {
         status: 404,
@@ -112,7 +116,7 @@ class OrganizationController {
     return null;
   }
 
-  static validateOrganizationListQuery(query) {
+  validateOrganizationListQuery(query) {
     const { status, organizationTypeId } = query;
 
     if (status && !['active', 'disbanded', 'destroyed'].includes(status)) {
@@ -133,7 +137,7 @@ class OrganizationController {
      * @param {Object} res - Express response object
      * @returns {Promise<void>}
      */
-  static async getAllOrganizations(req, res) {
+  async getAllOrganizations(req, res) {
     try {
       // Extract query parameters
       const {
@@ -171,18 +175,17 @@ class OrganizationController {
         sortOrder: sortDirection
       });
 
+      if (!result.success) {
+        return sendServiceResultError(res, result);
+      }
+
       res.status(200).json(createPaginatedResponse(
         result.organizations,
         result.pagination,
         'Organizations retrieved successfully'
       ));
     } catch (error) {
-      console.error('Error in getAllOrganizations:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while retrieving organizations',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'organization.getAllOrganizations');
     }
   }
 
@@ -193,7 +196,7 @@ class OrganizationController {
      * @param {Object} res - Express response object
      * @returns {Promise<void>}
      */
-  static async getOrganizationById(req, res) {
+  async getOrganizationById(req, res) {
     try {
       const { id } = req.params;
 
@@ -209,26 +212,16 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.getOrganizationById(Number.parseInt(id));
 
+      if (!result.success) {
+        return sendServiceResultError(res, result);
+      }
+
       res.status(200).json(createItemResponse(
         result.data,
         'Organization retrieved successfully'
       ));
     } catch (error) {
-      console.error('Error in getOrganizationById:', error);
-            
-      if (error.message.includes('not found')) {
-        return res.status(404).json({
-          success: false,
-          message: 'Organization not found',
-          error: 'NOT_FOUND'
-        });
-      }
-
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while retrieving organization',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'organization.getOrganizationById');
     }
   }
 
@@ -239,7 +232,7 @@ class OrganizationController {
      * @param {Object} res - Express response object
      * @returns {Promise<void>}
      */
-  static async createOrganization(req, res) {
+  async createOrganization(req, res) {
     try {
       const organizationData = req.body;
 
@@ -253,20 +246,18 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.createOrganization(organizationData);
 
+      if (!result.success) {
+        return sendServiceResultError(res, result);
+      }
+
       res.status(201).json(result);
     } catch (error) {
-      console.error('Error in createOrganization:', error);
-            
       const knownError = this.getOrganizationErrorResponse(error);
       if (knownError) {
         return res.status(knownError.status).json(knownError.body);
       }
 
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while creating organization',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'organization.createOrganization');
     }
   }
 
@@ -277,7 +268,7 @@ class OrganizationController {
      * @param {Object} res - Express response object
      * @returns {Promise<void>}
      */
-  static async updateOrganization(req, res) {
+  async updateOrganization(req, res) {
     try {
       const { id } = req.params;
       const updateData = req.body;
@@ -299,23 +290,21 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.updateOrganization(Number.parseInt(id), updateData);
 
+      if (!result.success) {
+        return sendServiceResultError(res, result);
+      }
+
       res.status(200).json(createItemResponse(
         result.data,
         'Organization updated successfully'
       ));
     } catch (error) {
-      console.error('Error in updateOrganization:', error);
-            
       const knownError = this.getOrganizationErrorResponse(error);
       if (knownError) {
         return res.status(knownError.status).json(knownError.body);
       }
 
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while updating organization',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'organization.updateOrganization');
     }
   }
 
@@ -326,7 +315,7 @@ class OrganizationController {
      * @param {Object} res - Express response object
      * @returns {Promise<void>}
      */
-  static async deleteOrganization(req, res) {
+  async deleteOrganization(req, res) {
     try {
       const { id } = req.params;
 
@@ -342,34 +331,16 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.deleteOrganization(Number.parseInt(id));
 
+      if (!result.success) {
+        return sendServiceResultError(res, result);
+      }
+
       res.status(200).json(createItemResponse(
         result.data,
         'Organization deleted successfully'
       ));
     } catch (error) {
-      console.error('Error in deleteOrganization:', error);
-            
-      if (error.message.includes('not found')) {
-        return res.status(404).json({
-          success: false,
-          message: 'Organization not found',
-          error: 'NOT_FOUND'
-        });
-      }
-
-      if (error.message.includes('active members')) {
-        return res.status(409).json({
-          success: false,
-          message: error.message,
-          error: 'CONFLICT_ERROR'
-        });
-      }
-
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while deleting organization',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'organization.deleteOrganization');
     }
   }
 
@@ -380,7 +351,7 @@ class OrganizationController {
      * @param {Object} res - Express response object
      * @returns {Promise<void>}
      */
-  static async getOrganizationsByType(req, res) {
+  async getOrganizationsByType(req, res) {
     try {
       const { organizationTypeId } = req.params;
 
@@ -396,26 +367,16 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.getOrganizationsByType(Number.parseInt(organizationTypeId));
 
+      if (!result.success) {
+        return sendServiceResultError(res, result);
+      }
+
       res.status(200).json(createListResponse(
         result.data,
         result.message
       ));
     } catch (error) {
-      console.error('Error in getOrganizationsByType:', error);
-            
-      if (error.message.includes('not found')) {
-        return res.status(404).json({
-          success: false,
-          message: 'Organization type not found',
-          error: 'NOT_FOUND'
-        });
-      }
-
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while retrieving organizations by type',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'organization.getOrganizationsByType');
     }
   }
 
@@ -426,7 +387,7 @@ class OrganizationController {
      * @param {Object} res - Express response object
      * @returns {Promise<void>}
      */
-  static async getOrganizationMembers(req, res) {
+  async getOrganizationMembers(req, res) {
     try {
       const { id } = req.params;
 
@@ -442,28 +403,28 @@ class OrganizationController {
       // Call service
       const result = await OrganizationService.getOrganizationMembers(Number.parseInt(id));
 
+      if (!result.success) {
+        return sendServiceResultError(res, result);
+      }
+
       res.status(200).json(createItemResponse(
         result.data,
         result.message
       ));
     } catch (error) {
-      console.error('Error in getOrganizationMembers:', error);
-            
-      if (error.message.includes('not found')) {
-        return res.status(404).json({
-          success: false,
-          message: 'Organization not found',
-          error: 'NOT_FOUND'
-        });
-      }
-
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error while retrieving organization members',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'organization.getOrganizationMembers');
     }
   }
 }
 
-module.exports = OrganizationController;
+const organizationController = new OrganizationController();
+
+module.exports = {
+  getAllOrganizations: organizationController.getAllOrganizations.bind(organizationController),
+  getOrganizationById: organizationController.getOrganizationById.bind(organizationController),
+  createOrganization: organizationController.createOrganization.bind(organizationController),
+  updateOrganization: organizationController.updateOrganization.bind(organizationController),
+  deleteOrganization: organizationController.deleteOrganization.bind(organizationController),
+  getOrganizationsByType: organizationController.getOrganizationsByType.bind(organizationController),
+  getOrganizationMembers: organizationController.getOrganizationMembers.bind(organizationController)
+};

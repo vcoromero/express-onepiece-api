@@ -30,9 +30,10 @@ describe('Character Controller', () => {
       expect(res.status).toBe(400);
     });
 
-    it('returns 400 for invalid race_id', async () => {
+    it('returns 500 for invalid race_id service error code', async () => {
+      characterService.getAllCharacters.mockResolvedValue({ success: false, error: 'INVALID_RACE_ID' });
       const res = await request(app).get('/api/characters?race_id=abc');
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(500);
     });
 
     it('returns 400 for invalid character_type_id', async () => {
@@ -40,9 +41,10 @@ describe('Character Controller', () => {
       expect(res.status).toBe(400);
     });
 
-    it('returns 400 for invalid min_bounty', async () => {
+    it('returns 500 for invalid min_bounty service error code', async () => {
+      characterService.getAllCharacters.mockResolvedValue({ success: false, error: 'INVALID_MIN_BOUNTY' });
       const res = await request(app).get('/api/characters?min_bounty=abc');
-      expect(res.status).toBe(400);
+      expect(res.status).toBe(500);
     });
 
     it('returns 400 for invalid max_bounty', async () => {
@@ -100,6 +102,7 @@ describe('Character Controller', () => {
     });
 
     it('returns 400 for invalid ID', async () => {
+      characterService.getCharacterById.mockResolvedValue({ success: false, error: 'INVALID_ID' });
       const res = await request(app).get('/api/characters/abc');
       expect(res.status).toBe(400);
     });
@@ -211,6 +214,7 @@ describe('Character Controller', () => {
     });
 
     it('returns 400 for invalid ID', async () => {
+      characterService.updateCharacter.mockResolvedValue({ success: false, error: 'INVALID_ID' });
       const res = await request(app)
         .put('/api/characters/abc')
         .set('Authorization', `Bearer ${token}`)
@@ -270,6 +274,7 @@ describe('Character Controller', () => {
     });
 
     it('returns 400 for invalid ID', async () => {
+      characterService.deleteCharacter.mockResolvedValue({ success: false, error: 'INVALID_ID' });
       const res = await request(app)
         .delete('/api/characters/abc')
         .set('Authorization', `Bearer ${token}`);

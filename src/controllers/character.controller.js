@@ -1,5 +1,9 @@
 const characterService = require('../services/character.service');
 const { createPaginatedResponse, createItemResponse } = require('../utils/response.helper');
+const {
+  sendServiceResultError,
+  sendUnexpectedError
+} = require('../utils/http-response.helper');
 
 /**
  * @class CharacterController
@@ -190,7 +194,7 @@ class CharacterController {
       });
 
       if (!result.success) {
-        return res.status(500).json(result);
+        return sendServiceResultError(res, result);
       }
 
       res.status(200).json(createPaginatedResponse(
@@ -199,12 +203,7 @@ class CharacterController {
         'Characters retrieved successfully'
       ));
     } catch (error) {
-      console.error('Error in getAllCharacters controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'character.getAllCharacters');
     }
   }
 
@@ -231,20 +230,15 @@ class CharacterController {
       const result = await characterService.getCharacterById(Number.parseInt(id));
 
       if (!result.success) {
-        return res.status(result.error === 'NOT_FOUND' ? 404 : 500).json(result);
+        return sendServiceResultError(res, result);
       }
 
       res.status(200).json(createItemResponse(
-        result.character,
+        result.data,
         'Character retrieved successfully'
       ));
     } catch (error) {
-      console.error('Error in getCharacterById controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'character.getCharacterById');
     }
   }
 
@@ -300,27 +294,12 @@ class CharacterController {
       });
 
       if (!result.success) {
-        switch (result.error) {
-        case 'MISSING_NAME':
-          return res.status(400).json(result);
-        case 'DUPLICATE_NAME':
-          return res.status(409).json(result);
-        case 'INVALID_RACE':
-        case 'INVALID_CHARACTER_TYPE':
-          return res.status(400).json(result);
-        default:
-          return res.status(500).json(result);
-        }
+        return sendServiceResultError(res, result);
       }
 
       res.status(201).json(result);
     } catch (error) {
-      console.error('Error in createCharacter controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'character.createCharacter');
     }
   }
 
@@ -356,33 +335,15 @@ class CharacterController {
       const result = await characterService.updateCharacter(Number.parseInt(id), updateData);
 
       if (!result.success) {
-        switch (result.error) {
-        case 'NOT_FOUND':
-          return res.status(404).json(result);
-        case 'INVALID_ID':
-        case 'NO_FIELDS_PROVIDED':
-        case 'INVALID_NAME':
-        case 'INVALID_RACE':
-        case 'INVALID_CHARACTER_TYPE':
-          return res.status(400).json(result);
-        case 'DUPLICATE_NAME':
-          return res.status(409).json(result);
-        default:
-          return res.status(500).json(result);
-        }
+        return sendServiceResultError(res, result);
       }
 
       res.status(200).json(createItemResponse(
-        result.character,
+        result.data,
         'Character updated successfully'
       ));
     } catch (error) {
-      console.error('Error in updateCharacter controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'character.updateCharacter');
     }
   }
 
@@ -409,16 +370,7 @@ class CharacterController {
       const result = await characterService.deleteCharacter(Number.parseInt(id));
 
       if (!result.success) {
-        switch (result.error) {
-        case 'NOT_FOUND':
-          return res.status(404).json(result);
-        case 'INVALID_ID':
-          return res.status(400).json(result);
-        case 'HAS_ASSOCIATIONS':
-          return res.status(409).json(result);
-        default:
-          return res.status(500).json(result);
-        }
+        return sendServiceResultError(res, result);
       }
 
       res.status(200).json(createItemResponse(
@@ -426,12 +378,7 @@ class CharacterController {
         result.message
       ));
     } catch (error) {
-      console.error('Error in deleteCharacter controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'character.deleteCharacter');
     }
   }
 
@@ -457,7 +404,7 @@ class CharacterController {
       const result = await characterService.searchCharacters(q.trim(), otherParams);
 
       if (!result.success) {
-        return res.status(result.error === 'MISSING_SEARCH_TERM' ? 400 : 500).json(result);
+        return sendServiceResultError(res, result);
       }
 
       res.status(200).json(createPaginatedResponse(
@@ -466,14 +413,18 @@ class CharacterController {
         'Search results retrieved successfully'
       ));
     } catch (error) {
-      console.error('Error in searchCharacters controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'character.searchCharacters');
     }
   }
 }
 
-module.exports = new CharacterController();
+const characterController = new CharacterController();
+
+module.exports = {
+  getAllCharacters: characterController.getAllCharacters.bind(characterController),
+  getCharacterById: characterController.getCharacterById.bind(characterController),
+  createCharacter: characterController.createCharacter.bind(characterController),
+  updateCharacter: characterController.updateCharacter.bind(characterController),
+  deleteCharacter: characterController.deleteCharacter.bind(characterController),
+  searchCharacters: characterController.searchCharacters.bind(characterController)
+};

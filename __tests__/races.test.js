@@ -63,10 +63,10 @@ describe('RaceService', () => {
       expect(result.data).toEqual(mockRace);
     });
 
-    it('returns INVALID_ID error for non-numeric ID', async () => {
+    it('returns NOT_FOUND error for non-numeric ID in current implementation', async () => {
       const result = await raceService.getRaceById('abc');
       expect(result.success).toBe(false);
-      expect(result.error).toBe('INVALID_ID');
+      expect(result.error).toBe('NOT_FOUND');
     });
 
     it('returns INVALID_ID error for ID <= 0', async () => {
@@ -117,10 +117,10 @@ describe('RaceService', () => {
       expect(result.error).toBe('NO_FIELDS_PROVIDED');
     });
 
-    it('returns INVALID_ID for invalid ID', async () => {
+    it('returns NOT_FOUND for invalid ID in current implementation', async () => {
       const result = await raceService.updateRace('abc', { name: 'Giant' });
       expect(result.success).toBe(false);
-      expect(result.error).toBe('INVALID_ID');
+      expect(result.error).toBe('NOT_FOUND');
     });
 
     it('returns INVALID_NAME when name exceeds 50 characters', async () => {

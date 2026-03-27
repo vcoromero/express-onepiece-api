@@ -1,0 +1,22 @@
+meta {
+  name: Update Fruit Type
+  type: http
+  seq: 46
+}
+
+put {
+  url: {{base_url}}/api/fruit-types/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "name": "Logia (Updated)",
+    "description": "Updated fruit type description"
+  }
+}

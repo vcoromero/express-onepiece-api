@@ -1,0 +1,22 @@
+meta {
+  name: Update Character
+  type: http
+  seq: 31
+}
+
+put {
+  url: {{base_url}}/api/characters/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "bounty": 600000000,
+    "description": "Updated character description"
+  }
+}

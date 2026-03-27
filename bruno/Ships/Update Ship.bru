@@ -1,0 +1,22 @@
+meta {
+  name: Update Ship
+  type: http
+  seq: 40
+}
+
+put {
+  url: {{base_url}}/api/ships/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "description": "Updated ship description",
+    "status": "active"
+  }
+}

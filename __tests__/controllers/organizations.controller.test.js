@@ -56,7 +56,11 @@ describe('Organization Controller', () => {
     });
 
     it('returns 404 when service throws not found', async () => {
-      OrganizationService.getOrganizationById.mockRejectedValue(new Error('not found'));
+      OrganizationService.getOrganizationById.mockResolvedValue({
+        success: false,
+        error: 'NOT_FOUND',
+        message: 'Organization not found'
+      });
       const res = await request(app).get('/api/organizations/1');
       expect(res.status).toBe(404);
     });
@@ -274,7 +278,11 @@ describe('Organization Controller', () => {
     });
 
     it('returns 404 when service throws not found', async () => {
-      OrganizationService.updateOrganization.mockRejectedValue(new Error('not found'));
+      OrganizationService.updateOrganization.mockResolvedValue({
+        success: false,
+        error: 'NOT_FOUND',
+        message: 'Organization not found'
+      });
       const res = await request(app)
         .put('/api/organizations/999')
         .set('Authorization', `Bearer ${token}`)
@@ -283,7 +291,11 @@ describe('Organization Controller', () => {
     });
 
     it('returns 409 when service throws already exists', async () => {
-      OrganizationService.updateOrganization.mockRejectedValue(new Error('already exists'));
+      OrganizationService.updateOrganization.mockResolvedValue({
+        success: false,
+        error: 'DUPLICATE_NAME',
+        message: 'Already exists'
+      });
       const res = await request(app)
         .put('/api/organizations/1')
         .set('Authorization', `Bearer ${token}`)
@@ -292,7 +304,11 @@ describe('Organization Controller', () => {
     });
 
     it('returns 400 when service throws Invalid error', async () => {
-      OrganizationService.updateOrganization.mockRejectedValue(new Error('Invalid type ID'));
+      OrganizationService.updateOrganization.mockResolvedValue({
+        success: false,
+        error: 'INVALID_ID',
+        message: 'Invalid type ID'
+      });
       const res = await request(app)
         .put('/api/organizations/1')
         .set('Authorization', `Bearer ${token}`)
@@ -332,7 +348,11 @@ describe('Organization Controller', () => {
     });
 
     it('returns 404 when service throws not found', async () => {
-      OrganizationService.deleteOrganization.mockRejectedValue(new Error('not found'));
+      OrganizationService.deleteOrganization.mockResolvedValue({
+        success: false,
+        error: 'NOT_FOUND',
+        message: 'Organization not found'
+      });
       const res = await request(app)
         .delete('/api/organizations/999')
         .set('Authorization', `Bearer ${token}`);
@@ -340,7 +360,11 @@ describe('Organization Controller', () => {
     });
 
     it('returns 409 when organization has active members', async () => {
-      OrganizationService.deleteOrganization.mockRejectedValue(new Error('active members'));
+      OrganizationService.deleteOrganization.mockResolvedValue({
+        success: false,
+        error: 'HAS_MEMBERS',
+        message: 'Organization has active members'
+      });
       const res = await request(app)
         .delete('/api/organizations/1')
         .set('Authorization', `Bearer ${token}`);
@@ -364,6 +388,7 @@ describe('Organization Controller', () => {
   describe('GET /api/organizations/type/:organizationTypeId', () => {
     it('returns 200 with organizations for valid type ID', async () => {
       OrganizationService.getOrganizationsByType.mockResolvedValue({
+        success: true,
         data: [mockOrg],
         message: 'Organizations by type retrieved'
       });
@@ -372,7 +397,11 @@ describe('Organization Controller', () => {
     });
 
     it('returns 404 when service throws not found', async () => {
-      OrganizationService.getOrganizationsByType.mockRejectedValue(new Error('not found'));
+      OrganizationService.getOrganizationsByType.mockResolvedValue({
+        success: false,
+        error: 'NOT_FOUND',
+        message: 'Organization type not found'
+      });
       const res = await request(app).get('/api/organizations/type/1');
       expect(res.status).toBe(404);
     });
@@ -387,6 +416,7 @@ describe('Organization Controller', () => {
   describe('GET /api/organizations/:id/members', () => {
     it('returns 200 with members for valid ID', async () => {
       OrganizationService.getOrganizationMembers.mockResolvedValue({
+        success: true,
         data: [],
         message: 'Members retrieved'
       });
@@ -395,7 +425,11 @@ describe('Organization Controller', () => {
     });
 
     it('returns 404 when service throws not found', async () => {
-      OrganizationService.getOrganizationMembers.mockRejectedValue(new Error('not found'));
+      OrganizationService.getOrganizationMembers.mockResolvedValue({
+        success: false,
+        error: 'NOT_FOUND',
+        message: 'Organization not found'
+      });
       const res = await request(app).get('/api/organizations/1/members');
       expect(res.status).toBe(404);
     });

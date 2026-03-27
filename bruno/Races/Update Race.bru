@@ -1,0 +1,22 @@
+meta {
+  name: Update Race
+  type: http
+  seq: 42
+}
+
+put {
+  url: {{base_url}}/api/races/1
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "name": "Human (Updated)",
+    "description": "Updated race description"
+  }
+}

@@ -1,0 +1,30 @@
+meta {
+  name: Create Devil Fruit
+  type: http
+  seq: 33
+}
+
+post {
+  url: {{base_url}}/api/devil-fruits
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "name": "Moku Moku no Mi",
+    "type_id": 1,
+    "japanese_name": "モクモクの実",
+    "description": "Logia fruit that allows the user to become smoke",
+    "abilities": "Smoke generation and transformation",
+    "weaknesses": "Sea water and seastone",
+    "awakening_description": "Enhanced area control with smoke",
+    "current_user_id": 1,
+    "previous_users": [],
+    "image_url": "https://example.com/moku-moku.png"
+  }
+}

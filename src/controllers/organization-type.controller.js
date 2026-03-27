@@ -1,5 +1,10 @@
 const organizationTypeService = require('../services/organization-type.service');
 const { createListResponse, createItemResponse } = require('../utils/response.helper');
+const {
+  buildValidationError,
+  sendServiceResultError,
+  sendUnexpectedError
+} = require('../utils/http-response.helper');
 
 /**
  * @class OrganizationTypeController
@@ -20,7 +25,7 @@ class OrganizationTypeController {
       const result = await organizationTypeService.getAllOrganizationTypes({ search, sortBy, sortOrder });
       
       if (!result.success) {
-        return res.status(500).json(result);
+        return sendServiceResultError(res, result);
       }
 
       res.status(200).json(createListResponse(
@@ -28,12 +33,7 @@ class OrganizationTypeController {
         'Organization types retrieved successfully'
       ));
     } catch (error) {
-      console.error('Error in getAllOrganizationTypes controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'organizationType.getAllOrganizationTypes');
     }
   }
 
@@ -50,33 +50,21 @@ class OrganizationTypeController {
 
       // Validate ID is a valid number
       if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid organization type ID',
-          error: 'INVALID_ID'
-        });
+        return res.status(400).json(buildValidationError('Invalid organization type ID', 'INVALID_ID'));
       }
 
       const result = await organizationTypeService.getOrganizationTypeById(Number.parseInt(id));
 
       if (!result.success) {
-        if (result.error === 'NOT_FOUND') {
-          return res.status(404).json(result);
-        }
-        return res.status(500).json(result);
+        return sendServiceResultError(res, result);
       }
 
       res.status(200).json(createItemResponse(
-        result.organizationType,
+        result.data,
         'Organization type retrieved successfully'
       ));
     } catch (error) {
-      console.error('Error in getOrganizationTypeById controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'organizationType.getOrganizationTypeById');
     }
   }
 
@@ -94,37 +82,18 @@ class OrganizationTypeController {
 
       // Validate ID is a valid number
       if (!id || Number.isNaN(id) || Number.parseInt(id) <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid organization type ID',
-          error: 'INVALID_ID'
-        });
+        return res.status(400).json(buildValidationError('Invalid organization type ID', 'INVALID_ID'));
       }
 
       // Validate request body
       if (!updateData || typeof updateData !== 'object') {
-        return res.status(400).json({
-          success: false,
-          message: 'Request body must be a valid JSON object',
-          error: 'INVALID_BODY'
-        });
+        return res.status(400).json(buildValidationError('Request body must be a valid JSON object', 'INVALID_BODY'));
       }
 
       const result = await organizationTypeService.updateOrganizationType(Number.parseInt(id), updateData);
 
       if (!result.success) {
-        switch (result.error) {
-        case 'NOT_FOUND':
-          return res.status(404).json(result);
-        case 'INVALID_ID':
-        case 'NO_FIELDS_PROVIDED':
-        case 'INVALID_NAME':
-          return res.status(400).json(result);
-        case 'DUPLICATE_NAME':
-          return res.status(409).json(result);
-        default:
-          return res.status(500).json(result);
-        }
+        return sendServiceResultError(res, result);
       }
 
       res.status(200).json(createItemResponse(
@@ -132,12 +101,7 @@ class OrganizationTypeController {
         'Organization type updated successfully'
       ));
     } catch (error) {
-      console.error('Error in updateOrganizationType controller:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Internal server error',
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined
-      });
+      return sendUnexpectedError(res, error, 'organizationType.updateOrganizationType');
     }
   }
 }

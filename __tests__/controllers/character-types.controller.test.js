@@ -34,6 +34,7 @@ describe('CharacterType Controller', () => {
     });
 
     it('returns 400 for invalid ID', async () => {
+      characterTypeService.getCharacterTypeById.mockResolvedValue({ success: false, error: 'INVALID_ID' });
       const res = await request(app).get('/api/character-types/abc');
       expect(res.status).toBe(400);
     });
@@ -62,6 +63,7 @@ describe('CharacterType Controller', () => {
     });
 
     it('returns 400 for invalid ID', async () => {
+      characterTypeService.updateCharacterType.mockResolvedValue({ success: false, error: 'INVALID_ID' });
       const res = await request(app)
         .put('/api/character-types/abc')
         .set('Authorization', `Bearer ${token}`)

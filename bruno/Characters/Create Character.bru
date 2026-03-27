@@ -1,0 +1,32 @@
+meta {
+  name: Create Character
+  type: http
+  seq: 30
+}
+
+post {
+  url: {{base_url}}/api/characters
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{jwt_token}}
+}
+
+body:json {
+  {
+    "name": "Portgas D. Ace",
+    "japanese_name": "ポートガス・D・エース",
+    "race_id": 1,
+    "character_type_id": 1,
+    "bounty": 550000000,
+    "age": 20,
+    "height": 185,
+    "description": "Second division commander of the Whitebeard Pirates",
+    "abilities": "Mera Mera no Mi",
+    "image_url": "https://example.com/ace.png",
+    "is_alive": false,
+    "first_appearance": "Chapter 154"
+  }
+}

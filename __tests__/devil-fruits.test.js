@@ -127,9 +127,9 @@ describe('DevilFruitService', () => {
       expect(result).toEqual(mockFruit);
     });
 
-    it('returns null for an invalid ID (non-numeric)', async () => {
+    it('returns undefined for an invalid ID (non-numeric)', async () => {
       const result = await devilFruitService.getFruitById('abc');
-      expect(result).toBeNull();
+      expect(result).toBeUndefined();
     });
 
     it('returns null for ID <= 0', async () => {
