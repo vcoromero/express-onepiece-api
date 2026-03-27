@@ -1,10 +1,7 @@
-# Automated tests (Postgres + Redis) and optional Serverless deploy to AWS.
-# Deploy requires GitHub secrets: AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, DATABASE_URL, JWT_SECRET.
-# Optional repo variables: SERVERLESS_DEPLOY_STAGE (default dev), AWS_REGION (default us-east-1).
-#
-# Secrets cannot be used in `if:` expressions (GitHub restriction). Map them to job `env` and use `env.*` in `if`.
-
 name: Test and Serverless deploy
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
   pull_request:
