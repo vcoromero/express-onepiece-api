@@ -4,7 +4,7 @@ A REST API inspired by the One Piece universe, built with Express and Prisma.
 
 ## Stack
 
-- Node.js + Express
+- Node.js 24 LTS + Express (version pinned via `.nvmrc` and `package.json` `engines`)
 - PostgreSQL + Prisma
 - JWT authentication
 - Redis (infrastructure ready)

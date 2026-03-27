@@ -17,6 +17,7 @@
 
 ## Prerequisites
 
+- Node.js 24 LTS (aligned with `.nvmrc`, CI, and Lambda `nodejs24.x` in `serverless.yml`)
 - AWS account + IAM credentials
 - AWS CLI configured
 - Serverless Framework v3+

@@ -40,7 +40,7 @@ A **VPC** is a private network in AWS (subnets, routing, often NAT for outbound 
 ## 3. Prerequisites
 
 1. **AWS account** (credit card required for the account; many services have a free tier, but always set a **billing alarm** in AWS Billing).
-2. **Node.js** (LTS, e.g. 20.x) — already used by this project.
+2. **Node.js** 24 LTS (same major as local dev and CI; see `.nvmrc` and `package.json` `engines`).
 3. **Git** and this repository cloned locally.
 
 You will install:
